@@ -1,0 +1,3 @@
+CREATE USER IF NOT EXISTS 'ckc-shrms'@'127.0.0.1' IDENTIFIED BY 'ckc-8hrm8';
+GRANT ALL PRIVILEGES ON `ckc-shrms`.* TO 'ckc-shrms'@'127.0.0.1';
+FLUSH PRIVILEGES;
