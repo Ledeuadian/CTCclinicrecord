@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seed educational levels first
         $this->call(EducationalLevelSeeder::class);
-        
+
         // Create specific test accounts
 
         // Admin account

@@ -41,14 +41,14 @@ echo "\n=== CHECKING JANE STAFF ===\n";
 $jane = User::where('name', 'LIKE', '%Jane%')->first();
 if ($jane) {
     echo "Jane User - ID: {$jane->id}, Name: {$jane->name}, User Type: {$jane->user_type}\n";
-    
+
     $janePatient = Patients::where('user_id', $jane->id)->first();
     if ($janePatient) {
         echo "Jane Patient Record - ID: {$janePatient->id}, Patient Type: {$janePatient->patient_type}\n";
     } else {
         echo "Jane has NO patient record!\n";
     }
-    
+
     $janeDoctor = Doctors::where('user_id', $jane->id)->first();
     if ($janeDoctor) {
         echo "Jane Doctor Record - ID: {$janeDoctor->id}, Specialization: {$janeDoctor->specialization}\n";

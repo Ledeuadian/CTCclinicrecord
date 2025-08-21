@@ -44,6 +44,8 @@ class PatientsUpdatePersonalInformation extends Controller
     {
         $request->validate([
             'patient_type' => 'required|string',
+            'school_id' => 'nullable|string|max:255',
+            'edulvl_id' => 'nullable|integer|exists:educational_level,id',
             'address' => 'required|string|max:255',
             'medical_condition' => 'nullable|string',
             'medical_illness' => 'nullable|string',
@@ -66,6 +68,8 @@ class PatientsUpdatePersonalInformation extends Controller
         Patients::create([
             'user_id' => $user->id,
             'patient_type' => $request->patient_type,
+            'school_id' => $request->school_id ?? null,
+            'edulvl_id' => $request->edulvl_id ?? null,
             'address' => $request->address,
             'medical_condition' => $request->medical_condition,
             'medical_illness' => $request->medical_illness,

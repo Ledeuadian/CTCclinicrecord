@@ -55,7 +55,7 @@ class DoctorDashboardController extends Controller
 
         // Monthly appointment statistics
         $monthlyStats = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('MONTH(date) as month, COUNT(*) as count')
+            ->selectRaw('strftime("%m", date) as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->pluck('count', 'month')
@@ -128,9 +128,9 @@ class DoctorDashboardController extends Controller
             ->paginate(15);
 
         return view('doctor.appointments', compact(
-            'appointments', 
-            'doctor', 
-            'pendingAppointments', 
+            'appointments',
+            'doctor',
+            'pendingAppointments',
             'calendarAppointments',
             'calendarData',
             'currentMonth',
@@ -305,7 +305,7 @@ class DoctorDashboardController extends Controller
 
         // Monthly appointment trends
         $monthlyTrends = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('MONTH(date) as month, YEAR(date) as year, COUNT(*) as count')
+            ->selectRaw('strftime("%m", date) as month, strftime("%Y", date) as year, COUNT(*) as count')
             ->whereYear('date', '>=', Carbon::now()->subYear()->year)
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')

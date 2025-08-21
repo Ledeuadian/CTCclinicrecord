@@ -11,17 +11,54 @@ class AdminAppointments extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $appointments = Appointment::all();
-        return view('admin.appointments.index', compact('appointments'));
+        $query = Appointment::with(['patient.user', 'doctor.user']);
+        
+        // Handle search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->whereHas('patient.user', function($patientQuery) use ($searchTerm) {
+                    $patientQuery->where('name', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('doctor.user', function($doctorQuery) use ($searchTerm) {
+                    $doctorQuery->where('name', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('patient', function($patientTypeQuery) use ($searchTerm) {
+                    $patientTypeQuery->where('patient_type', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('doctor', function($doctorSpecQuery) use ($searchTerm) {
+                    $doctorSpecQuery->where('specialization', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->orWhere('status', 'LIKE', '%' . $searchTerm . '%')
+                ->orWhere('date', 'LIKE', '%' . $searchTerm . '%')
+                ->orWhere('reason', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+        
+        $appointments = $query->orderBy('date', 'desc')
+            ->orderBy('time', 'desc')
+            ->get();
+            
+        // Calculate statistics (for all appointments, not just filtered)
+        $allAppointments = Appointment::all();
+        $stats = [
+            'total' => $allAppointments->count(),
+            'pending' => $allAppointments->where('status', Appointment::STATUS_PENDING)->count(),
+            'confirmed' => $allAppointments->where('status', Appointment::STATUS_CONFIRMED)->count(),
+            'cancelled' => $allAppointments->where('status', Appointment::STATUS_CANCELLED)->count(),
+            'today' => $allAppointments->where('date', now()->format('Y-m-d'))->count(),
+        ];
+        
+        return view('admin.appointments.index', compact('appointments', 'stats'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         //
         // Get patients with their user information, excluding doctors (user_type = 3)
@@ -35,7 +72,36 @@ class AdminAppointments extends Controller
             ->select('doctors.id', 'users.name', 'doctors.specialization')
             ->get();
         
-        return view('admin.appointments.create', compact('patients', 'doctors'));
+        // Define available time slots (8 AM to 4 PM)
+        $timeSlots = [
+            '08:00' => '8:00 AM',
+            '09:00' => '9:00 AM',
+            '10:00' => '10:00 AM',
+            '11:00' => '11:00 AM',
+            '13:00' => '1:00 PM',
+            '14:00' => '2:00 PM',
+            '15:00' => '3:00 PM',
+            '16:00' => '4:00 PM'
+        ];
+        
+        $selectedDate = $request->get('date', old('date'));
+        $selectedDoctorId = $request->get('doc_id', old('doc_id', ''));
+        $timeSlotAvailability = [];
+        
+        // If date and doctor are selected, check availability
+        if ($selectedDate && $selectedDoctorId) {
+            foreach ($timeSlots as $time => $label) {
+                $isBooked = Appointment::where('doc_id', $selectedDoctorId)
+                    ->where('date', $selectedDate)
+                    ->where('time', $time)
+                    ->where('status', '!=', Appointment::STATUS_CANCELLED)
+                    ->exists();
+                    
+                $timeSlotAvailability[$time] = !$isBooked;
+            }
+        }
+        
+        return view('admin.appointments.create', compact('patients', 'doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 
     /**
@@ -74,7 +140,7 @@ class AdminAppointments extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, string $id)
     {
         //
         // Find the appointment by ID
@@ -91,7 +157,37 @@ class AdminAppointments extends Controller
             ->select('doctors.id', 'users.name', 'doctors.specialization')
             ->get();
         
-        return view('admin.appointments.edit', compact('appointment', 'patients', 'doctors'));
+        // Define available time slots (8 AM to 4 PM)
+        $timeSlots = [
+            '08:00' => '8:00 AM',
+            '09:00' => '9:00 AM',
+            '10:00' => '10:00 AM',
+            '11:00' => '11:00 AM',
+            '13:00' => '1:00 PM',
+            '14:00' => '2:00 PM',
+            '15:00' => '3:00 PM',
+            '16:00' => '4:00 PM'
+        ];
+        
+        $selectedDate = $request->get('date', old('date', $appointment->date));
+        $selectedDoctorId = $request->get('doc_id', old('doc_id', $appointment->doc_id));
+        $timeSlotAvailability = [];
+        
+        // If date and doctor are selected, check availability
+        if ($selectedDate && $selectedDoctorId) {
+            foreach ($timeSlots as $time => $label) {
+                $isBooked = Appointment::where('doc_id', $selectedDoctorId)
+                    ->where('date', $selectedDate)
+                    ->where('time', $time)
+                    ->where('status', '!=', Appointment::STATUS_CANCELLED)
+                    ->where('id', '!=', $id) // Exclude current appointment from availability check
+                    ->exists();
+                    
+                $timeSlotAvailability[$time] = !$isBooked;
+            }
+        }
+        
+        return view('admin.appointments.edit', compact('appointment', 'patients', 'doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 
     /**

@@ -99,7 +99,7 @@
             </h2>
             <p class="text-gray-600 text-sm">Click on dates to view appointments</p>
         </div>
-        
+
         <div class="p-6">
             <!-- Calendar Navigation -->
             <div class="flex items-center justify-between mb-6">
@@ -163,7 +163,7 @@
         function generateCalendar() {
             const year = displayMonth.getFullYear();
             const month = displayMonth.getMonth();
-            
+
             // Update month/year display
             const monthNames = ["January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"];
@@ -182,15 +182,15 @@
             for (let i = 0; i < 42; i++) {
                 const cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
-                
+
                 // Use timezone-safe date formatting
-                const dateStr = cellDate.getFullYear() + '-' + 
-                    String(cellDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                const dateStr = cellDate.getFullYear() + '-' +
+                    String(cellDate.getMonth() + 1).padStart(2, '0') + '-' +
                     String(cellDate.getDate()).padStart(2, '0');
                 const isCurrentMonth = cellDate.getMonth() === month;
                 const isToday = cellDate.toDateString() === currentDate.toDateString();
                 const hasAppointments = calendarData[dateStr] && calendarData[dateStr].length > 0;
-                
+
                 const cell = document.createElement('div');
                 cell.className = `
                     relative p-2 h-16 border border-gray-200 cursor-pointer transition-colors
@@ -198,7 +198,7 @@
                     ${isToday ? 'border-blue-500 bg-blue-50' : ''}
                     ${hasAppointments ? 'border-green-300' : ''}
                 `;
-                
+
                 cell.onclick = () => showDateDetails(dateStr, cellDate);
 
                 // Date number
@@ -211,7 +211,7 @@
                 if (hasAppointments) {
                     const appointments = calendarData[dateStr];
                     const hasConfirmed = appointments.some(apt => apt.status === 'Confirmed');
-                    
+
                     // Create appointment label
                     const label = document.createElement('div');
                     label.className = `absolute bottom-1 left-1 text-xs px-1 py-0.5 rounded text-black font-medium border-2 border-green-600 ${
@@ -219,7 +219,7 @@
                     }`;
                     label.textContent = 'Appointment';
                     cell.appendChild(label);
-                    
+
                     // Create count indicator if multiple appointments
                     if (appointments.length > 1) {
                         const countIndicator = document.createElement('div');
@@ -247,7 +247,7 @@
             if (appointments.length > 0) {
                 detailsDiv.classList.remove('hidden');
                 noAppointmentsDiv.classList.add('hidden');
-                
+
                 appointmentsDiv.innerHTML = '';
                 appointments.forEach(appointment => {
                     const appointmentDiv = document.createElement('div');
@@ -255,7 +255,7 @@
                         flex items-center justify-between p-3 rounded-lg border
                         ${appointment.status === 'Pending' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200'}
                     `;
-                    
+
                     appointmentDiv.innerHTML = `
                         <div>
                             <p class="font-medium text-gray-800">${appointment.patient_name}</p>
@@ -267,13 +267,13 @@
                             }">
                                 ${appointment.status}
                             </span>
-                            <a href="/doctor/patient-details/${appointment.patient_id}" 
+                            <a href="/doctor/patient-details/${appointment.patient_id}"
                                class="text-blue-600 hover:text-blue-800 text-sm">
                                 View Patient
                             </a>
                         </div>
                     `;
-                    
+
                     appointmentsDiv.appendChild(appointmentDiv);
                 });
             } else {
@@ -285,7 +285,7 @@
         function changeMonth(direction) {
             displayMonth.setMonth(displayMonth.getMonth() + direction);
             generateCalendar();
-            
+
             // Hide any open date details
             document.getElementById('selected-date-details').classList.add('hidden');
             document.getElementById('no-appointments-message').classList.add('hidden');

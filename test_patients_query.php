@@ -24,10 +24,10 @@ try {
             'educational_level.year_level'
         )
         ->get();
-    
+
     echo "Query executed successfully!\n";
     echo "Number of patients found: " . $patients->count() . "\n\n";
-    
+
     foreach ($patients as $patient) {
         echo "Patient ID: {$patient->id}\n";
         echo "Name: {$patient->name}\n";
@@ -38,7 +38,7 @@ try {
         echo "Address: {$patient->address}\n";
         echo "---\n";
     }
-    
+
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
     echo "Query failed!\n";

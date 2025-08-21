@@ -13,10 +13,40 @@ class PatientsAppointmentScheduler extends Controller
     /**
      * Show form to schedule doctor appointment
      */
-    public function scheduleAppointment()
+    public function scheduleAppointment(Request $request)
     {
         $doctors = Doctors::with('user')->get();
-        return view('patients.schedule-appointment', compact('doctors'));
+        
+        // Define available time slots (8 AM to 4 PM)
+        $timeSlots = [
+            '08:00' => '8:00 AM',
+            '09:00' => '9:00 AM',
+            '10:00' => '10:00 AM',
+            '11:00' => '11:00 AM',
+            '13:00' => '1:00 PM',
+            '14:00' => '2:00 PM',
+            '15:00' => '3:00 PM',
+            '16:00' => '4:00 PM'
+        ];
+        
+        $selectedDate = $request->get('date', old('date'));
+        $selectedDoctorId = $request->get('doctor_id', old('doctor_id', ''));
+        $timeSlotAvailability = [];
+        
+        // If date and doctor are selected, check availability
+        if ($selectedDate && $selectedDoctorId) {
+            foreach ($timeSlots as $time => $label) {
+                $isBooked = Appointment::where('doc_id', $selectedDoctorId)
+                    ->where('date', $selectedDate)
+                    ->where('time', $time)
+                    ->where('status', '!=', Appointment::STATUS_CANCELLED)
+                    ->exists();
+                    
+                $timeSlotAvailability[$time] = !$isBooked;
+            }
+        }
+        
+        return view('patients.schedule-appointment', compact('doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 
     /**
