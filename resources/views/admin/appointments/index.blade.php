@@ -41,7 +41,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
             <div class="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
@@ -55,7 +55,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
             <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
@@ -69,7 +69,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
             <div class="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
@@ -83,7 +83,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
             <div class="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
@@ -111,31 +111,31 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <input type="text" 
-                           id="search" 
-                           name="search" 
+                    <input type="text"
+                           id="search"
+                           name="search"
                            value="{{ request('search') }}"
                            placeholder="Search by patient name, doctor name, specialization, status, date, or reason..."
                            title="Press Ctrl+F to focus search, Escape to clear, Enter to search"
                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white dark:bg-gray-700 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                 </div>
             </div>
-            <button type="submit" 
+            <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                 Search
             </button>
             @if(request('search'))
-                <a href="{{ route('admin.appointments.index') }}" 
+                <a href="{{ route('admin.appointments.index') }}"
                    class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                     Clear
                 </a>
             @endif
         </form>
-        
+
         @if(request('search'))
             <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-md">
                 <p class="text-sm text-blue-800 dark:text-blue-200">
-                    <span class="font-medium">Search Results:</span> 
+                    <span class="font-medium">Search Results:</span>
                     Showing {{ $appointments->count() }} appointment(s) for "{{ request('search') }}"
                     @if($appointments->count() === 0)
                         <span class="block mt-1 text-blue-600 dark:text-blue-300">No appointments found matching your search criteria.</span>
@@ -143,31 +143,31 @@
                 </p>
             </div>
         @endif
-        
+
         <!-- Quick Filter Buttons -->
         <div class="mt-4 flex flex-wrap gap-2">
             <span class="text-sm text-gray-600 dark:text-gray-400 mr-2">Quick filters:</span>
-            <a href="{{ route('admin.appointments.index', ['search' => 'Pending']) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => 'Pending']) }}"
                class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors {{ request('search') === 'Pending' ? 'ring-2 ring-yellow-400' : '' }}">
                 Pending
             </a>
-            <a href="{{ route('admin.appointments.index', ['search' => 'Confirmed']) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => 'Confirmed']) }}"
                class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors {{ request('search') === 'Confirmed' ? 'ring-2 ring-green-400' : '' }}">
                 Confirmed
             </a>
-            <a href="{{ route('admin.appointments.index', ['search' => 'Cancelled']) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => 'Cancelled']) }}"
                class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors {{ request('search') === 'Cancelled' ? 'ring-2 ring-red-400' : '' }}">
                 Cancelled
             </a>
-            <a href="{{ route('admin.appointments.index', ['search' => now()->format('Y-m-d')]) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => now()->format('Y-m-d')]) }}"
                class="px-3 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition-colors {{ request('search') === now()->format('Y-m-d') ? 'ring-2 ring-indigo-400' : '' }}">
                 Today
             </a>
-            <a href="{{ route('admin.appointments.index', ['search' => 'Student']) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => 'Student']) }}"
                class="px-3 py-1 text-xs bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors {{ request('search') === 'Student' ? 'ring-2 ring-purple-400' : '' }}">
                 Students
             </a>
-            <a href="{{ route('admin.appointments.index', ['search' => 'Staff']) }}" 
+            <a href="{{ route('admin.appointments.index', ['search' => 'Staff']) }}"
                class="px-3 py-1 text-xs bg-cyan-100 text-cyan-800 rounded-full hover:bg-cyan-200 transition-colors {{ request('search') === 'Staff' ? 'ring-2 ring-cyan-400' : '' }}">
                 Staff
             </a>
@@ -281,18 +281,18 @@
                                     <li>Search by patient type (Student, Staff)</li>
                                 </ul>
                             </div>
-                            <a href="{{ route('admin.appointments.index') }}" 
+                            <a href="{{ route('admin.appointments.index') }}"
                                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">
                                 Clear Search
                             </a>
                         @else
                             <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M8 7V3a4 4 0 118 0v4m-4 9v2m-6.938 4h13.856c.946 0 1.337-1.213.574-1.756L9.756 15a1 1 0 00-.512-.244v0a1 1 0 00-.512.244L2.006 18.244C1.243 18.787 1.634 20 2.58 20z"></path>
                             </svg>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No appointments found</h3>
                             <p class="text-gray-500 dark:text-gray-400 mb-4">Get started by creating a new appointment.</p>
-                            <a href="{{ route('admin.appointments.create') }}" 
+                            <a href="{{ route('admin.appointments.create') }}"
                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
                                 Create First Appointment
                             </a>
@@ -336,7 +336,7 @@ document.querySelector('form').addEventListener('submit', function() {
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Searching...';
     submitBtn.disabled = true;
-    
+
     // Re-enable after a short delay in case of quick return
     setTimeout(() => {
         submitBtn.textContent = originalText;

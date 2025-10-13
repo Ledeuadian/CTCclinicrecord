@@ -16,7 +16,7 @@ class PatientsAppointmentScheduler extends Controller
     public function scheduleAppointment(Request $request)
     {
         $doctors = Doctors::with('user')->get();
-        
+
         // Define available time slots (8 AM to 4 PM)
         $timeSlots = [
             '08:00' => '8:00 AM',
@@ -28,11 +28,11 @@ class PatientsAppointmentScheduler extends Controller
             '15:00' => '3:00 PM',
             '16:00' => '4:00 PM'
         ];
-        
+
         $selectedDate = $request->get('date', old('date'));
         $selectedDoctorId = $request->get('doctor_id', old('doctor_id', ''));
         $timeSlotAvailability = [];
-        
+
         // If date and doctor are selected, check availability
         if ($selectedDate && $selectedDoctorId) {
             foreach ($timeSlots as $time => $label) {
@@ -41,11 +41,11 @@ class PatientsAppointmentScheduler extends Controller
                     ->where('time', $time)
                     ->where('status', '!=', Appointment::STATUS_CANCELLED)
                     ->exists();
-                    
+
                 $timeSlotAvailability[$time] = !$isBooked;
             }
         }
-        
+
         return view('patients.schedule-appointment', compact('doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 

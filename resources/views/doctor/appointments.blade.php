@@ -214,9 +214,7 @@
 
                     // Create appointment label
                     const label = document.createElement('div');
-                    label.className = `absolute bottom-1 left-1 text-xs px-1 py-0.5 rounded text-black font-medium border-2 border-green-600 ${
-                        hasConfirmed ? 'bg-green-300' : 'bg-yellow-300'
-                    }`;
+                    label.className = `absolute bottom-1 left-1 text-xs px-1 py-0.5 rounded text-black font-medium bg-green-600 border border-green-700`;
                     label.textContent = 'Appointment';
                     cell.appendChild(label);
 
@@ -267,7 +265,7 @@
                             }">
                                 ${appointment.status}
                             </span>
-                            <a href="/doctor/patient-details/${appointment.patient_id}"
+                            <a href="/doctor/patients/${appointment.patient_id}"
                                class="text-blue-600 hover:text-blue-800 text-sm">
                                 View Patient
                             </a>

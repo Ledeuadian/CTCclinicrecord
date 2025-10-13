@@ -15,7 +15,7 @@ class AdminAppointments extends Controller
     {
         //
         $query = Appointment::with(['patient.user', 'doctor.user']);
-        
+
         // Handle search functionality
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
@@ -37,11 +37,11 @@ class AdminAppointments extends Controller
                 ->orWhere('reason', 'LIKE', '%' . $searchTerm . '%');
             });
         }
-        
+
         $appointments = $query->orderBy('date', 'desc')
             ->orderBy('time', 'desc')
             ->get();
-            
+
         // Calculate statistics (for all appointments, not just filtered)
         $allAppointments = Appointment::all();
         $stats = [
@@ -51,7 +51,7 @@ class AdminAppointments extends Controller
             'cancelled' => $allAppointments->where('status', Appointment::STATUS_CANCELLED)->count(),
             'today' => $allAppointments->where('date', now()->format('Y-m-d'))->count(),
         ];
-        
+
         return view('admin.appointments.index', compact('appointments', 'stats'));
     }
 
@@ -66,12 +66,12 @@ class AdminAppointments extends Controller
             ->whereIn('users.user_type', [1, 2]) // Only students and staff
             ->select('patients.id', 'users.name', 'patients.patient_type')
             ->get();
-        
+
         // Get doctors with their user information
         $doctors = \App\Models\Doctors::join('users', 'users.id', '=', 'doctors.user_id')
             ->select('doctors.id', 'users.name', 'doctors.specialization')
             ->get();
-        
+
         // Define available time slots (8 AM to 4 PM)
         $timeSlots = [
             '08:00' => '8:00 AM',
@@ -83,11 +83,11 @@ class AdminAppointments extends Controller
             '15:00' => '3:00 PM',
             '16:00' => '4:00 PM'
         ];
-        
+
         $selectedDate = $request->get('date', old('date'));
         $selectedDoctorId = $request->get('doc_id', old('doc_id', ''));
         $timeSlotAvailability = [];
-        
+
         // If date and doctor are selected, check availability
         if ($selectedDate && $selectedDoctorId) {
             foreach ($timeSlots as $time => $label) {
@@ -96,11 +96,11 @@ class AdminAppointments extends Controller
                     ->where('time', $time)
                     ->where('status', '!=', Appointment::STATUS_CANCELLED)
                     ->exists();
-                    
+
                 $timeSlotAvailability[$time] = !$isBooked;
             }
         }
-        
+
         return view('admin.appointments.create', compact('patients', 'doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 
@@ -145,18 +145,18 @@ class AdminAppointments extends Controller
         //
         // Find the appointment by ID
         $appointment = Appointment::findOrFail($id);
-        
+
         // Get patients with their user information, excluding doctors (user_type = 3)
         $patients = \App\Models\Patients::join('users', 'users.id', '=', 'patients.user_id')
             ->whereIn('users.user_type', [1, 2]) // Only students and staff
             ->select('patients.id', 'users.name', 'patients.patient_type')
             ->get();
-        
+
         // Get doctors with their user information
         $doctors = \App\Models\Doctors::join('users', 'users.id', '=', 'doctors.user_id')
             ->select('doctors.id', 'users.name', 'doctors.specialization')
             ->get();
-        
+
         // Define available time slots (8 AM to 4 PM)
         $timeSlots = [
             '08:00' => '8:00 AM',
@@ -168,11 +168,11 @@ class AdminAppointments extends Controller
             '15:00' => '3:00 PM',
             '16:00' => '4:00 PM'
         ];
-        
+
         $selectedDate = $request->get('date', old('date', $appointment->date));
         $selectedDoctorId = $request->get('doc_id', old('doc_id', $appointment->doc_id));
         $timeSlotAvailability = [];
-        
+
         // If date and doctor are selected, check availability
         if ($selectedDate && $selectedDoctorId) {
             foreach ($timeSlots as $time => $label) {
@@ -182,11 +182,11 @@ class AdminAppointments extends Controller
                     ->where('status', '!=', Appointment::STATUS_CANCELLED)
                     ->where('id', '!=', $id) // Exclude current appointment from availability check
                     ->exists();
-                    
+
                 $timeSlotAvailability[$time] = !$isBooked;
             }
         }
-        
+
         return view('admin.appointments.edit', compact('appointment', 'patients', 'doctors', 'timeSlots', 'timeSlotAvailability', 'selectedDate', 'selectedDoctorId'));
     }
 

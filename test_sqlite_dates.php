@@ -17,11 +17,11 @@ try {
             ->groupBy('month')
             ->pluck('count', 'month')
             ->toArray();
-        
+
         echo "✅ Monthly stats query executed successfully!\n";
         echo "   Found data for " . count($monthlyStats) . " months\n";
     }
-    
+
     // Test the fixed monthly trends query
     echo "\n🔍 Testing monthly trends query...\n";
     if ($doctor) {
@@ -32,13 +32,13 @@ try {
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->get();
-        
+
         echo "✅ Monthly trends query executed successfully!\n";
         echo "   Found " . $monthlyTrends->count() . " trend records\n";
     }
-    
+
     echo "\n✅ All SQLite date function queries are working!\n";
-    
+
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage() . "\n";
 }

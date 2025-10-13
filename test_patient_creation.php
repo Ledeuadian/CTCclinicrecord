@@ -13,10 +13,10 @@ try {
         echo "❌ No users found to test with\n";
         exit;
     }
-    
+
     echo "🔍 Testing patient creation without school_id...\n";
     echo "   Using user: {$testUser->name} (ID: {$testUser->id})\n";
-    
+
     // Check if patient already exists
     $existingPatient = App\Models\Patients::where('user_id', $testUser->id)->first();
     if ($existingPatient) {
@@ -24,7 +24,7 @@ try {
         echo "   Deleting existing patient for test...\n";
         $existingPatient->delete();
     }
-    
+
     // Try to create patient without school_id
     $patient = App\Models\Patients::create([
         'user_id' => $testUser->id,
@@ -38,15 +38,15 @@ try {
         'emergency_contact_number' => '123456789',
         'emergency_relationship' => 'Friend',
     ]);
-    
+
     echo "✅ Patient created successfully without school_id!\n";
     echo "   Patient ID: {$patient->id}\n";
     echo "   School ID: " . ($patient->school_id ?? 'NULL') . "\n";
-    
+
     // Clean up - delete the test patient
     $patient->delete();
     echo "   🧹 Test patient deleted\n";
-    
+
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage() . "\n";
 }

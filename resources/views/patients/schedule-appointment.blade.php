@@ -83,7 +83,7 @@
                     <div class="block text-sm font-medium text-gray-700 mb-2">
                         Preferred Time <span class="text-red-500">*</span>
                     </div>
-                    
+
                     @if($selectedDate && $selectedDoctorId)
                         <!-- Time Slot Table -->
                         <div class="border border-gray-300 rounded-md overflow-hidden">
@@ -183,17 +183,17 @@
 function checkAvailability() {
     const doctorId = document.getElementById('doctor_id').value;
     const date = document.getElementById('date').value;
-    
+
     if (doctorId && date) {
         // Check if we already have the current values in URL to avoid unnecessary refresh
         const currentUrl = new URL(window.location.href);
         const currentDoctorId = currentUrl.searchParams.get('doctor_id');
         const currentDate = currentUrl.searchParams.get('date');
-        
+
         if (currentDoctorId !== doctorId || currentDate !== date) {
             // Show loading indicator
             document.body.style.cursor = 'wait';
-            
+
             // Redirect to same page with parameters to check availability
             const url = new URL(window.location.href);
             url.searchParams.set('doctor_id', doctorId);
@@ -206,7 +206,7 @@ function checkAvailability() {
 function setSelectedTime(time) {
     document.getElementById('selected_time').value = time;
     document.getElementById('final_time').value = time;
-    
+
     // Update visual selection
     document.querySelectorAll('input[name="time"]').forEach((input) => {
         const label = input.closest('label');
@@ -226,22 +226,22 @@ function validateForm() {
     const doctorId = document.getElementById('doctor_id').value;
     const date = document.getElementById('date').value;
     const time = document.getElementById('final_time').value;
-    
+
     if (!doctorId) {
         alert('Please select a doctor.');
         return false;
     }
-    
+
     if (!date) {
         alert('Please select a date.');
         return false;
     }
-    
+
     if (!time) {
         alert('Please select a time slot.');
         return false;
     }
-    
+
     return true;
 }
 

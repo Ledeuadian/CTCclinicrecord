@@ -123,10 +123,10 @@
                             <!-- Actions -->
                             <div class="flex space-x-2">
                                 <a href="{{ route('doctor.patient-details', $patient->id) }}"
-                                   class="flex-1 bg-blue-600 text-white text-center py-2 px-3 rounded-md text-sm hover:bg-blue-700 transition">
+                                   class="flex-1 bg-blue-700 hover:bg-blue-700 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-blue-700 transition-all duration-200">
                                     View Details
                                 </a>
-                                <button class="bg-gray-200 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-300 transition"
+                                <button class="bg-gray-300 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200"
                                         onclick="quickContact('{{ $patient->user->email }}')">
                                     Contact
                                 </button>

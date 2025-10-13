@@ -17,7 +17,7 @@ class PatientsUpdatePersonalInformation extends Controller
     {
         $user = Auth::user();
         $patient = Patients::where('user_id', $user->id)->first();
-        
+
         return view('patients.profile', compact('user', 'patient'));
     }
 
@@ -28,7 +28,7 @@ class PatientsUpdatePersonalInformation extends Controller
     {
         $user = Auth::user();
         $existingPatient = Patients::where('user_id', $user->id)->first();
-        
+
         if ($existingPatient) {
             return redirect()->route('patients.profile')
                 ->with('info', 'You already have a patient profile.');
@@ -57,14 +57,14 @@ class PatientsUpdatePersonalInformation extends Controller
         ]);
 
         $user = Auth::user();
-        
+
         // Check if patient profile already exists
         $existingPatient = Patients::where('user_id', $user->id)->first();
         if ($existingPatient) {
             return redirect()->route('patients.profile')
                 ->with('error', 'Patient profile already exists.');
         }
-        
+
         Patients::create([
             'user_id' => $user->id,
             'patient_type' => $request->patient_type,
@@ -91,7 +91,7 @@ class PatientsUpdatePersonalInformation extends Controller
     {
         $user = Auth::user();
         $patients = Patients::where('user_id', $user->id)->first();
-        
+
         if (!$patients) {
             return redirect()->route('patients.profile.create')
                 ->with('info', 'Please create your patient profile first.');
@@ -121,12 +121,12 @@ class PatientsUpdatePersonalInformation extends Controller
 
         $user = Auth::user();
         $patients = Patients::where('user_id', $user->id)->first();
-        
+
         if (!$patients) {
             return redirect()->route('patients.profile.create')
                 ->with('error', 'Patient profile not found.');
         }
-        
+
         // Update user information
         $user->update([
             'name' => $request->name,
@@ -184,7 +184,7 @@ class PatientsUpdatePersonalInformation extends Controller
         ]);
 
         $user = Auth::user();
-        
+
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
@@ -207,7 +207,7 @@ class PatientsUpdatePersonalInformation extends Controller
 
         $user = Auth::user();
         $patients = Patients::where('user_id', $user->id)->first();
-        
+
         if (!$patients) {
             return redirect()->route('patients.profile.create')
                 ->with('error', 'Patient profile not found.');
@@ -236,7 +236,7 @@ class PatientsUpdatePersonalInformation extends Controller
 
         $user = Auth::user();
         $patients = Patients::where('user_id', $user->id)->first();
-        
+
         if (!$patients) {
             return redirect()->route('patients.profile.create')
                 ->with('error', 'Patient profile not found.');
