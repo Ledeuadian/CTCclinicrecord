@@ -65,7 +65,7 @@
                     {{ $physical->id }}
                 </th>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $physical->user_id }}
+                    {{ $physical->patient_id }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $physical->vaccine_name }}

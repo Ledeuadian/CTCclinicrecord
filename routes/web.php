@@ -88,6 +88,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/patients', [DoctorDashboardController::class, 'patients'])->name('patients');
         Route::get('/patients/{patientId}', [DoctorDashboardController::class, 'viewPatient'])->name('patient-details');
         Route::get('/health-records', [DoctorDashboardController::class, 'healthRecords'])->name('health-records');
+        Route::get('/health-records/create', [DoctorDashboardController::class, 'createHealthRecord'])->name('health-records.create');
+        Route::post('/health-records', [DoctorDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
         Route::get('/medications', [DoctorDashboardController::class, 'medications'])->name('medications');
         Route::get('/reports', [DoctorDashboardController::class, 'reports'])->name('reports');
     });

@@ -24,33 +24,64 @@
     @endforeach
 @endif
 <h2 class="text-xl font-semibold text-white">New Appointment</h2>
+
+<style>
+/* Custom dropdown styling for better visibility */
+select option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    padding: 8px;
+}
+
+select option:hover {
+    background-color: #f3f4f6 !important;
+    color: #000000 !important;
+}
+
+select option:checked {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+/* Ensure dropdown is visible in both light and dark modes */
+select {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+
+select:focus {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+</style>
+
 <form class="max-w mx-auto" action="{{ route('admin.appointments.store') }}" method="POST">
     @csrf
     <div class="grid md:grid-cols-2 md:gap-6">
         <div class="relative z-0 w-full mb-5 group">
+            <label for="patient" class="block mb-2 text-sm font-medium text-white">Patient</label>
             <select name="patient_id" id="patient"
-                class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer cursor-pointer"
-                required onchange="showSelected('patient', 'patient_selected')">
-                <option value="" disabled selected></option>
+                class="block py-2.5 px-3 w-full text-sm text-gray-900 bg-white border border-gray-300 rounded-lg appearance-none dark:text-black dark:bg-white dark:border-gray-400 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 cursor-pointer"
+                required onchange="showSelected('patient', 'patient_selected')" style="color: black; background-color: white;">
+                <option value="" disabled selected style="color: black; background-color: white;">Select a patient</option>
                 @foreach($patients as $patient)
-                    <option value="{{ $patient->id }}">{{ $patient->name }} ({{ $patient->patient_type }})</option>
+                    <option value="{{ $patient->id }}" style="color: black; background-color: white;">{{ $patient->name }} ({{ $patient->patient_type }})</option>
                 @endforeach
             </select>
-            <label for="patient" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Patient</label>
             <div id="patient_selected" class="mt-2 text-sm text-gray-700 dark:text-gray-300 hidden"></div>
         </div>
     </div>
     <div class="grid md:grid-cols-2 md:gap-6">
         <div class="relative z-0 w-full mb-5 group">
+            <label for="doctor" class="block mb-2 text-sm font-medium text-white">Doctor</label>
             <select name="doc_id" id="doctor"
-                class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer cursor-pointer"
-                required onchange="showSelected('doctor', 'doctor_selected'); checkAvailabilityOnChange();">
-                <option value="" disabled {{ empty($selectedDoctorId) ? 'selected' : '' }}></option>
+                class="block py-2.5 px-3 w-full text-sm text-gray-900 bg-white border border-gray-300 rounded-lg appearance-none dark:text-black dark:bg-white dark:border-gray-400 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 cursor-pointer"
+                required onchange="showSelected('doctor', 'doctor_selected'); checkAvailabilityOnChange();" style="color: black; background-color: white;">
+                <option value="" disabled {{ empty($selectedDoctorId) ? 'selected' : '' }} style="color: black; background-color: white;">Select a doctor</option>
                 @foreach($doctors as $doctor)
-                    <option value="{{ $doctor->id }}" {{ (old('doc_id') == $doctor->id || $selectedDoctorId == $doctor->id) ? 'selected' : '' }}>{{ $doctor->name }} ({{ $doctor->specialization }})</option>
+                    <option value="{{ $doctor->id }}" {{ (old('doc_id') == $doctor->id || $selectedDoctorId == $doctor->id) ? 'selected' : '' }} style="color: black; background-color: white;">{{ $doctor->name }} ({{ $doctor->specialization }})</option>
                 @endforeach
             </select>
-            <label for="doctor" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Doctor</label>
             <div id="doctor_selected" class="mt-2 text-sm text-gray-700 dark:text-gray-300 hidden"></div>
         </div>
     </div>

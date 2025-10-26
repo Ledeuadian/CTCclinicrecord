@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
 use App\Models\ImmunizationRecords;
 use App\Models\PrescriptionRecord;
+use App\Models\DentalExamination;
+use App\Models\PhysicalExamination;
+use App\Models\HealthRecords;
 
 class Patients extends Model
 {
@@ -51,6 +54,30 @@ class Patients extends Model
     public function prescription()
     {
         return $this->hasOne(PrescriptionRecord::class,'patient_id','id');
+    }
+
+    /**
+     * Patient to Dental Examination Relationship (One-to-Many)
+     */
+    public function dentalExaminations(): HasMany
+    {
+        return $this->hasMany(DentalExamination::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Patient to Physical Examination Relationship (One-to-Many)
+     */
+    public function physicalExaminations(): HasMany
+    {
+        return $this->hasMany(PhysicalExamination::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Patient to Health Records Relationship (One-to-Many)
+     */
+    public function healthRecords(): HasMany
+    {
+        return $this->hasMany(HealthRecords::class, 'patient_id', 'id');
     }
 
     /**

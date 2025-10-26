@@ -4,8 +4,43 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Patients;
+use App\Models\Doctors;
 
 class PhysicalExamination extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'height',
+        'weight',
+        'heart',
+        'lungs',
+        'eyes',
+        'ears',
+        'nose',
+        'throat',
+        'skin',
+        'bp',
+        'remarks',
+        'patient_id',
+        'doctor_id',
+    ];
+
+    /**
+     * Physical Examination to Patient Relationship (Foreign Key)
+     */
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patients::class, 'patient_id', 'id');
+    }
+
+    /**
+     * Physical Examination to Doctor Relationship (Foreign Key)
+     */
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctors::class, 'doctor_id', 'id');
+    }
 }

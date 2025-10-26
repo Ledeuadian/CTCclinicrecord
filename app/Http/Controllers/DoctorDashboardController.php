@@ -10,6 +10,7 @@ use App\Models\PrescriptionRecord;
 use App\Models\ImmunizationRecords;
 use App\Models\PhysicalExamination;
 use App\Models\DentalExamination;
+use App\Models\Immunization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -216,14 +217,14 @@ class DoctorDashboardController extends Controller
 
         // Get patient's medical records
         $healthRecords = HealthRecords::where('user_id', $patient->user_id)->get();
-        $prescriptions = PrescriptionRecord::where('user_id', $patient->user_id)
+        $prescriptions = PrescriptionRecord::where('patient_id', $patient->id)
             ->with('medicine')
             ->get();
-        $immunizations = ImmunizationRecords::where('user_id', $patient->user_id)
+        $immunizations = ImmunizationRecords::where('patient_id', $patient->id)
             ->with('immunization')
             ->get();
-        $physicalExams = PhysicalExamination::where('user_id', $patient->user_id)->get();
-        $dentalExams = DentalExamination::where('user_id', $patient->user_id)->get();
+        $physicalExams = PhysicalExamination::where('patient_id', $patient->id)->get();
+        $dentalExams = DentalExamination::where('patient_id', $patient->id)->get();
 
         $appointments = Appointment::where('doc_id', $doctor->id)
             ->where('patient_id', $patient->id)
@@ -336,27 +337,56 @@ class DoctorDashboardController extends Controller
     {
         $doctor = Doctors::where('user_id', Auth::id())->first();
 
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found. Please contact administrator.');
+        }
+
         // Get all health records for patients who have appointments with this doctor
         $healthRecords = HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
-            $query->where('doctor_id', $doctor->user_id);
+            $query->where('doc_id', $doctor->id);
         })
-        ->with(['patient.user', 'patient.appointments' => function($query) use ($doctor) {
-            $query->where('doctor_id', $doctor->user_id)->latest();
+        ->whereNotNull('patient_id')
+        ->with(['patient' => function($query) {
+            $query->whereNotNull('user_id')->with('user');
+        }, 'patient.appointments' => function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id)->latest();
         }])
         ->orderBy('created_at', 'desc')
-        ->paginate(15);
+        ->paginate(10);
+
+        // Get physical examinations
+        $physicalExaminations = PhysicalExamination::where('doctor_id', $doctor->id)
+            ->with(['patient.user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'physical_page');
+
+        // Get dental examinations
+        $dentalExaminations = DentalExamination::where('doctor_id', $doctor->id)
+            ->with(['patient.user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'dental_page');
+
+        // Get immunization records for patients treated by this doctor
+        $immunizationRecords = ImmunizationRecords::whereHas('Patients.appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })
+        ->with(['Patients.user'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(10, ['*'], 'immunization_page');
 
         // Get summary statistics
-        $totalRecords = $healthRecords->total();
-        $recentRecords = HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
-            $query->where('doctor_id', $doctor->user_id);
-        })
-        ->where('created_at', '>=', now()->subMonth())
-        ->count();
+        $totalHealthRecords = $healthRecords->total();
+        $totalPhysicalExams = PhysicalExamination::where('doctor_id', $doctor->id)->count();
+        $totalDentalExams = DentalExamination::where('doctor_id', $doctor->id)->count();
+        $totalImmunizations = ImmunizationRecords::whereHas('Patients.appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })->count();
+
+        $recentRecords = $totalHealthRecords + $totalPhysicalExams + $totalDentalExams + $totalImmunizations;
 
         // Get records by diagnosis for this doctor's patients
         $diagnosisStats = HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
-            $query->where('doctor_id', $doctor->user_id);
+            $query->where('doc_id', $doctor->id);
         })
         ->whereNotNull('diagnosis')
         ->selectRaw('diagnosis, COUNT(*) as count')
@@ -368,9 +398,165 @@ class DoctorDashboardController extends Controller
         return view('doctor.health-records', compact(
             'doctor',
             'healthRecords',
-            'totalRecords',
+            'physicalExaminations',
+            'dentalExaminations',
+            'immunizationRecords',
+            'totalHealthRecords',
+            'totalPhysicalExams',
+            'totalDentalExams',
+            'totalImmunizations',
             'recentRecords',
             'diagnosisStats'
         ));
+    }
+
+    /**
+     * Show form for creating a new health record
+     */
+    public function createHealthRecord()
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found. Please contact administrator.');
+        }
+
+        // Get patients who have appointments with this doctor
+        $patients = Patients::whereHas('appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })
+        ->with('user')
+        ->orderBy('id', 'desc')
+        ->get();
+
+        // Get available immunizations for dropdown
+        $immunizations = Immunization::orderBy('name')->get();
+
+        return view('doctor.health-records.create', compact('doctor', 'patients', 'immunizations'));
+    }
+
+    /**
+     * Store a new health record
+     */
+    public function storeHealthRecord(Request $request)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found. Please contact administrator.');
+        }
+
+        $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'record_type' => 'required|in:physical,dental,immunization',
+        ]);
+
+        // Verify doctor has access to this patient
+        $hasAppointment = Appointment::where('doc_id', $doctor->id)
+            ->where('patient_id', $request->patient_id)
+            ->exists();
+
+        if (!$hasAppointment) {
+            return back()->with('error', 'You can only create records for patients you have treated.');
+        }
+
+        try {
+            switch ($request->record_type) {
+                case 'physical':
+                    $this->createPhysicalExamination($request, $doctor);
+                    break;
+                case 'dental':
+                    $this->createDentalExamination($request, $doctor);
+                    break;
+                case 'immunization':
+                    $this->createImmunizationRecord($request, $doctor);
+                    break;
+            }
+
+            return redirect()->route('doctor.health-records')
+                ->with('success', 'Health record created successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error creating health record: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Create Physical Examination Record
+     */
+    private function createPhysicalExamination(Request $request, $doctor)
+    {
+        $request->validate([
+            'height' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'bp' => 'nullable|string|max:20',
+            'heart' => 'nullable|string|max:255',
+            'lungs' => 'nullable|string|max:255',
+            'eyes' => 'nullable|string|max:255',
+            'ears' => 'nullable|string|max:255',
+            'nose' => 'nullable|string|max:255',
+            'throat' => 'nullable|string|max:255',
+            'skin' => 'nullable|string|max:255',
+            'remarks' => 'nullable|string',
+        ]);
+
+        PhysicalExamination::create([
+            'patient_id' => $request->patient_id,
+            'doctor_id' => $doctor->id,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'bp' => $request->bp,
+            'heart' => $request->heart,
+            'lungs' => $request->lungs,
+            'eyes' => $request->eyes,
+            'ears' => $request->ears,
+            'nose' => $request->nose,
+            'throat' => $request->throat,
+            'skin' => $request->skin,
+            'remarks' => $request->remarks,
+        ]);
+    }
+
+    /**
+     * Create Dental Examination Record
+     */
+    private function createDentalExamination(Request $request, $doctor)
+    {
+        $request->validate([
+            'diagnosis' => 'nullable|string',
+            'teeth_status' => 'nullable|array',
+        ]);
+
+        DentalExamination::create([
+            'patient_id' => $request->patient_id,
+            'doctor_id' => $doctor->id,
+            'diagnosis' => $request->diagnosis,
+            'teeth_status' => $request->teeth_status ?? [],
+        ]);
+    }
+
+    /**
+     * Create Immunization Record
+     */
+    private function createImmunizationRecord(Request $request, $doctor)
+    {
+        $request->validate([
+            'vaccine_name' => 'required|string|max:255',
+            'vaccine_type' => 'nullable|string|max:255',
+            'dosage' => 'nullable|string|max:255',
+            'site_of_administration' => 'nullable|string|max:255',
+            'expiration_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        ImmunizationRecords::create([
+            'patient_id' => $request->patient_id,
+            'vaccine_name' => $request->vaccine_name,
+            'vaccine_type' => $request->vaccine_type,
+            'administered_by' => $doctor->name,
+            'dosage' => $request->dosage,
+            'site_of_administration' => $request->site_of_administration,
+            'expiration_date' => $request->expiration_date,
+            'notes' => $request->notes,
+        ]);
     }
 }
