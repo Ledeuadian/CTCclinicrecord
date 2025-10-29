@@ -12,7 +12,7 @@ class AdminImmunization extends Controller
     public function index()
     {
         //
-        $immunizations = ImmunizationRecords::all();
+        $immunizations = ImmunizationRecords::with(['patient.user'])->get();
         return view('admin.immunization.index', compact('immunizations'));
     }
 
@@ -46,6 +46,8 @@ class AdminImmunization extends Controller
     public function edit(string $id)
     {
         //
+        $record = ImmunizationRecords::findOrFail($id);
+        return view('admin.immunization.edit', compact('record'));
     }
 
     /**
@@ -54,6 +56,21 @@ class AdminImmunization extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $record = ImmunizationRecords::findOrFail($id);
+
+        $validated = $request->validate([
+            'vaccine_name' => 'required|string',
+            'vaccine_type' => 'nullable|string',
+            'administered_by' => 'nullable|string',
+            'dosage' => 'nullable|string',
+            'site_of_administration' => 'nullable|string',
+            'expiration_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $record->update($validated);
+
+        return redirect()->route('admin.immunization.index')->with('success', 'Immunization record updated successfully!');
     }
 
     /**

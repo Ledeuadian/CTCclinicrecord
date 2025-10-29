@@ -1,4 +1,4 @@
-@extends('admin.layout.navigation')
+@extends('layouts.app')
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
@@ -10,7 +10,7 @@
                     <h1 class="text-2xl font-semibold text-gray-800">Edit Immunization Record</h1>
                     <p class="text-gray-600">Update immunization details</p>
                 </div>
-                <a href="{{ route('admin.immunization.index') }}"
+                <a href="{{ route('doctor.health-records') }}" 
                    class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
                     ← Back
                 </a>
@@ -19,15 +19,9 @@
 
         <!-- Edit Form -->
         <div class="bg-white shadow-sm rounded-lg">
-            <form action="{{ route('admin.immunization.update', $record->id) }}" method="POST" class="p-6">
+            <form action="{{ route('doctor.immunizations.update', $record->id) }}" method="POST" class="p-6">
                 @csrf
                 @method('PUT')
-
-                <!-- Patient Info (Read-only) -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-2">Patient Information</h3>
-                    <p><strong>Patient:</strong> {{ $record->patient && $record->patient->user ? $record->patient->user->name : 'N/A' }}</p>
-                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Vaccine Name -->
@@ -35,9 +29,9 @@
                         <label for="vaccine_name" class="block text-sm font-medium text-gray-700 mb-2">
                             Vaccine Name <span class="text-red-500">*</span>
                         </label>
-                        <input type="text"
-                               id="vaccine_name"
-                               name="vaccine_name"
+                        <input type="text" 
+                               id="vaccine_name" 
+                               name="vaccine_name" 
                                value="{{ old('vaccine_name', $record->vaccine_name) }}"
                                required
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -52,9 +46,9 @@
                         <label for="vaccine_type" class="block text-sm font-medium text-gray-700 mb-2">
                             Vaccine Type
                         </label>
-                        <input type="text"
-                               id="vaccine_type"
-                               name="vaccine_type"
+                        <input type="text" 
+                               id="vaccine_type" 
+                               name="vaccine_type" 
                                value="{{ old('vaccine_type', $record->vaccine_type) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                placeholder="e.g., mRNA, Inactivated">
@@ -68,9 +62,9 @@
                         <label for="dosage" class="block text-sm font-medium text-gray-700 mb-2">
                             Dosage
                         </label>
-                        <input type="text"
-                               id="dosage"
-                               name="dosage"
+                        <input type="text" 
+                               id="dosage" 
+                               name="dosage" 
                                value="{{ old('dosage', $record->dosage) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                placeholder="e.g., 0.5 mL, 1st dose">
@@ -84,9 +78,9 @@
                         <label for="site_of_administration" class="block text-sm font-medium text-gray-700 mb-2">
                             Site of Administration
                         </label>
-                        <input type="text"
-                               id="site_of_administration"
-                               name="site_of_administration"
+                        <input type="text" 
+                               id="site_of_administration" 
+                               name="site_of_administration" 
                                value="{{ old('site_of_administration', $record->site_of_administration) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                placeholder="e.g., Left deltoid, Right arm">
@@ -100,9 +94,9 @@
                         <label for="administered_by" class="block text-sm font-medium text-gray-700 mb-2">
                             Administered By
                         </label>
-                        <input type="text"
-                               id="administered_by"
-                               name="administered_by"
+                        <input type="text" 
+                               id="administered_by" 
+                               name="administered_by" 
                                value="{{ old('administered_by', $record->administered_by) }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                placeholder="e.g., Dr. Smith, Nurse Johnson">
@@ -116,9 +110,9 @@
                         <label for="expiration_date" class="block text-sm font-medium text-gray-700 mb-2">
                             Expiration Date
                         </label>
-                        <input type="date"
-                               id="expiration_date"
-                               name="expiration_date"
+                        <input type="date" 
+                               id="expiration_date" 
+                               name="expiration_date" 
                                value="{{ old('expiration_date', $record->expiration_date ? \Carbon\Carbon::parse($record->expiration_date)->format('Y-m-d') : '') }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                         @error('expiration_date')
@@ -131,8 +125,8 @@
                         <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
                             Notes
                         </label>
-                        <textarea id="notes"
-                                  name="notes"
+                        <textarea id="notes" 
+                                  name="notes" 
                                   rows="4"
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                   placeholder="Additional notes or observations...">{{ old('notes', $record->notes) }}</textarea>
@@ -144,11 +138,11 @@
 
                 <!-- Action Buttons -->
                 <div class="mt-6 flex justify-end space-x-3">
-                    <a href="{{ route('admin.immunization.index') }}"
+                    <a href="{{ route('doctor.health-records') }}" 
                        class="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition">
                         Cancel
                     </a>
-                    <button type="submit"
+                    <button type="submit" 
                             class="bg-yellow-600 text-white px-6 py-2 rounded-md hover:bg-yellow-700 transition">
                         Update Immunization
                     </button>

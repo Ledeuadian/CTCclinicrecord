@@ -13,7 +13,7 @@ class AdminPhysicalExamination extends Controller
     public function index()
     {
         //
-        $physicals = PhysicalExamination::all();
+        $physicals = PhysicalExamination::with(['patient.user', 'doctor.user'])->get();
         return view('admin.physical.index', compact('physicals'));
     }
 
@@ -47,6 +47,8 @@ class AdminPhysicalExamination extends Controller
     public function edit(string $id)
     {
         //
+        $exam = PhysicalExamination::findOrFail($id);
+        return view('admin.physical.edit', compact('exam'));
     }
 
     /**
@@ -55,6 +57,25 @@ class AdminPhysicalExamination extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $exam = PhysicalExamination::findOrFail($id);
+        
+        $validated = $request->validate([
+            'height' => 'nullable|string',
+            'weight' => 'nullable|string',
+            'bp' => 'nullable|string',
+            'heart' => 'nullable|string',
+            'lungs' => 'nullable|string',
+            'eyes' => 'nullable|string',
+            'ears' => 'nullable|string',
+            'nose' => 'nullable|string',
+            'throat' => 'nullable|string',
+            'skin' => 'nullable|string',
+            'remarks' => 'nullable|string',
+        ]);
+        
+        $exam->update($validated);
+        
+        return redirect()->route('admin.physical.index')->with('success', 'Physical examination updated successfully!');
     }
 
     /**

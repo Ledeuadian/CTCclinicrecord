@@ -11,6 +11,7 @@ use App\Models\ImmunizationRecords;
 use App\Models\PhysicalExamination;
 use App\Models\DentalExamination;
 use App\Models\Immunization;
+use App\Models\Medicine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -220,10 +221,10 @@ class DoctorDashboardController extends Controller
         $prescriptions = PrescriptionRecord::where('patient_id', $patient->id)
             ->with('medicine')
             ->get();
-        $immunizations = ImmunizationRecords::where('patient_id', $patient->id)
-            ->with('immunization')
+        $immunizations = ImmunizationRecords::where('patient_id', $patient->id)->get();
+        $physicalExams = PhysicalExamination::where('patient_id', $patient->id)
+            ->with(['patient.user', 'doctor'])
             ->get();
-        $physicalExams = PhysicalExamination::where('patient_id', $patient->id)->get();
         $dentalExams = DentalExamination::where('patient_id', $patient->id)->get();
 
         $appointments = Appointment::where('doc_id', $doctor->id)
@@ -255,15 +256,30 @@ class DoctorDashboardController extends Controller
             return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
-        // Get prescriptions for patients who have appointments with this doctor
-        $prescriptions = PrescriptionRecord::whereHas('patient.appointments', function($query) use ($doctor) {
-                $query->where('doc_id', $doctor->id);
-            })
-            ->with(['patient.user', 'medicine'])
-            ->orderBy('date_prescribed', 'desc')
-            ->paginate(15);
+        // Get all medicines with pagination
+        $medicines = Medicine::orderBy('name', 'asc')->paginate(15);
 
-        return view('doctor.medications', compact('prescriptions', 'doctor'));
+        // Get statistics
+        $totalMedicines = Medicine::count();
+        $availableMedicines = Medicine::where('quantity', '>=', 10)
+            ->where(function($query) {
+                $query->whereNull('expiration_date')
+                      ->orWhere('expiration_date', '>', now());
+            })
+            ->count();
+        $lowStockMedicines = Medicine::where('quantity', '<', 10)->count();
+        $expiredMedicines = Medicine::whereNotNull('expiration_date')
+            ->where('expiration_date', '<', now())
+            ->count();
+
+        return view('doctor.medicines', compact(
+            'medicines',
+            'doctor',
+            'totalMedicines',
+            'availableMedicines',
+            'lowStockMedicines',
+            'expiredMedicines'
+        ));
     }
 
     /**
@@ -367,10 +383,10 @@ class DoctorDashboardController extends Controller
             ->paginate(10, ['*'], 'dental_page');
 
         // Get immunization records for patients treated by this doctor
-        $immunizationRecords = ImmunizationRecords::whereHas('Patients.appointments', function($query) use ($doctor) {
+        $immunizationRecords = ImmunizationRecords::whereHas('patient.appointments', function($query) use ($doctor) {
             $query->where('doc_id', $doctor->id);
         })
-        ->with(['Patients.user'])
+        ->with(['patient.user'])
         ->orderBy('created_at', 'desc')
         ->paginate(10, ['*'], 'immunization_page');
 
@@ -378,7 +394,7 @@ class DoctorDashboardController extends Controller
         $totalHealthRecords = $healthRecords->total();
         $totalPhysicalExams = PhysicalExamination::where('doctor_id', $doctor->id)->count();
         $totalDentalExams = DentalExamination::where('doctor_id', $doctor->id)->count();
-        $totalImmunizations = ImmunizationRecords::whereHas('Patients.appointments', function($query) use ($doctor) {
+        $totalImmunizations = ImmunizationRecords::whereHas('patient.appointments', function($query) use ($doctor) {
             $query->where('doc_id', $doctor->id);
         })->count();
 
@@ -499,8 +515,11 @@ class DoctorDashboardController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
+        // Get the patient's user_id
+        $patient = Patients::findOrFail($request->patient_id);
+
         PhysicalExamination::create([
-            'patient_id' => $request->patient_id,
+            'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
             'height' => $request->height,
             'weight' => $request->weight,
@@ -558,5 +577,477 @@ class DoctorDashboardController extends Controller
             'expiration_date' => $request->expiration_date,
             'notes' => $request->notes,
         ]);
+    }
+
+    /**
+     * Edit Health Record
+     */
+    public function editHealthRecord($id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found.');
+        }
+
+        $record = HealthRecords::findOrFail($id);
+
+        // Verify this record belongs to a patient the doctor has treated
+        $hasAccess = Appointment::where('doc_id', $doctor->id)
+            ->where('patient_id', $record->patient_id)
+            ->exists();
+
+        if (!$hasAccess) {
+            return redirect()->back()->with('error', 'You do not have access to edit this record.');
+        }
+
+        return view('doctor.edit-health-record', compact('record', 'doctor'));
+    }
+
+    /**
+     * Update Health Record
+     */
+    public function updateHealthRecord(Request $request, $id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        $record = HealthRecords::findOrFail($id);
+
+        $request->validate([
+            'diagnosis' => 'nullable|string',
+            'treatment' => 'nullable|string',
+            'symptoms' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $record->update([
+            'diagnosis' => $request->diagnosis,
+            'treatment' => $request->treatment,
+            'symptoms' => $request->symptoms,
+            'notes' => $request->notes,
+        ]);
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Health record updated successfully.');
+    }
+
+    /**
+     * Edit Physical Examination
+     */
+    public function editPhysicalExam($id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found.');
+        }
+
+        $exam = PhysicalExamination::where('id', $id)
+            ->where('doctor_id', $doctor->id)
+            ->firstOrFail();
+
+        return view('doctor.edit-physical-exam', compact('exam', 'doctor'));
+    }
+
+    /**
+     * Update Physical Examination
+     */
+    public function updatePhysicalExam(Request $request, $id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        $exam = PhysicalExamination::where('id', $id)
+            ->where('doctor_id', $doctor->id)
+            ->firstOrFail();
+
+        $request->validate([
+            'height' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'bp' => 'nullable|string|max:20',
+            'heart' => 'nullable|string|max:255',
+            'lungs' => 'nullable|string|max:255',
+            'eyes' => 'nullable|string|max:255',
+            'ears' => 'nullable|string|max:255',
+            'nose' => 'nullable|string|max:255',
+            'throat' => 'nullable|string|max:255',
+            'skin' => 'nullable|string|max:255',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $exam->update($request->only([
+            'height', 'weight', 'bp', 'heart', 'lungs',
+            'eyes', 'ears', 'nose', 'throat', 'skin', 'remarks'
+        ]));
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Physical examination updated successfully.');
+    }
+
+    /**
+     * Edit Dental Examination
+     */
+    public function editDentalExam($id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found.');
+        }
+
+        $exam = DentalExamination::where('id', $id)
+            ->where('doctor_id', $doctor->id)
+            ->firstOrFail();
+
+        return view('doctor.edit-dental-exam', compact('exam', 'doctor'));
+    }
+
+    /**
+     * Update Dental Examination
+     */
+    public function updateDentalExam(Request $request, $id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        $exam = DentalExamination::where('id', $id)
+            ->where('doctor_id', $doctor->id)
+            ->firstOrFail();
+
+        $request->validate([
+            'diagnosis' => 'nullable|string',
+            'teeth_status' => 'nullable|array',
+        ]);
+
+        $exam->update([
+            'diagnosis' => $request->diagnosis,
+            'teeth_status' => $request->teeth_status,
+        ]);
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Dental examination updated successfully.');
+    }
+
+    /**
+     * Edit Immunization Record
+     */
+    public function editImmunization($id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found.');
+        }
+
+        $record = ImmunizationRecords::findOrFail($id);
+
+        // Verify access
+        $hasAccess = Appointment::where('doc_id', $doctor->id)
+            ->whereHas('patient', function($q) use ($record) {
+                $q->where('id', $record->patient_id);
+            })
+            ->exists();
+
+        if (!$hasAccess) {
+            return redirect()->back()->with('error', 'You do not have access to edit this record.');
+        }
+
+        return view('doctor.edit-immunization', compact('record', 'doctor'));
+    }
+
+    /**
+     * Update Immunization Record
+     */
+    public function updateImmunization(Request $request, $id)
+    {
+        $record = ImmunizationRecords::findOrFail($id);
+
+        $request->validate([
+            'vaccine_name' => 'required|string|max:255',
+            'vaccine_type' => 'nullable|string|max:255',
+            'administered_by' => 'nullable|string|max:255',
+            'dosage' => 'nullable|string|max:255',
+            'site_of_administration' => 'nullable|string|max:255',
+            'expiration_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $record->update($request->only([
+            'vaccine_name', 'vaccine_type', 'administered_by',
+            'dosage', 'site_of_administration', 'expiration_date', 'notes'
+        ]));
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Immunization record updated successfully.');
+    }
+
+    /**
+     * Edit Prescription Record
+     */
+    public function editPrescription($id)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            return redirect()->back()->with('error', 'Doctor profile not found.');
+        }
+
+        $prescription = PrescriptionRecord::findOrFail($id);
+
+        // Verify access
+        $hasAccess = Appointment::where('doc_id', $doctor->id)
+            ->where('patient_id', $prescription->patient_id)
+            ->exists();
+
+        if (!$hasAccess) {
+            return redirect()->back()->with('error', 'You do not have access to edit this record.');
+        }
+
+        $medicines = Medicine::all();
+
+        return view('doctor.edit-prescription', compact('prescription', 'doctor', 'medicines'));
+    }
+
+    /**
+     * Update Prescription Record
+     */
+    public function updatePrescription(Request $request, $id)
+    {
+        $prescription = PrescriptionRecord::findOrFail($id);
+
+        $request->validate([
+            'medicine_id' => 'required|exists:medicines,id',
+            'dosage' => 'required|string|max:255',
+            'frequency' => 'nullable|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'instructions' => 'nullable|string',
+            'date_prescribed' => 'required|date',
+        ]);
+
+        $prescription->update($request->only([
+            'medicine_id', 'dosage', 'frequency', 'duration',
+            'instructions', 'date_prescribed'
+        ]));
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Prescription updated successfully.');
+    }
+
+    /**
+     * Store a new medicine
+     */
+    public function storeMedicine(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'medicine_type' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'quantity' => 'required|integer|min:0',
+            'expiration_date' => 'nullable|date',
+        ]);
+
+        Medicine::create($request->only([
+            'name', 'medicine_type', 'description', 'quantity', 'expiration_date'
+        ]));
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Medicine added successfully.');
+    }
+
+    /**
+     * Update an existing medicine
+     */
+    public function updateMedicine(Request $request, $id)
+    {
+        $medicine = Medicine::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'medicine_type' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'quantity' => 'required|integer|min:0',
+            'expiration_date' => 'nullable|date',
+        ]);
+
+        $medicine->update($request->only([
+            'name', 'medicine_type', 'description', 'quantity', 'expiration_date'
+        ]));
+
+        return redirect()->route('doctor.health-records')
+            ->with('success', 'Medicine updated successfully.');
+    }
+
+    /**
+     * Display prescriptions page
+     */
+    public function prescriptions(Request $request)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        // Build query for prescriptions
+        $query = PrescriptionRecord::where('doctor_id', $doctor->id)
+            ->with(['patient.user', 'medicine']);
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('patient.user', function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%');
+            })->orWhere('patient_id', 'like', '%' . $search . '%');
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        // Get prescriptions
+        $prescriptions = $query->orderBy('date_prescribed', 'desc')->paginate(15);
+
+        // Get statistics
+        $totalPrescriptions = PrescriptionRecord::where('doctor_id', $doctor->id)->count();
+        $activePrescriptions = PrescriptionRecord::where('doctor_id', $doctor->id)->where('status', 'active')->count();
+        $completedPrescriptions = PrescriptionRecord::where('doctor_id', $doctor->id)->where('status', 'completed')->count();
+        $discontinuedPrescriptions = PrescriptionRecord::where('doctor_id', $doctor->id)->where('status', 'discontinued')->count();
+
+        // Get patients for dropdown
+        $patients = Patients::whereHas('appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })->with('user')->get();
+
+        // Get medicines for dropdown
+        $medicines = Medicine::orderBy('name', 'asc')->get();
+
+        return view('doctor.prescriptions', compact(
+            'doctor',
+            'prescriptions',
+            'totalPrescriptions',
+            'activePrescriptions',
+            'completedPrescriptions',
+            'discontinuedPrescriptions',
+            'patients',
+            'medicines'
+        ));
+    }
+
+    /**
+     * Store a new prescription
+     */
+    public function storePrescription(Request $request)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'medicine_id' => 'required|exists:medicine,id',
+            'dosage' => 'required|string|max:255',
+            'frequency' => 'nullable|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'instruction' => 'nullable|string',
+            'date_prescribed' => 'required|date',
+        ]);
+
+        PrescriptionRecord::create([
+            'patient_id' => $request->patient_id,
+            'medicine_id' => $request->medicine_id,
+            'doctor_id' => $doctor->id,
+            'dosage' => $request->dosage,
+            'frequency' => $request->frequency,
+            'duration' => $request->duration,
+            'instruction' => $request->instruction,
+            'date_prescribed' => $request->date_prescribed,
+            'status' => 'active',
+        ]);
+
+        return redirect()->route('doctor.prescriptions')
+            ->with('success', 'Prescription created successfully.');
+    }
+
+    /**
+     * Update an existing prescription
+     */
+    public function updatePrescriptionRecord(Request $request, $id)
+    {
+        $prescription = PrescriptionRecord::findOrFail($id);
+
+        // Verify doctor owns this prescription
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if ($prescription->doctor_id != $doctor->id) {
+            return redirect()->route('doctor.prescriptions')->with('error', 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'dosage' => 'required|string|max:255',
+            'frequency' => 'nullable|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'instruction' => 'nullable|string',
+        ]);
+
+        $prescription->update($request->only([
+            'dosage', 'frequency', 'duration', 'instruction'
+        ]));
+
+        return redirect()->route('doctor.prescriptions')
+            ->with('success', 'Prescription updated successfully.');
+    }
+
+    /**
+     * Discontinue a prescription
+     */
+    public function discontinuePrescription(Request $request, $id)
+    {
+        $prescription = PrescriptionRecord::findOrFail($id);
+
+        // Verify doctor owns this prescription
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if ($prescription->doctor_id != $doctor->id) {
+            return redirect()->route('doctor.prescriptions')->with('error', 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'discontinuation_reason' => 'required|string',
+        ]);
+
+        $prescription->update([
+            'status' => 'discontinued',
+            'date_discontinued' => now(),
+            'discontinuation_reason' => $request->discontinuation_reason,
+        ]);
+
+        return redirect()->route('doctor.prescriptions')
+            ->with('success', 'Prescription discontinued successfully.');
+    }
+
+    /**
+     * Get prescription history for a patient
+     */
+    public function prescriptionHistory($patientId)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Doctor profile not found.'], 404);
+        }
+
+        $prescriptions = PrescriptionRecord::where('patient_id', $patientId)
+            ->where('doctor_id', $doctor->id)
+            ->with('medicine')
+            ->orderBy('date_prescribed', 'desc')
+            ->get();
+
+        return response()->json($prescriptions);
     }
 }

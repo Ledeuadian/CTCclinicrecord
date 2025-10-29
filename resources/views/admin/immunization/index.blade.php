@@ -50,11 +50,10 @@
                 <th scope="col" class="px-6 py-4">Patient</th>
                 <th scope="col" class="px-6 py-4">Vaccine Name</th>
                 <th scope="col" class="px-6 py-4">Vaccine Type</th>
-                <th scope="col" class="px-6 py-4">Administered By</th>
                 <th scope="col" class="px-6 py-4">Dosage</th>
-                <th scope="col" class="px-6 py-4">Site of Administration/th>
+                <th scope="col" class="px-6 py-4">Administered By</th>
+                <th scope="col" class="px-6 py-4">Site of Administration</th>
                 <th scope="col" class="px-6 py-4">Expiration Date</th>
-                <th scope="col" class="px-6 py-4">Notes</th>
                 <th scope="col" class="px-6 py-4">Action</th>
             </tr>
         </thead>
@@ -65,7 +64,7 @@
                     {{ $immunization->id }}
                 </th>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $immunization->patient_id }}
+                    {{ $immunization->patient && $immunization->patient->user ? $immunization->patient->user->name : 'N/A' }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $immunization->vaccine_name }}
@@ -74,7 +73,17 @@
                     {{ $immunization->vaccine_type }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $immunization->administered_by }}
+                    {{ $immunization->dosage }}
+                </td>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ $immunization->administered_by ?? 'N/A' }}
+                </td>
+                </td>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ $immunization->vaccine_name }}
+                </td>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ $immunization->vaccine_type }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $immunization->dosage }}
@@ -85,18 +94,13 @@
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $immunization->expiration_date }}
                 </td>
-                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $immunization->notes }}
-                </td>
                 <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.immunization.updateWithType', ['user' => $immunization['id'], 'type' => $immunization['user_type']]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                    <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
-                        <form action="{{ route('admin.immunization.deleteWithType', ['user' => $immunization['id'], 'type' => $immunization['user_type']]) }}" method="POST" style="display:inline-block'];">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3r" onclick="return confirm('Are you sure?')">Remove</button>
-                        </form>
-                    </a>
+                    <a href="{{ route('admin.immunization.edit', $immunization->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                    <form action="{{ route('admin.immunization.destroy', $immunization->id) }}" method="POST" style="display:inline-block;" class="ms-3">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this immunization record?')">Remove</button>
+                    </form>
                 </td>
             </tr>
             @endforeach

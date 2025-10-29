@@ -9,6 +9,9 @@
 
         <link rel="shortcut icon" href="data:image/svg+xml;utf8, {!! rawurlencode(view('components.application-logo')->render()) !!}" type="image/svg+xml">
 
+        <!-- PWA -->
+        @laravelPWA
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

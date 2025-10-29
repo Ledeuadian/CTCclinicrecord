@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Patients;
 use App\Models\Doctors;
+use App\Models\User;
 
 class PhysicalExamination extends Model
 {
@@ -42,5 +43,15 @@ class PhysicalExamination extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctors::class, 'doctor_id', 'id');
+    }
+
+    /**
+     * Get the user through the patient relationship
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'patient_id', 'id')
+            ->join('patients', 'users.id', '=', 'patients.user_id')
+            ->where('patients.id', $this->patient_id);
     }
 }

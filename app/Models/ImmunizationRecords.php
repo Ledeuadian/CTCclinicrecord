@@ -25,7 +25,7 @@ class ImmunizationRecords extends Model
     /**
      * Immunization Records to Patient Relationship (Foreign Key)
      */
-    public function Patients(): BelongsTo
+    public function patient(): BelongsTo
     {
         return $this->belongsTo(Patients::class,'patient_id','id');
     }

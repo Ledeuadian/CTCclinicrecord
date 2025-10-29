@@ -44,7 +44,11 @@
                         </x-nav-link>
 
                         <x-nav-link :href="route('doctor.medications')" :active="request()->routeIs('doctor.medications')">
-                            {{ __('Medications') }}
+                            {{ __('Medicines') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('doctor.prescriptions')" :active="request()->routeIs('doctor.prescriptions')">
+                            {{ __('Prescriptions') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('doctor.reports')" :active="request()->routeIs('doctor.reports')">

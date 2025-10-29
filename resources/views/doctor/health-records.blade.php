@@ -153,12 +153,12 @@
                     // Add immunization records
                     if($immunizationRecords->count() > 0) {
                         foreach($immunizationRecords as $record) {
-                            if($record->Patients && $record->Patients->user) {
+                            if($record->patient && $record->patient->user) {
                                 $allRecords->push([
                                     'type' => 'immunization',
                                     'data' => $record,
                                     'date' => $record->created_at,
-                                    'patient' => $record->Patients
+                                    'patient' => $record->patient
                                 ]);
                                 $hasAnyRecords = true;
                             }
@@ -178,6 +178,7 @@
                                 $patient = $recordItem['patient'];
                             @endphp
 
+                            @if($patient && $patient->user)
                             <div class="border border-gray-200 rounded-lg">
                                 <div class="p-6">
                                     <!-- Record Header -->
@@ -214,9 +215,32 @@
                                                 @endif
                                             </div>
                                         </div>
-                                        <div class="text-right">
-                                            <p class="text-sm font-medium text-gray-800">{{ $record->created_at->format('M j, Y') }}</p>
-                                            <p class="text-sm text-gray-600">{{ $record->created_at->format('g:i A') }}</p>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="text-right mr-4">
+                                                <p class="text-sm font-medium text-gray-800">{{ $record->created_at->format('M j, Y') }}</p>
+                                                <p class="text-sm text-gray-600">{{ $record->created_at->format('g:i A') }}</p>
+                                            </div>
+                                            @if($type === 'health')
+                                                <a href="{{ route('doctor.health-records.edit', $record->id) }}" 
+                                                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                                                    Edit
+                                                </a>
+                                            @elseif($type === 'physical')
+                                                <a href="{{ route('doctor.physical-exams.edit', $record->id) }}" 
+                                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                                                    Edit
+                                                </a>
+                                            @elseif($type === 'dental')
+                                                <a href="{{ route('doctor.dental-exams.edit', $record->id) }}" 
+                                                   class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                                                    Edit
+                                                </a>
+                                            @elseif($type === 'immunization')
+                                                <a href="{{ route('doctor.immunizations.edit', $record->id) }}" 
+                                                   class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                                                    Edit
+                                                </a>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -438,6 +462,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         @endforeach
                     </div>
                 @else
@@ -460,6 +485,7 @@
                 @if($physicalExaminations->count() > 0)
                     <div class="space-y-4">
                         @foreach($physicalExaminations as $exam)
+                            @if($exam->patient && $exam->patient->user)
                             <div class="border border-gray-200 rounded-lg p-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex items-center">
@@ -516,6 +542,7 @@
                                     </div>
                                 @endif
                             </div>
+                            @endif
                         @endforeach
                     </div>
 
@@ -544,6 +571,7 @@
                 @if($dentalExaminations->count() > 0)
                     <div class="space-y-4">
                         @foreach($dentalExaminations as $exam)
+                            @if($exam->patient && $exam->patient->user)
                             <div class="border border-gray-200 rounded-lg p-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex items-center">
@@ -607,6 +635,7 @@
                                     </div>
                                 @endif
                             </div>
+                            @endif
                         @endforeach
                     </div>
 
@@ -635,15 +664,16 @@
                 @if($immunizationRecords->count() > 0)
                     <div class="space-y-4">
                         @foreach($immunizationRecords as $record)
+                            @if($record->patient && $record->patient->user)
                             <div class="border border-gray-200 rounded-lg p-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-semibold">
-                                            {{ substr($record->Patients->user->name, 0, 1) }}
+                                            {{ substr($record->patient->user->name, 0, 1) }}
                                         </div>
                                         <div class="ml-3">
-                                            <h3 class="font-semibold text-gray-800">{{ $record->Patients->user->name }}</h3>
-                                            <p class="text-sm text-gray-600">Patient ID: {{ $record->Patients->id }}</p>
+                                            <h3 class="font-semibold text-gray-800">{{ $record->patient->user->name }}</h3>
+                                            <p class="text-sm text-gray-600">Patient ID: {{ $record->patient->id }}</p>
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -697,6 +727,7 @@
                                     </div>
                                 @endif
                             </div>
+                            @endif
                         @endforeach
                     </div>
 

@@ -135,77 +135,442 @@
                 @endif
             </div>
 
-            <!-- Health Records -->
-            @if($healthRecords->count() > 0)
-                <div class="mb-8">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Health Records</h2>
-                    <div class="space-y-4">
-                        @foreach($healthRecords as $record)
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h3 class="font-medium text-gray-800">Record #{{ $record->id }}</h3>
-                                    <span class="text-sm text-gray-500">{{ $record->created_at->format('M j, Y') }}</span>
-                                </div>
-                                @if($record->diagnosis)
-                                    <p class="text-sm text-gray-600"><strong>Diagnosis:</strong> {{ $record->diagnosis }}</p>
-                                @endif
-                                @if($record->treatment)
-                                    <p class="text-sm text-gray-600"><strong>Treatment:</strong> {{ $record->treatment }}</p>
-                                @endif
-                                @if($record->notes)
-                                    <p class="text-sm text-gray-600"><strong>Notes:</strong> {{ $record->notes }}</p>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+            <!-- Medical Records Tabs -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Medical Records</h2>
 
-            <!-- Prescriptions -->
-            @if($prescriptions->count() > 0)
-                <div class="mb-8">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Prescription History</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3">Date</th>
-                                    <th class="px-6 py-3">Medicine</th>
-                                    <th class="px-6 py-3">Dosage</th>
-                                    <th class="px-6 py-3">Instructions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($prescriptions as $prescription)
-                                    <tr class="bg-white border-b">
-                                        <td class="px-6 py-4">{{ \Carbon\Carbon::parse($prescription->date_prescribed)->format('M j, Y') }}</td>
-                                        <td class="px-6 py-4">{{ $prescription->medicine->name ?? 'N/A' }}</td>
-                                        <td class="px-6 py-4">{{ $prescription->dosage }}</td>
-                                        <td class="px-6 py-4">{{ $prescription->instructions ?? 'N/A' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8">
+                        <button onclick="showRecordTab('health')"
+                                class="record-tab active border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+                            Health Records ({{ $healthRecords->count() }})
+                        </button>
+                        <button onclick="showRecordTab('physical')"
+                                class="record-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Physical Exams ({{ $physicalExams->count() }})
+                        </button>
+                        <button onclick="showRecordTab('dental')"
+                                class="record-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Dental Exams ({{ $dentalExams->count() }})
+                        </button>
+                        <button onclick="showRecordTab('immunization')"
+                                class="record-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Immunizations ({{ $immunizations->count() }})
+                        </button>
+                        <button onclick="showRecordTab('prescription')"
+                                class="record-tab border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Prescriptions ({{ $prescriptions->count() }})
+                        </button>
+                    </nav>
                 </div>
-            @endif
+
+                <!-- Health Records Tab -->
+                <div id="health-tab" class="record-tab-content">
+                    @if($healthRecords->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($healthRecords as $record)
+                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800">Record #{{ $record->id }}</h3>
+                                            <span class="text-sm text-gray-500">{{ $record->created_at->format('M j, Y g:i A') }}</span>
+                                        </div>
+                                        <button onclick="editHealthRecord({{ $record->id }})"
+                                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                        @if($record->diagnosis)
+                                            <div class="bg-blue-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-blue-700 mb-1">Diagnosis</p>
+                                                <p class="text-sm text-gray-800">{{ $record->diagnosis }}</p>
+                                            </div>
+                                        @endif
+                                        @if($record->treatment)
+                                            <div class="bg-green-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-green-700 mb-1">Treatment</p>
+                                                <p class="text-sm text-gray-800">{{ $record->treatment }}</p>
+                                            </div>
+                                        @endif
+                                        @if($record->notes)
+                                            <div class="bg-gray-50 p-3 rounded md:col-span-2">
+                                                <p class="text-xs font-medium text-gray-700 mb-1">Notes</p>
+                                                <p class="text-sm text-gray-800">{{ $record->notes }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-8">No health records found.</p>
+                    @endif
+                </div>
+
+                <!-- Physical Examinations Tab -->
+                <div id="physical-tab" class="record-tab-content hidden">
+                    @if($physicalExams->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($physicalExams as $exam)
+                                <div class="border border-purple-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800">Physical Exam #{{ $exam->id }}</h3>
+                                            <span class="text-sm text-gray-500">{{ $exam->created_at->format('M j, Y g:i A') }}</span>
+                                        </div>
+                                        <button onclick="editPhysicalExam({{ $exam->id }})"
+                                                class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition">
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                                        @if($exam->height)
+                                            <div class="bg-purple-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-purple-700 mb-1">Height</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->height }} cm</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->weight)
+                                            <div class="bg-purple-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-purple-700 mb-1">Weight</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->weight }} kg</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->bp)
+                                            <div class="bg-red-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-red-700 mb-1">Blood Pressure</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->bp }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->heart)
+                                            <div class="bg-pink-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-pink-700 mb-1">Heart</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->heart }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->lungs)
+                                            <div class="bg-blue-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-blue-700 mb-1">Lungs</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->lungs }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->eyes)
+                                            <div class="bg-green-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-green-700 mb-1">Eyes</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->eyes }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->ears)
+                                            <div class="bg-yellow-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-yellow-700 mb-1">Ears</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->ears }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->nose)
+                                            <div class="bg-orange-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-orange-700 mb-1">Nose</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->nose }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->throat)
+                                            <div class="bg-indigo-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-indigo-700 mb-1">Throat</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->throat }}</p>
+                                            </div>
+                                        @endif
+                                        @if($exam->skin)
+                                            <div class="bg-teal-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-teal-700 mb-1">Skin</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->skin }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($exam->remarks)
+                                        <div class="bg-gray-50 p-3 rounded mt-3">
+                                            <p class="text-xs font-medium text-gray-700 mb-1">Remarks</p>
+                                            <p class="text-sm text-gray-800">{{ $exam->remarks }}</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-8">No physical examination records found.</p>
+                    @endif
+                </div>
+
+                <!-- Dental Examinations Tab -->
+                <div id="dental-tab" class="record-tab-content hidden">
+                    @if($dentalExams->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($dentalExams as $exam)
+                                <div class="border border-green-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800">Dental Exam #{{ $exam->id }}</h3>
+                                            <span class="text-sm text-gray-500">{{ $exam->created_at->format('M j, Y g:i A') }}</span>
+                                        </div>
+                                        <button onclick="editDentalExam({{ $exam->id }})"
+                                                class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition">
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-3 mt-3">
+                                        @if($exam->diagnosis)
+                                            <div class="bg-green-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-green-700 mb-1">Diagnosis</p>
+                                                <p class="text-sm text-gray-800">{{ $exam->diagnosis }}</p>
+                                            </div>
+                                        @endif
+
+                                        @if($exam->teeth_status)
+                                            <div class="bg-blue-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-blue-700 mb-2">Teeth Status</p>
+                                                <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+                                                    @php
+                                                        $teethStatus = is_string($exam->teeth_status) ? json_decode($exam->teeth_status, true) : $exam->teeth_status;
+                                                    @endphp
+                                                    @foreach($teethStatus as $toothNum => $status)
+                                                        @if($status !== 'healthy')
+                                                            <div class="text-center p-2 rounded
+                                                                @if($status === 'cavity') bg-red-100 text-red-700
+                                                                @elseif($status === 'missing') bg-gray-200 text-gray-700
+                                                                @elseif($status === 'filled') bg-yellow-100 text-yellow-700
+                                                                @else bg-orange-100 text-orange-700
+                                                                @endif">
+                                                                <div class="text-xs font-bold">#{{ $toothNum }}</div>
+                                                                <div class="text-xs">{{ ucfirst($status) }}</div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                                @php
+                                                    $healthyCount = collect($teethStatus)->filter(fn($s) => $s === 'healthy')->count();
+                                                    $totalTeeth = count($teethStatus);
+                                                @endphp
+                                                <p class="text-xs text-gray-600 mt-2">{{ $healthyCount }}/{{ $totalTeeth }} teeth healthy</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-8">No dental examination records found.</p>
+                    @endif
+                </div>
+
+                <!-- Immunization Records Tab -->
+                <div id="immunization-tab" class="record-tab-content hidden">
+                    @if($immunizations->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($immunizations as $immunization)
+                                <div class="border border-yellow-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800">{{ $immunization->vaccine_name }}</h3>
+                                            <span class="text-sm text-gray-500">{{ $immunization->created_at->format('M j, Y g:i A') }}</span>
+                                        </div>
+                                        <button onclick="editImmunization({{ $immunization->id }})"
+                                                class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition">
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                        @if($immunization->vaccine_type)
+                                            <div class="bg-yellow-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-yellow-700 mb-1">Vaccine Type</p>
+                                                <p class="text-sm text-gray-800">{{ $immunization->vaccine_type }}</p>
+                                            </div>
+                                        @endif
+                                        @if($immunization->dosage)
+                                            <div class="bg-blue-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-blue-700 mb-1">Dosage</p>
+                                                <p class="text-sm text-gray-800">{{ $immunization->dosage }}</p>
+                                            </div>
+                                        @endif
+                                        @if($immunization->site_of_administration)
+                                            <div class="bg-green-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-green-700 mb-1">Administration Site</p>
+                                                <p class="text-sm text-gray-800">{{ $immunization->site_of_administration }}</p>
+                                            </div>
+                                        @endif
+                                        @if($immunization->administered_by)
+                                            <div class="bg-purple-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-purple-700 mb-1">Administered By</p>
+                                                <p class="text-sm text-gray-800">{{ $immunization->administered_by }}</p>
+                                            </div>
+                                        @endif
+                                        @if($immunization->expiration_date)
+                                            <div class="bg-red-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-red-700 mb-1">Expiration Date</p>
+                                                <p class="text-sm text-gray-800">{{ \Carbon\Carbon::parse($immunization->expiration_date)->format('M j, Y') }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($immunization->notes)
+                                        <div class="bg-gray-50 p-3 rounded mt-3">
+                                            <p class="text-xs font-medium text-gray-700 mb-1">Notes</p>
+                                            <p class="text-sm text-gray-800">{{ $immunization->notes }}</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-8">No immunization records found.</p>
+                    @endif
+                </div>
+
+                <!-- Prescription Records Tab -->
+                <div id="prescription-tab" class="record-tab-content hidden">
+                    @if($prescriptions->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($prescriptions as $prescription)
+                                <div class="border border-red-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800">{{ $prescription->medicine->name ?? 'Medicine' }}</h3>
+                                            <span class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($prescription->date_prescribed)->format('M j, Y') }}</span>
+                                        </div>
+                                        <button onclick="editPrescription({{ $prescription->id }})"
+                                                class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition">
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                                        @if($prescription->dosage)
+                                            <div class="bg-red-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-red-700 mb-1">Dosage</p>
+                                                <p class="text-sm text-gray-800">{{ $prescription->dosage }}</p>
+                                            </div>
+                                        @endif
+                                        @if($prescription->frequency)
+                                            <div class="bg-orange-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-orange-700 mb-1">Frequency</p>
+                                                <p class="text-sm text-gray-800">{{ $prescription->frequency }}</p>
+                                            </div>
+                                        @endif
+                                        @if($prescription->duration)
+                                            <div class="bg-yellow-50 p-3 rounded">
+                                                <p class="text-xs font-medium text-yellow-700 mb-1">Duration</p>
+                                                <p class="text-sm text-gray-800">{{ $prescription->duration }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($prescription->instructions)
+                                        <div class="bg-gray-50 p-3 rounded mt-3">
+                                            <p class="text-xs font-medium text-gray-700 mb-1">Instructions</p>
+                                            <p class="text-sm text-gray-800">{{ $prescription->instructions }}</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-8">No prescription records found.</p>
+                    @endif
+                </div>
+            </div>
 
             <!-- Quick Actions -->
             <div class="border-t border-gray-200 pt-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                <div class="flex space-x-4">
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="addHealthRecord({{ $patient->id }})"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
                         Add Health Record
                     </button>
-                    <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                    <button onclick="addPrescription({{ $patient->id }})"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
                         Prescribe Medication
                     </button>
-                    <button class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
-                        Schedule Follow-up
+                    <button onclick="addDentalRecord({{ $patient->id }})"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                        Add Dental Record
+                    </button>
+                    <button onclick="addPhysicalExam({{ $patient->id }})"
+                            class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
+                        Add Physical Exam
+                    </button>
+                    <button onclick="addImmunization({{ $patient->id }})"
+                            class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition">
+                        Add Immunization
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function showRecordTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.record-tab-content');
+    tabContents.forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    // Remove active class from all tabs
+    const tabs = document.querySelectorAll('.record-tab');
+    tabs.forEach(tab => {
+        tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    const selectedContent = document.getElementById(tabName + '-tab');
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+    }
+
+    // Add active class to clicked tab
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+    event.target.classList.add('active', 'border-blue-500', 'text-blue-600');
+}
+
+function editHealthRecord(id) {
+    window.location.href = `/doctor/health-records/${id}/edit`;
+}
+
+function editPhysicalExam(id) {
+    window.location.href = `/doctor/physical-exams/${id}/edit`;
+}
+
+function editDentalExam(id) {
+    window.location.href = `/doctor/dental-exams/${id}/edit`;
+}
+
+function editImmunization(id) {
+    window.location.href = `/doctor/immunizations/${id}/edit`;
+}
+
+function editPrescription(id) {
+    window.location.href = `/doctor/prescriptions/${id}/edit`;
+}
+
+// Quick Actions
+function addHealthRecord(patientId) {
+    window.location.href = `/doctor/health-records/create?patient_id=${patientId}`;
+}
+
+function addPrescription(patientId) {
+    window.location.href = `/doctor/prescriptions/create?patient_id=${patientId}`;
+}
+
+function addDentalRecord(patientId) {
+    window.location.href = `/doctor/dental-exams/create?patient_id=${patientId}`;
+}
+
+function addPhysicalExam(patientId) {
+    window.location.href = `/doctor/physical-exams/create?patient_id=${patientId}`;
+}
+
+function addImmunization(patientId) {
+    window.location.href = `/doctor/immunizations/create?patient_id=${patientId}`;
+}
+</script>
+
 @endsection

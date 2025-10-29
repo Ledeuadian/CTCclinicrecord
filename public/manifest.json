@@ -1,0 +1,27 @@
+{
+    "name": "CKC Clinic Health Records System",
+    "short_name": "CKC Clinic",
+    "start_url": "/",
+    "background_color": "#ffffff",
+    "description": "CKC Student Health Records Management System - Manage appointments, prescriptions, medical records, and patient care",
+    "display": "standalone",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "categories": ["health", "medical", "education"],
+    "screenshots": []
+}

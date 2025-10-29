@@ -15,7 +15,13 @@ class PrescriptionRecord extends Model
 
     protected $fillable = [
         'dosage',
+        'frequency',
+        'duration',
         'instruction',
+        'date_prescribed',
+        'date_discontinued',
+        'status',
+        'discontinuation_reason',
         'patient_id',
         'doctor_id',
         'medicine_id',

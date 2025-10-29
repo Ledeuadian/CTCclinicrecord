@@ -61,26 +61,37 @@
                     {{ $dental->id }}
                 </th>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $dental->patient_id }}
+                    {{ $dental->patient && $dental->patient->user ? $dental->patient->user->name : 'N/A' }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $dental->doctor_id }}
+                    {{ $dental->doctor && $dental->doctor->user ? $dental->doctor->user->name : 'N/A' }}
                 </td>
-                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $dental->teeth_status }}
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                    @if(is_array($dental->teeth_status))
+                        @php
+                            $statusCounts = array_count_values($dental->teeth_status);
+                            $summary = [];
+                            if(isset($statusCounts['healthy'])) $summary[] = $statusCounts['healthy'] . ' healthy';
+                            if(isset($statusCounts['cavity'])) $summary[] = $statusCounts['cavity'] . ' cavities';
+                            if(isset($statusCounts['filled'])) $summary[] = $statusCounts['filled'] . ' filled';
+                            if(isset($statusCounts['missing'])) $summary[] = $statusCounts['missing'] . ' missing';
+                            if(isset($statusCounts['other'])) $summary[] = $statusCounts['other'] . ' other';
+                        @endphp
+                        {{ !empty($summary) ? implode(', ', $summary) : 'No data' }}
+                    @else
+                        {{ $dental->teeth_status ?? 'N/A' }}
+                    @endif
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $dental->diagnosis }}
                 </td>
                 <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.dental.updateWithType', ['user' => $dental['id'], 'type' => $dental['user_type']]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                    <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
-                        <form action="{{ route('admin.dental.deleteWithType', ['user' => $dental['id'], 'type' => $dental['user_type']]) }}" method="POST" style="display:inline-block'];">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3r" onclick="return confirm('Are you sure?')">Remove</button>
-                        </form>
-                    </a>
+                    <a href="{{ route('admin.dental.edit', $dental->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                    <form action="{{ route('admin.dental.destroy', $dental->id) }}" method="POST" style="display:inline-block;" class="ms-3">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this dental examination?')">Remove</button>
+                    </form>
                 </td>
             </tr>
             @endforeach

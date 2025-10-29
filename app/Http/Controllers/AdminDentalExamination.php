@@ -13,7 +13,7 @@ class AdminDentalExamination extends Controller
     public function index()
     {
         //
-        $dentals = DentalExamination::all();
+        $dentals = DentalExamination::with(['patient.user', 'doctor.user'])->get();
         return view('admin.dental.index', compact('dentals'));
     }
 
@@ -48,6 +48,8 @@ class AdminDentalExamination extends Controller
     public function edit(string $id)
     {
         //
+        $exam = DentalExamination::findOrFail($id);
+        return view('admin.dental.edit', compact('exam'));
     }
 
     /**
@@ -56,6 +58,16 @@ class AdminDentalExamination extends Controller
     public function update(Request $request, string $id)
     {
         //
+        $exam = DentalExamination::findOrFail($id);
+
+        $validated = $request->validate([
+            'diagnosis' => 'nullable|string',
+            'teeth_status' => 'nullable|array',
+        ]);
+
+        $exam->update($validated);
+
+        return redirect()->route('admin.dental.index')->with('success', 'Dental examination updated successfully!');
     }
 
     /**
