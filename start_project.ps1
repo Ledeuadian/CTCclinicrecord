@@ -6,12 +6,14 @@ Write-Host ""
 
 # Check if MariaDB service exists and start it
 Write-Host "Checking MariaDB service..." -ForegroundColor Yellow
-$service = Get-Service -Name "MariaDB" -ErrorAction SilentlyContinue
+
+# Try to find MariaDB service (any version)
+$service = Get-Service -Name "MariaDB*" -ErrorAction SilentlyContinue | Select-Object -First 1
 
 if ($service) {
     if ($service.Status -eq "Stopped") {
-        Write-Host "Starting MariaDB service..." -ForegroundColor Yellow
-        Start-Service -Name "MariaDB"
+        Write-Host "Starting MariaDB service ($($service.Name))..." -ForegroundColor Yellow
+        Start-Service -Name $service.Name
         Start-Sleep -Seconds 3
     }
     Write-Host "MariaDB service is running!" -ForegroundColor Green
