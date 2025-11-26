@@ -54,7 +54,7 @@ foreach ($tables as $table) {
         }
 
         $data = DB::table($table)->get();
-        
+
         if ($data->isEmpty()) {
             echo "○ $table: No data\n";
             continue;
@@ -62,10 +62,10 @@ foreach ($tables as $table) {
 
         fwrite($handle, "-- Table: $table\n");
         fwrite($handle, "TRUNCATE TABLE `$table`;\n");
-        
+
         foreach ($data as $row) {
             $row = (array) $row;
-            
+
             // Escape values for MySQL
             $values = array_map(function($value) {
                 if (is_null($value)) {
@@ -76,17 +76,17 @@ foreach ($tables as $table) {
                 }
                 return "'" . addslashes($value) . "'";
             }, $row);
-            
+
             $columns = array_keys($row);
             $columnsStr = '`' . implode('`, `', $columns) . '`';
             $valuesStr = implode(', ', $values);
-            
+
             fwrite($handle, "INSERT INTO `$table` ($columnsStr) VALUES ($valuesStr);\n");
         }
-        
+
         fwrite($handle, "\n");
         echo "✓ $table: " . count($data) . " records\n";
-        
+
     } catch (Exception $e) {
         echo "✗ Error exporting $table: " . $e->getMessage() . "\n";
         continue;

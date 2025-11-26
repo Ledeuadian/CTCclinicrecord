@@ -48,7 +48,7 @@ if (is_dir($cachePath)) {
         new RecursiveDirectoryIterator($cachePath, RecursiveDirectoryIterator::SKIP_DOTS),
         RecursiveIteratorIterator::CHILD_FIRST
     );
-    
+
     foreach ($iterator as $file) {
         if ($file->isFile()) {
             unlink($file->getRealPath());

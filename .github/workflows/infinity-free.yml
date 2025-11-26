@@ -1,11 +1,11 @@
 name: Deploy to InfinityFree
 
-# Run manually or on push to the main branch
+# Run manually only (disabled auto-deploy on push)
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   deploy:

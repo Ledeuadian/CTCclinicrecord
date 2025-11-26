@@ -18,31 +18,31 @@ $warnings = 0;
 echo "<h3>1. Environment File (.env)</h3>";
 if (file_exists(__DIR__.'/.env')) {
     echo "<p class='ok'>✅ .env file exists</p>";
-    
+
     // Check .env contents
     $env = file_get_contents(__DIR__.'/.env');
-    
+
     if (strpos($env, 'APP_ENV=production') !== false) {
         echo "<p class='ok'>✅ APP_ENV is set to production</p>";
     } else {
         echo "<p class='error'>❌ APP_ENV should be 'production'</p>";
         $errors++;
     }
-    
+
     if (strpos($env, 'APP_DEBUG=false') !== false) {
         echo "<p class='ok'>✅ APP_DEBUG is false (secure)</p>";
     } else {
         echo "<p class='error'>❌ APP_DEBUG should be 'false' in production!</p>";
         $errors++;
     }
-    
+
     if (strpos($env, 'DB_CONNECTION=mysql') !== false) {
         echo "<p class='ok'>✅ Database is set to MySQL</p>";
     } else {
         echo "<p class='error'>❌ DB_CONNECTION should be 'mysql'</p>";
         $errors++;
     }
-    
+
     if (strpos($env, 'APP_KEY=base64:') !== false) {
         echo "<p class='ok'>✅ APP_KEY is set</p>";
     } else {
@@ -127,22 +127,22 @@ echo "<h3>6. Database Connection</h3>";
 try {
     if (file_exists(__DIR__.'/vendor/autoload.php')) {
         require __DIR__.'/vendor/autoload.php';
-        
+
         $env = parse_ini_file(__DIR__.'/.env');
         $host = $env['DB_HOST'] ?? 'unknown';
         $database = $env['DB_DATABASE'] ?? 'unknown';
         $username = $env['DB_USERNAME'] ?? 'unknown';
         $password = $env['DB_PASSWORD'] ?? '';
-        
+
         $pdo = new PDO("mysql:host=$host;dbname=$database", $username, $password);
         echo "<p class='ok'>✅ Database connection successful!</p>";
         echo "<p>Connected to: $database on $host</p>";
-        
+
         // Check if tables exist
         $stmt = $pdo->query("SHOW TABLES");
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo "<p class='ok'>✅ Found " . count($tables) . " tables in database</p>";
-        
+
     } else {
         echo "<p class='warning'>⚠️ Cannot test (vendor/ missing)</p>";
     }
