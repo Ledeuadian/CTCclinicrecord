@@ -27,12 +27,6 @@
                 </a>
             </div>
 
-            <div>
-                <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-                    {{ config('app.name', 'Laravel') }}
-                </h1>
-            </div>
-
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
                 {{ $slot }}
             </div>

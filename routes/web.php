@@ -17,6 +17,8 @@ use App\Http\Controllers\PatientsViewPersonalHealthRecord;
 use App\Http\Controllers\PatientsUpdatePersonalInformation;
 // Doctor Controllers
 use App\Http\Controllers\DoctorDashboardController;
+// Staff Controllers
+use App\Http\Controllers\StaffDashboardController;
 // Admin Controllers
 use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\AdminDashboardController;
@@ -92,36 +94,84 @@ Route::middleware('auth')->group(function () {
         Route::post('/health-records', [DoctorDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
         Route::get('/health-records/{id}/edit', [DoctorDashboardController::class, 'editHealthRecord'])->name('health-records.edit');
         Route::put('/health-records/{id}', [DoctorDashboardController::class, 'updateHealthRecord'])->name('health-records.update');
-        
+
         // Physical Examinations
         Route::get('/physical-exams/{id}/edit', [DoctorDashboardController::class, 'editPhysicalExam'])->name('physical-exams.edit');
         Route::put('/physical-exams/{id}', [DoctorDashboardController::class, 'updatePhysicalExam'])->name('physical-exams.update');
-        
+
         // Dental Examinations
         Route::get('/dental-exams/{id}/edit', [DoctorDashboardController::class, 'editDentalExam'])->name('dental-exams.edit');
         Route::put('/dental-exams/{id}', [DoctorDashboardController::class, 'updateDentalExam'])->name('dental-exams.update');
-        
+
         // Immunizations
         Route::get('/immunizations/{id}/edit', [DoctorDashboardController::class, 'editImmunization'])->name('immunizations.edit');
         Route::put('/immunizations/{id}', [DoctorDashboardController::class, 'updateImmunization'])->name('immunizations.update');
-        
+
         // Prescriptions (old routes)
         Route::get('/prescriptions/{id}/edit', [DoctorDashboardController::class, 'editPrescription'])->name('prescriptions.edit');
         Route::put('/prescriptions/{id}', [DoctorDashboardController::class, 'updatePrescription'])->name('prescriptions.update');
-        
+
         // Prescriptions Management (new routes)
         Route::get('/prescriptions', [DoctorDashboardController::class, 'prescriptions'])->name('prescriptions');
+        Route::get('/prescriptions/create', [DoctorDashboardController::class, 'createPrescription'])->name('prescriptions.create');
         Route::post('/prescription', [DoctorDashboardController::class, 'storePrescription'])->name('prescription.store');
         Route::put('/prescription/{id}', [DoctorDashboardController::class, 'updatePrescriptionRecord'])->name('prescription.update');
         Route::put('/prescription/{id}/discontinue', [DoctorDashboardController::class, 'discontinuePrescription'])->name('prescription.discontinue');
         Route::get('/prescription/history/{patientId}', [DoctorDashboardController::class, 'prescriptionHistory'])->name('prescription.history');
-        
+
         // Medicine
         Route::post('/medicine', [DoctorDashboardController::class, 'storeMedicine'])->name('medicine.store');
         Route::put('/medicine/{id}', [DoctorDashboardController::class, 'updateMedicine'])->name('medicine.update');
-        
+
         Route::get('/medications', [DoctorDashboardController::class, 'medications'])->name('medications');
         Route::get('/reports', [DoctorDashboardController::class, 'reports'])->name('reports');
+    });
+
+    // Staff Routes - for user_type = 2 (Faculty & Staff)
+    // Staff have access to doctor-like functionalities for managing patients
+    Route::prefix('staff')->name('staff.')->middleware(['auth', 'check.user.type:2'])->group(function () {
+        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/appointments', [StaffDashboardController::class, 'appointments'])->name('appointments');
+        Route::patch('/appointments/{appointmentId}/status', [StaffDashboardController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
+        Route::get('/patients', [StaffDashboardController::class, 'patients'])->name('patients');
+        Route::get('/patients/{patientId}', [StaffDashboardController::class, 'viewPatient'])->name('patient-details');
+        Route::get('/health-records', [StaffDashboardController::class, 'healthRecords'])->name('health-records');
+        Route::get('/health-records/create', [StaffDashboardController::class, 'createHealthRecord'])->name('health-records.create');
+        Route::post('/health-records', [StaffDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
+        Route::get('/health-records/{id}/edit', [StaffDashboardController::class, 'editHealthRecord'])->name('health-records.edit');
+        Route::put('/health-records/{id}', [StaffDashboardController::class, 'updateHealthRecord'])->name('health-records.update');
+
+        // Physical Examinations
+        Route::get('/physical-exams/{id}/edit', [StaffDashboardController::class, 'editPhysicalExam'])->name('physical-exams.edit');
+        Route::put('/physical-exams/{id}', [StaffDashboardController::class, 'updatePhysicalExam'])->name('physical-exams.update');
+
+        // Dental Examinations
+        Route::get('/dental-exams/{id}/edit', [StaffDashboardController::class, 'editDentalExam'])->name('dental-exams.edit');
+        Route::put('/dental-exams/{id}', [StaffDashboardController::class, 'updateDentalExam'])->name('dental-exams.update');
+
+        // Immunization Records
+        Route::get('/immunizations/{id}/edit', [StaffDashboardController::class, 'editImmunization'])->name('immunizations.edit');
+        Route::put('/immunizations/{id}', [StaffDashboardController::class, 'updateImmunization'])->name('immunizations.update');
+
+        // Medicines
+        Route::get('/medications', [StaffDashboardController::class, 'medications'])->name('medications');
+        Route::post('/medicine', [StaffDashboardController::class, 'storeMedicine'])->name('medicine.store');
+        Route::put('/medicine/{id}', [StaffDashboardController::class, 'updateMedicine'])->name('medicine.update');
+
+        // Prescriptions Management
+        Route::get('/prescriptions', [StaffDashboardController::class, 'prescriptions'])->name('prescriptions');
+        Route::post('/prescription', [StaffDashboardController::class, 'storePrescription'])->name('prescription.store');
+        Route::put('/prescription/{id}', [StaffDashboardController::class, 'updatePrescriptionRecord'])->name('prescription.update');
+        Route::put('/prescription/{id}/discontinue', [StaffDashboardController::class, 'discontinuePrescription'])->name('prescription.discontinue');
+        Route::get('/prescription/history/{patientId}', [StaffDashboardController::class, 'prescriptionHistory'])->name('prescription.history');
+
+        // Reports & Statistics
+        Route::get('/reports', [StaffDashboardController::class, 'reports'])->name('reports');
+        Route::get('/reports/generate', [StaffDashboardController::class, 'showReportGeneration'])->name('reports.generate');
+        Route::post('/reports/generate', [StaffDashboardController::class, 'generateReport'])->name('reports.store');
+        Route::get('/reports/view/{id}', [StaffDashboardController::class, 'viewReport'])->name('reports.view');
+        Route::delete('/reports/{id}', [StaffDashboardController::class, 'deleteReport'])->name('reports.delete');
+        Route::get('/reports/export/{id}/{format}', [StaffDashboardController::class, 'exportReport'])->name('reports.export');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -24,7 +24,7 @@
             </div>
         @endforeach
     @endif
-    <h2 class="text-xl font-semibold text-white">Update User</h2>
+    <h2 class="text-xl font-semibold text-white mb-6">Update User</h2>
     <form action="{{ route('admin.users.updateWithType',['user' => $admin['id'], 'type' => $admin['user_type']]) }}" method="post">
         @csrf
         @method('PUT')
@@ -101,7 +101,7 @@
         </div>
         <div class="flex justify-start space-x-2">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Save Appointment
+                Update User
             </button>
         </div>
     </form>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
+use App\Models\EducationalLevel;
 use App\Models\ImmunizationRecords;
 use App\Models\PrescriptionRecord;
 use App\Models\DentalExamination;
@@ -38,6 +39,14 @@ class Patients extends Model
     public function User(): BelongsTo
     {
         return $this->belongsTo(User::class,'user_id','id');
+    }
+
+    /**
+     * Patient to Educational Level Relationship (Foreign Key)
+     */
+    public function educationalLevel(): BelongsTo
+    {
+        return $this->belongsTo(EducationalLevel::class, 'edulvl_id', 'id');
     }
 
     /**

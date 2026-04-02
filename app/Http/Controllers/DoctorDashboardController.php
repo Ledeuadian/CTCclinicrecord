@@ -934,6 +934,35 @@ class DoctorDashboardController extends Controller
     }
 
     /**
+     * Show form to create prescription
+     */
+    public function createPrescription(Request $request)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        // Get patient if patient_id is provided
+        $patient = null;
+        if ($request->has('patient_id')) {
+            $patient = Patients::with('user')->find($request->patient_id);
+        }
+
+        // Get all patients for dropdown
+        $patients = Patients::with('user')->get();
+
+        // Get medicines for dropdown
+        $medicines = Medicine::where('quantity', '>', 0)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('doctor.create-prescription', compact('patient', 'patients', 'medicines'));
+    }
+
+    /**
      * Store a new prescription
      */
     public function storePrescription(Request $request)

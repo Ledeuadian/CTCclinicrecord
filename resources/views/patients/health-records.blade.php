@@ -10,8 +10,8 @@
 
         <div class="p-6">
             @php
-                $totalRecords = $healthRecords->count() + $dentalExaminations->count() + 
-                               $physicalExaminations->count() + $immunizationRecords->count() + 
+                $totalRecords = $healthRecords->count() + $dentalExaminations->count() +
+                               $physicalExaminations->count() + $immunizationRecords->count() +
                                $prescriptionRecords->count();
             @endphp
 
@@ -20,33 +20,33 @@
                 <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Health Records Summary</h3>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <button onclick="showTab('all')" data-tab="all" class="tab-button bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer border-2 border-transparent">
                             <p class="text-3xl font-bold text-blue-600">{{ $totalRecords }}</p>
                             <p class="text-sm text-gray-600 mt-1">Total Records</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                        </button>
+                        <button onclick="showTab('dental')" data-tab="dental" class="tab-button bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer border-2 border-transparent">
                             <p class="text-3xl font-bold text-green-600">{{ $dentalExaminations->count() }}</p>
                             <p class="text-sm text-gray-600 mt-1">Dental Exams</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                        </button>
+                        <button onclick="showTab('physical')" data-tab="physical" class="tab-button bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer border-2 border-transparent">
                             <p class="text-3xl font-bold text-purple-600">{{ $physicalExaminations->count() }}</p>
                             <p class="text-sm text-gray-600 mt-1">Physical Exams</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                        </button>
+                        <button onclick="showTab('immunization')" data-tab="immunization" class="tab-button bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer border-2 border-transparent">
                             <p class="text-3xl font-bold text-yellow-600">{{ $immunizationRecords->count() }}</p>
                             <p class="text-sm text-gray-600 mt-1">Immunizations</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                        </button>
+                        <button onclick="showTab('prescription')" data-tab="prescription" class="tab-button bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer border-2 border-transparent">
                             <p class="text-3xl font-bold text-red-600">{{ $prescriptionRecords->count() }}</p>
                             <p class="text-sm text-gray-600 mt-1">Prescriptions</p>
-                        </div>
+                        </button>
                     </div>
                 </div>
 
                 <div class="space-y-6">
                     <!-- Dental Examinations -->
                     @foreach($dentalExaminations as $dental)
-                        <div class="border border-green-200 bg-green-50 rounded-lg p-6">
+                        <div class="record-item dental-record border border-green-200 bg-green-50 rounded-lg p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <span class="inline-block px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full mb-2">
@@ -77,24 +77,61 @@
 
                             @if($dental->teeth_status && is_array($dental->teeth_status) && count($dental->teeth_status) > 0)
                                 <div class="mt-4 pt-4 border-t border-green-200">
-                                    <span class="text-sm font-medium text-gray-600 block mb-2">Teeth Status:</span>
-                                    <div class="grid grid-cols-8 gap-1 text-xs">
-                                        @for($i = 1; $i <= 32; $i++)
-                                            @php
-                                                $status = $dental->teeth_status[$i] ?? '';
-                                                $bgColor = match($status) {
-                                                    'healthy' => 'bg-green-100 text-green-800',
-                                                    'cavity' => 'bg-red-100 text-red-800',
-                                                    'filled' => 'bg-blue-100 text-blue-800',
-                                                    'missing' => 'bg-gray-100 text-gray-800',
-                                                    'crown' => 'bg-yellow-100 text-yellow-800',
-                                                    default => 'bg-gray-50 text-gray-400'
-                                                };
-                                            @endphp
-                                            <div class="p-1 {{ $bgColor }} rounded text-center">
-                                                {{ $i }}
-                                            </div>
-                                        @endfor
+                                    <span class="text-sm font-medium text-gray-600 block mb-3">Teeth Status:</span>
+
+                                    <!-- Legend -->
+                                    <div class="flex flex-wrap gap-2 mb-3 p-2 bg-white rounded border text-xs">
+                                        <div class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded mr-1"></span>Healthy</div>
+                                        <div class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded mr-1"></span>Cavity</div>
+                                        <div class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded mr-1"></span>Filled</div>
+                                        <div class="flex items-center"><span class="w-3 h-3 bg-gray-400 rounded mr-1"></span>Missing</div>
+                                        <div class="flex items-center"><span class="w-3 h-3 bg-yellow-500 rounded mr-1"></span>Other</div>
+                                    </div>
+
+                                    <!-- Upper Teeth -->
+                                    <div class="mb-3">
+                                        <p class="text-xs font-semibold text-gray-500 mb-1">Upper (1-16)</p>
+                                        <div class="grid grid-cols-8 gap-1">
+                                            @for($i = 1; $i <= 16; $i++)
+                                                @php
+                                                    $status = $dental->teeth_status[$i] ?? 'healthy';
+                                                    $bgColor = match($status) {
+                                                        'healthy' => 'bg-green-500',
+                                                        'cavity' => 'bg-red-500',
+                                                        'filled' => 'bg-blue-500',
+                                                        'missing' => 'bg-gray-400',
+                                                        'other' => 'bg-yellow-500',
+                                                        default => 'bg-gray-200'
+                                                    };
+                                                @endphp
+                                                <div class="w-8 h-8 {{ $bgColor }} rounded flex items-center justify-center text-white text-xs font-bold border border-gray-300">
+                                                    {{ $i }}
+                                                </div>
+                                            @endfor
+                                        </div>
+                                    </div>
+
+                                    <!-- Lower Teeth -->
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 mb-1">Lower (17-32)</p>
+                                        <div class="grid grid-cols-8 gap-1">
+                                            @for($i = 17; $i <= 32; $i++)
+                                                @php
+                                                    $status = $dental->teeth_status[$i] ?? 'healthy';
+                                                    $bgColor = match($status) {
+                                                        'healthy' => 'bg-green-500',
+                                                        'cavity' => 'bg-red-500',
+                                                        'filled' => 'bg-blue-500',
+                                                        'missing' => 'bg-gray-400',
+                                                        'other' => 'bg-yellow-500',
+                                                        default => 'bg-gray-200'
+                                                    };
+                                                @endphp
+                                                <div class="w-8 h-8 {{ $bgColor }} rounded flex items-center justify-center text-white text-xs font-bold border border-gray-300">
+                                                    {{ $i }}
+                                                </div>
+                                            @endfor
+                                        </div>
                                     </div>
                                 </div>
                             @endif
@@ -103,7 +140,7 @@
 
                     <!-- Physical Examinations -->
                     @foreach($physicalExaminations as $physical)
-                        <div class="border border-purple-200 bg-purple-50 rounded-lg p-6">
+                        <div class="record-item physical-record border border-purple-200 bg-purple-50 rounded-lg p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <span class="inline-block px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full mb-2">
@@ -184,7 +221,7 @@
 
                     <!-- Immunization Records -->
                     @foreach($immunizationRecords as $immunization)
-                        <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-6">
+                        <div class="record-item immunization-record border border-yellow-200 bg-yellow-50 rounded-lg p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <span class="inline-block px-3 py-1 bg-yellow-600 text-white text-xs font-semibold rounded-full mb-2">
@@ -237,7 +274,7 @@
 
                     <!-- Prescription Records -->
                     @foreach($prescriptionRecords as $prescription)
-                        <div class="border border-red-200 bg-red-50 rounded-lg p-6">
+                        <div class="record-item prescription-record border border-red-200 bg-red-50 rounded-lg p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <span class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full mb-2">
@@ -341,4 +378,49 @@
         </div>
     </div>
 </div>
+
+<script>
+    function showTab(tabName) {
+        // Get all tab buttons and record items
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const recordItems = document.querySelectorAll('.record-item');
+
+        // Remove active state from all tabs
+        tabButtons.forEach(button => {
+            button.classList.remove('border-blue-500', 'bg-blue-50');
+            button.classList.add('border-transparent');
+        });
+
+        // Add active state to clicked tab
+        const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeTab) {
+            activeTab.classList.remove('border-transparent');
+            activeTab.classList.add('border-blue-500', 'bg-blue-50');
+        }
+
+        // Show/hide records based on selected tab
+        if (tabName === 'all') {
+            // Show all records
+            recordItems.forEach(item => {
+                item.style.display = 'block';
+            });
+        } else {
+            // Hide all records first
+            recordItems.forEach(item => {
+                item.style.display = 'none';
+            });
+
+            // Show only selected type
+            const selectedRecords = document.querySelectorAll(`.${tabName}-record`);
+            selectedRecords.forEach(item => {
+                item.style.display = 'block';
+            });
+        }
+    }
+
+    // Initialize with 'all' tab active on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        showTab('all');
+    });
+</script>
 @endsection
