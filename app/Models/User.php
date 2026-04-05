@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Patients;
-use App\Models\PrescriptionRecord;
+use App\Models\Doctors;
 
 class User extends Authenticatable
 {
@@ -58,25 +58,17 @@ class User extends Authenticatable
     }
 
     /**
-     * User to Patient Relationship (Foreign Key)
+     * User to Patient Relationship (One-to-One)
      */
-    public function patients()
+    public function patient()
     {
         return $this->hasOne(Patients::class,'user_id','id');
     }
 
     /**
-     * User to Prescription Relationship (Foreign Key)
+     * User to Doctor Relationship (One-to-One)
      */
-    public function prescription()
-    {
-        return $this->hasOne(PrescriptionRecord::class,'patient_id', 'id');
-    }
-
-    /**
-     * User to Doctors Relationship (Foreign Key)
-     */
-    public function doctors()
+    public function doctor()
     {
         return $this->hasOne(Doctors::class,'user_id','id');
     }

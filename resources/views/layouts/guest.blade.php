@@ -9,8 +9,7 @@
 
         <link rel="shortcut icon" href="data:image/svg+xml;utf8, {!! rawurlencode(view('components.application-logo')->render()) !!}" type="image/svg+xml">
 
-        <!-- PWA -->
-        @laravelPWA
+       
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

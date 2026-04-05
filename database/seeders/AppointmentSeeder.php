@@ -2,23 +2,34 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Appointment;
+use App\Models\Patients;
+use App\Models\Doctors;
+use Illuminate\Database\Seeder;
 
 class AppointmentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Appointment::create([
-            'patient_id' => '1',
-            'date' => '2024-10-20',
-            'time' => '10:00',
-            'doc_id' => '2',
-            'status' => 'Confirmed',
-        ]);
+        $patients = Patients::all();
+        $doctors = Doctors::all();
+
+        if ($patients->isEmpty() || $doctors->isEmpty()) {
+            return;
+        }
+
+        foreach ($patients as $patient) {
+            for ($i = 0; $i < rand(2, 4); $i++) {
+                $doctor = $doctors->random();
+                Appointment::create([
+                    'patient_id' => $patient->id,
+                    'date' => now()->addDays(rand(1, 30))->format('Y-m-d'),
+                    'time' => ['09:00', '10:00', '14:00', '15:00', '16:00'][rand(0, 4)],
+                    'doc_id' => $doctor->id,
+                    'status' => ['Pending', 'Confirmed', 'Cancelled'][rand(0, 2)],
+                    'reason' => ['Regular checkup', 'Follow-up', 'Sick visit', 'Vaccination'][rand(0, 3)],
+                ]);
+            }
+        }
     }
 }

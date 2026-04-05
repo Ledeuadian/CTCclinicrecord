@@ -67,4 +67,26 @@ class AdminPrescription extends Controller
     {
         //
     }
+
+    /**
+     * Show the form for editing a prescription with type
+     */
+    public function updateWithType($id)
+    {
+        $prescription = PrescriptionRecord::findOrFail($id);
+        $patients = \App\Models\Patients::all();
+        $doctors = \App\Models\Doctors::all();
+        $medicines = \App\Models\Medicine::all();
+        return view('admin.prescription.edit', compact('prescription', 'patients', 'doctors', 'medicines'));
+    }
+
+    /**
+     * Delete a prescription with type
+     */
+    public function deleteWithType($id)
+    {
+        $prescription = PrescriptionRecord::findOrFail($id);
+        $prescription->delete();
+        return redirect()->route('admin.prescription.index')->with('success', 'Prescription deleted successfully');
+    }
 }

@@ -256,6 +256,8 @@ Route::middleware('auth:admin')->group(function ()  {
         'update' => 'admin.prescription.update',
         'destroy' => 'admin.prescription.destroy',
     ]);
+    Route::get('/admin/prescription/{id}/edit2', [AdminPrescription::class, 'updateWithType'])->name('admin.prescription.updateWithType');
+    Route::delete('/admin/prescription/{id}/delete2', [AdminPrescription::class, 'deleteWithType'])->name('admin.prescription.deleteWithType');
     Route::post('/admin/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });

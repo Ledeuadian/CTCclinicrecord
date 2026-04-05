@@ -36,7 +36,7 @@ class Patients extends Model
     /**
      * Patient to User Relationship (Foreign Key)
      */
-    public function User(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class,'user_id','id');
     }
@@ -50,19 +50,19 @@ class Patients extends Model
     }
 
     /**
-     * Patient to User Relationship (Foreign Key)
+     * Patient to Immunization Records Relationship (One-to-Many)
      */
-    public function immunization()
+    public function immunizations()
     {
-        return $this->hasOne(ImmunizationRecords::class,'patient_id','id');
+        return $this->hasMany(ImmunizationRecords::class,'patient_id','id');
     }
 
     /**
-     * Patient to Prescription Record Relationship (Foreign Key)
+     * Patient to Prescription Records Relationship (One-to-Many)
      */
-    public function prescription()
+    public function prescriptions()
     {
-        return $this->hasOne(PrescriptionRecord::class,'patient_id','id');
+        return $this->hasMany(PrescriptionRecord::class,'patient_id','id');
     }
 
     /**

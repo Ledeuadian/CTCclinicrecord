@@ -330,7 +330,17 @@
                                                 <p class="text-xs font-medium text-blue-700 mb-2">Teeth Status</p>
                                                 <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
                                                     @php
-                                                        $teethStatus = is_string($exam->teeth_status) ? json_decode($exam->teeth_status, true) : $exam->teeth_status;
+                                                        $decoded = is_string($exam->teeth_status) ? json_decode($exam->teeth_status, true) : $exam->teeth_status;
+                                                        $teethArray = $decoded['teeth'] ?? [];
+                                                        // Convert array of objects to key-value array
+                                                        $teethStatus = [];
+                                                        foreach($teethArray as $tooth) {
+                                                            if (is_array($tooth)) {
+                                                                $teethStatus[$tooth['teeth_no']] = $tooth['teeth_condition'];
+                                                            } else {
+                                                                $teethStatus[$tooth->teeth_no] = $tooth->teeth_condition;
+                                                            }
+                                                        }
                                                     @endphp
                                                     @foreach($teethStatus as $toothNum => $status)
                                                         @if($status !== 'healthy')

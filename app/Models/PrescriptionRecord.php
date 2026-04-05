@@ -28,15 +28,7 @@ class PrescriptionRecord extends Model
     ];
 
     /**
-     * Prescription Records to Patient Relationsip (Foreign Key)
-     */
-    public function Patients(): BelongsTo
-    {
-        return $this->belongsTo(Patients::class,'patient_id','id');
-    }
-
-    /**
-     * Prescription Records to Patient Relationship (Alias for controller usage)
+     * Prescription Records to Patient Relationship (Foreign Key)
      */
     public function patient(): BelongsTo
     {

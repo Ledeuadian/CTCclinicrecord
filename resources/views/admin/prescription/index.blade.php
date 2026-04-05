@@ -77,9 +77,9 @@
                     {{ $prescription->instruction }}
                 </td>
                 <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.prescription.updateWithType', ['user' => $prescription['id'], 'type' => $prescription['user_type']]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                    <a href="{{ route('admin.prescription.updateWithType', $prescription->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
                     <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
-                        <form action="{{ route('admin.prescription.deleteWithType', ['user' => $prescription['id'], 'type' => $prescription['user_type']]) }}" method="POST" style="display:inline-block'];">
+                        <form action="{{ route('admin.prescription.deleteWithType', $prescription->id) }}" method="POST" style="display:inline-block'];">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3r" onclick="return confirm('Are you sure?')">Remove</button>
