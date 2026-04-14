@@ -46,7 +46,7 @@ class StaffDashboardController extends Controller
             ->get();
 
         // Monthly appointment statistics
-        $monthlyStats = Appointment::selectRaw('strftime("%m", date) as month, COUNT(*) as count')
+        $monthlyStats = Appointment::selectRaw('DATE_FORMAT(date, "%m") as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->orderBy('month')
@@ -491,7 +491,7 @@ class StaffDashboardController extends Controller
         ];
 
         // Monthly trends (last 12 months)
-        $monthlyTrends = Appointment::selectRaw('strftime("%m", date) as month, strftime("%Y", date) as year, COUNT(*) as count')
+        $monthlyTrends = Appointment::selectRaw('DATE_FORMAT(date, "%m") as month, DATE_FORMAT(date, "%Y") as year, COUNT(*) as count')
             ->whereNotNull('date')
             ->groupBy('month', 'year')
             ->orderBy('year', 'desc')
@@ -941,7 +941,7 @@ class StaffDashboardController extends Controller
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->groupBy('status')
                 ->get(),
-            'by_month' => Appointment::selectRaw('strftime("%Y-%m", date) as month, COUNT(*) as count')
+            'by_month' => Appointment::selectRaw('DATE_FORMAT(date, "%Y-%m") as month, COUNT(*) as count')
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->groupBy('month')
                 ->orderBy('month')

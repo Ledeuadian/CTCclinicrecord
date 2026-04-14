@@ -57,7 +57,7 @@ class DoctorDashboardController extends Controller
 
         // Monthly appointment statistics
         $monthlyStats = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('strftime("%m", date) as month, COUNT(*) as count')
+            ->selectRaw('DATE_FORMAT(date, "%m") as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->pluck('count', 'month')
@@ -322,7 +322,7 @@ class DoctorDashboardController extends Controller
 
         // Monthly appointment trends
         $monthlyTrends = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('strftime("%m", date) as month, strftime("%Y", date) as year, COUNT(*) as count')
+            ->selectRaw('DATE_FORMAT(date, "%m") as month, DATE_FORMAT(date, "%Y") as year, COUNT(*) as count')
             ->whereYear('date', '>=', Carbon::now()->subYear()->year)
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
