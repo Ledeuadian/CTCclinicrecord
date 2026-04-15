@@ -182,7 +182,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/admin/login', [AdminLoginController::class , 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
 
-Route::middleware('auth:admin')->group(function ()  {
+Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
     Route::resource('/admin/appointments',AdminAppointments::class)->names([
         'index' => 'admin.appointments.index',
         'create' => 'admin.appointments.create',
