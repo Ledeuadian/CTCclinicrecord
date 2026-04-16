@@ -37,11 +37,24 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
+    // Generic dashboard - redirects to appropriate user dashboard
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        switch ($user->user_type) {
+            case 0: // Admin
+                return redirect()->route('admin.dashboard');
+            case 1: // Student/Patient
+                return redirect()->route('patients.dashboard');
+            case 2: // Faculty & Staff
+                return redirect()->route('staff.dashboard');
+            case 3: // Doctor
+                return redirect()->route('doctor.dashboard');
+            default:
+                return redirect()->route('patients.dashboard');
+        }
+    })->middleware(['auth', 'verified'])->name('dashboard');
+
     Route::resource('/appointments', AppointmentController::class);
     Route::resource('/health-records', HealthRecordsController::class);
     Route::resource('/doctors', DoctorsController::class);

@@ -45,6 +45,16 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        $user = Auth::user();
+        switch ($user->user_type) {
+            case 1:
+                return redirect(route('patients.dashboard'));
+            case 2:
+                return redirect(route('staff.dashboard'));
+            case 3:
+                return redirect(route('doctor.dashboard'));
+            default:
+                return redirect(route('patients.dashboard'));
+        }
     }
 }

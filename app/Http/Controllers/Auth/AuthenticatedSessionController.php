@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->route('staff.dashboard');
             case 1: // Student/Patient
             default:
-                return redirect()->intended(route('dashboard', absolute: false));
+                return redirect()->route('patients.dashboard');
         }
     }
 

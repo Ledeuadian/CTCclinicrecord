@@ -27,7 +27,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get statistics
@@ -83,7 +83,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get pending appointments
@@ -178,7 +178,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get patients who have appointments with this doctor
@@ -202,7 +202,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         $patient = Patients::with('user')->findOrFail($patientId);
@@ -291,7 +291,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Generate various statistics
