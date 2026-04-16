@@ -359,7 +359,9 @@
                                             </div>
                                         @endif
 
-                                        @if($record->teeth_status && count($record->teeth_status) > 0)
+                                        @if($record->teeth_status)
+                                            @php $teethArray = is_array($record->teeth_status) ? $record->teeth_status : json_decode($record->teeth_status, true); @endphp
+                                            @if($teethArray && count($teethArray) > 0)
                                             <div class="mb-4">
                                                 <h4 class="font-medium text-gray-800 mb-3">Teeth Status</h4>
 
@@ -378,7 +380,7 @@
                                                     <div class="grid grid-cols-8 gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
                                                         @for($i = 1; $i <= 16; $i++)
                                                             @php
-                                                                $status = $record->teeth_status[$i] ?? 'healthy';
+                                                                $status = $teethArray[$i] ?? 'healthy';
                                                                 $bgColor = match($status) {
                                                                     'healthy' => 'bg-green-500',
                                                                     'cavity' => 'bg-red-500',
@@ -403,7 +405,7 @@
                                                     <div class="grid grid-cols-8 gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
                                                         @for($i = 17; $i <= 32; $i++)
                                                             @php
-                                                                $status = $record->teeth_status[$i] ?? 'healthy';
+                                                                $status = $teethArray[$i] ?? 'healthy';
                                                                 $bgColor = match($status) {
                                                                     'healthy' => 'bg-green-500',
                                                                     'cavity' => 'bg-red-500',
@@ -422,6 +424,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @endif
                                         @endif
 
                                     @elseif($type === 'immunization')
@@ -623,7 +626,9 @@
                                     </div>
                                 @endif
 
-                                @if($exam->teeth_status && count($exam->teeth_status) > 0)
+                                @if($exam->teeth_status)
+                                    @php $examTeethArray = is_array($exam->teeth_status) ? $exam->teeth_status : json_decode($exam->teeth_status, true); @endphp
+                                    @if($examTeethArray && count($examTeethArray) > 0)
                                     <div class="mb-4">
                                         <h4 class="font-medium text-gray-800 mb-3">Teeth Status</h4>
 
@@ -642,7 +647,7 @@
                                             <div class="grid grid-cols-8 gap-2 p-3 bg-gray-50 rounded-lg">
                                                 @for($i = 1; $i <= 16; $i++)
                                                     @php
-                                                        $status = $exam->teeth_status[$i] ?? 'healthy';
+                                                        $status = $examTeethArray[$i] ?? 'healthy';
                                                         $bgColor = match($status) {
                                                             'healthy' => 'bg-green-500',
                                                             'cavity' => 'bg-red-500',
@@ -667,7 +672,7 @@
                                             <div class="grid grid-cols-8 gap-2 p-3 bg-gray-50 rounded-lg">
                                                 @for($i = 17; $i <= 32; $i++)
                                                     @php
-                                                        $status = $exam->teeth_status[$i] ?? 'healthy';
+                                                        $status = $examTeethArray[$i] ?? 'healthy';
                                                         $bgColor = match($status) {
                                                             'healthy' => 'bg-green-500',
                                                             'cavity' => 'bg-red-500',
@@ -686,6 +691,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @endif
                                 @endif
                             </div>
                             @endif

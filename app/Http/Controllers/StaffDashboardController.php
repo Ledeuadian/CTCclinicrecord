@@ -221,7 +221,8 @@ class StaffDashboardController extends Controller
      */
     public function healthRecords(Request $request)
     {
-        $query = HealthRecords::with(['patient.user', 'physicalExamination', 'dentalExamination', 'immunizationRecords']);
+        // Load only existing relationships: patient.user
+        $query = HealthRecords::with(['patient.user']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -242,10 +243,11 @@ class StaffDashboardController extends Controller
         $totalDentalExams = DentalExamination::count();
         $totalImmunizations = ImmunizationRecords::count();
 
-        // Top diagnoses
+        // Top diagnoses - ensure diagnosis is a valid string before counting
         $diagnosisStats = HealthRecords::select('diagnosis', \DB::raw('count(*) as count'))
             ->whereNotNull('diagnosis')
             ->where('diagnosis', '!=', '')
+            ->whereRaw('LENGTH(diagnosis) > 0')
             ->groupBy('diagnosis')
             ->orderBy('count', 'desc')
             ->get();
@@ -301,7 +303,7 @@ class StaffDashboardController extends Controller
         $totalMedicines = Medicine::count();
         $availableMedicines = Medicine::where('quantity', '>', 0)->count();
         $lowStockMedicines = Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count();
-        $expiredMedicines = Medicine::where('expiry_date', '<', Carbon::now())->count();
+        $expiredMedicines = Medicine::where('expiration_date', '<', Carbon::now())->count();
 
         return view('staff.medicines', compact('medicines', 'totalMedicines', 'availableMedicines', 'lowStockMedicines', 'expiredMedicines'));
     }
@@ -318,7 +320,7 @@ class StaffDashboardController extends Controller
             'dosage' => 'required|string|max:100',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
-            'expiry_date' => 'required|date',
+            'expiration_date' => 'required|date',
             'description' => 'nullable|string',
         ]);
 
@@ -339,7 +341,7 @@ class StaffDashboardController extends Controller
             'dosage' => 'required|string|max:100',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
-            'expiry_date' => 'required|date',
+            'expiration_date' => 'required|date',
             'description' => 'nullable|string',
         ]);
 
@@ -514,7 +516,7 @@ class StaffDashboardController extends Controller
             'in_stock' => Medicine::where('quantity', '>', 10)->count(),
             'low_stock' => Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count(),
             'out_of_stock' => Medicine::where('quantity', '<=', 0)->count(),
-            'expired' => Medicine::where('expiry_date', '<', Carbon::now())->count(),
+            'expired' => Medicine::where('expiration_date', '<', Carbon::now())->count(),
         ];
 
         return view('staff.reports', compact('appointmentStats', 'patientStats', 'monthlyTrends', 'topConditions', 'recentHealthRecords', 'medicineStats'));
@@ -836,7 +838,7 @@ class StaffDashboardController extends Controller
 
         $dateFrom = Carbon::parse($report->parameters['date_from']);
         $dateTo = Carbon::parse($report->parameters['date_to']);
-        
+
         $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
 
         return view('staff.view-report', compact('report', 'reportData', 'dateFrom', 'dateTo'));
@@ -874,7 +876,7 @@ class StaffDashboardController extends Controller
 
         $dateFrom = Carbon::parse($report->parameters['date_from']);
         $dateTo = Carbon::parse($report->parameters['date_to']);
-        
+
         $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
 
         if ($format === 'csv') {
@@ -1000,16 +1002,16 @@ class StaffDashboardController extends Controller
             'in_stock' => Medicine::where('quantity', '>', 10)->count(),
             'low_stock' => Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count(),
             'out_of_stock' => Medicine::where('quantity', '<=', 0)->count(),
-            'expired' => Medicine::where('expiry_date', '<', Carbon::now())->count(),
-            'expiring_soon' => Medicine::where('expiry_date', '>', Carbon::now())
-                ->where('expiry_date', '<=', Carbon::now()->addMonths(3))
+            'expired' => Medicine::where('expiration_date', '<', Carbon::now())->count(),
+            'expiring_soon' => Medicine::where('expiration_date', '>', Carbon::now())
+                ->where('expiration_date', '<=', Carbon::now()->addMonths(3))
                 ->count(),
             'low_stock_items' => Medicine::where('quantity', '>', 0)
                 ->where('quantity', '<=', 10)
                 ->orderBy('quantity')
                 ->get(),
-            'expired_items' => Medicine::where('expiry_date', '<', Carbon::now())
-                ->orderBy('expiry_date')
+            'expired_items' => Medicine::where('expiration_date', '<', Carbon::now())
+                ->orderBy('expiration_date')
                 ->get(),
         ];
     }
@@ -1017,7 +1019,7 @@ class StaffDashboardController extends Controller
     private function exportAsCSV($report, $reportData)
     {
         $filename = str_replace(' ', '_', $report->title) . '_' . now()->format('YmdHis') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -1025,19 +1027,19 @@ class StaffDashboardController extends Controller
 
         $callback = function() use ($reportData, $report) {
             $file = fopen('php://output', 'w');
-            
+
             // Add report header
             fputcsv($file, ['Report Title', $report->title]);
             fputcsv($file, ['Report Type', str_replace('_', ' ', ucwords($report->report_type))]);
             fputcsv($file, ['Generated On', $report->created_at->format('Y-m-d H:i:s')]);
             fputcsv($file, ['Date Range', $report->parameters['date_from'] . ' to ' . $report->parameters['date_to']]);
             fputcsv($file, []);
-            
+
             // Add data based on report type
             foreach ($reportData as $key => $value) {
                 if (is_array($value) || is_object($value)) {
                     fputcsv($file, [ucwords(str_replace('_', ' ', $key))]);
-                    
+
                     if ($value instanceof \Illuminate\Support\Collection) {
                         $items = $value->toArray();
                         if (count($items) > 0) {
@@ -1052,7 +1054,7 @@ class StaffDashboardController extends Controller
                     fputcsv($file, [ucwords(str_replace('_', ' ', $key)), $value]);
                 }
             }
-            
+
             fclose($file);
         };
 

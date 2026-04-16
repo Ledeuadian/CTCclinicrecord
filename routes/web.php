@@ -172,6 +172,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports/view/{id}', [StaffDashboardController::class, 'viewReport'])->name('reports.view');
         Route::delete('/reports/{id}', [StaffDashboardController::class, 'deleteReport'])->name('reports.delete');
         Route::get('/reports/export/{id}/{format}', [StaffDashboardController::class, 'exportReport'])->name('reports.export');
+
+        // AJAX Tab Content Routes
+        Route::get('/ajax/dashboard', [StaffDashboardController::class, 'ajaxDashboard'])->name('ajax.dashboard');
+        Route::get('/ajax/appointments', [StaffDashboardController::class, 'ajaxAppointments'])->name('ajax.appointments');
+        Route::get('/ajax/patients', [StaffDashboardController::class, 'ajaxPatients'])->name('ajax.patients');
+        Route::get('/ajax/health-records', [StaffDashboardController::class, 'ajaxHealthRecords'])->name('ajax.health-records');
+        Route::get('/ajax/medicines', [StaffDashboardController::class, 'ajaxMedicines'])->name('ajax.medicines');
+        Route::get('/ajax/prescriptions', [StaffDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
+        Route::get('/ajax/reports', [StaffDashboardController::class, 'ajaxReports'])->name('ajax.reports');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
