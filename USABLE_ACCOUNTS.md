@@ -6,13 +6,19 @@
 - **Email:** admin@ckc.edu
 - **Password:** password123
 - **Name:** Admin User
-- **Type:** Admin (user_type: 2)
+- **Type:** Admin (user_type: 0)
 - **Table:** admins
 
-### Doctor Account
-- **Email:** doctor@ckc.edu  
+### Doctor Accounts
+- **Email:** doctor1@ckc.edu
 - **Password:** password123
 - **Name:** Dr. John Smith
+- **Type:** Doctor (user_type: 3)
+- **Table:** users
+
+- **Email:** doctor2@ckc.edu
+- **Password:** password123
+- **Name:** Dr. Maria Santos
 - **Type:** Doctor (user_type: 3)
 - **Table:** users
 
@@ -23,30 +29,47 @@
 - **Type:** Staff (user_type: 2)
 - **Table:** users
 
-### Student Account
-- **Email:** student@ckc.edu
+### Student Accounts
+- **Email:** student1@ckc.edu
 - **Password:** password123
 - **Name:** John Student
 - **Type:** Student (user_type: 1)
 - **Table:** users
 
-## Additional Random Users
-- **Oral Immanuel Greenfelder** (natasha20@example.com) - Doctor (Type 3)
-- **Art Eloy Dooley** (ernestine01@example.org) - Staff (Type 2)
-- **Anahi Trinity Gislason** (dolores.schmidt@example.com) - Student (Type 1)
+- **Email:** student2@ckc.edu
+- **Password:** password123
+- **Name:** Maria Garcia
+- **Type:** Student (user_type: 1)
+- **Table:** users
 
-## User Type Mapping
-- **1 = Student**
-- **2 = Faculty & Staff**
-- **3 = Doctor**
+- **Email:** student3@ckc.edu
+- **Password:** password123
+- **Name:** Pedro Cruz
+- **Type:** Student (user_type: 1)
+- **Table:** users
+
+- **Email:** student4@ckc.edu
+- **Password:** password123
+- **Name:** Ana Lopez
+- **Type:** Student (user_type: 1)
+- **Table:** users
+
+- **Email:** student5@ckc.edu
+- **Password:** password123
+- **Name:** Carlos Reyes
+- **Type:** Student (user_type: 1)
+- **Table:** users
 
 ## Login Instructions
 1. Visit: http://127.0.0.1:8000
 2. Use any of the email addresses above
-3. Password for all test accounts: **password123**
-4. Password for random users: **password**
+3. Password for all accounts: **password123**
 
-## Features by User Type
+## User Type Mapping
+- **0 = Admin**
+- **1 = Student**
+- **2 = Faculty & Staff**
+- **3 = Doctor**
 
 ### Doctor (user_type = 3)
 - Dashboard with medical statistics

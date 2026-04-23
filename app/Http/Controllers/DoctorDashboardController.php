@@ -55,13 +55,20 @@ class DoctorDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Monthly appointment statistics
+        // Monthly appointment statistics - show all 12 months
         $monthlyStats = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('DATE_FORMAT(date, "%m") as month, COUNT(*) as count')
+            ->selectRaw('MONTH(date) as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->pluck('count', 'month')
             ->toArray();
+
+        // Fill in missing months with 0
+        $allMonths = collect(range(1, 12))->mapWithKeys(function($m) {
+            return [$m => 0];
+        })->toArray();
+        $monthlyStats = $allMonths + $monthlyStats;
+        ksort($monthlyStats);
 
         return view('doctor.dashboard', compact(
             'doctor',

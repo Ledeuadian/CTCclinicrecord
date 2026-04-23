@@ -45,13 +45,19 @@ class StaffDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Monthly appointment statistics
-        $monthlyStats = Appointment::selectRaw('DATE_FORMAT(date, "%m") as month, COUNT(*) as count')
+        // Monthly appointment statistics - show all 12 months
+        $monthlyStats = Appointment::selectRaw('MONTH(date) as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->orderBy('month')
             ->get()
             ->pluck('count', 'month');
+
+        // Fill in missing months with 0
+        $allMonths = collect(range(1, 12))->mapWithKeys(function($m) {
+            return [$m => 0];
+        });
+        $monthlyStats = $allMonths->merge($monthlyStats);
 
         return view('staff.dashboard', compact(
             'todayAppointments',
