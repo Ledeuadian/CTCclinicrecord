@@ -26,7 +26,7 @@
                 <!-- Personal Information -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Personal Information</h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -73,7 +73,7 @@
                 <!-- Medical Information -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Medical Information</h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="medical_condition" class="block text-sm font-medium text-gray-700 mb-2">
@@ -110,13 +110,23 @@
                                       placeholder="List any known allergies (food, medication, environmental)..."
                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('allergies', $patients->allergies) }}</textarea>
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Blood Type
+                            </label>
+                            <p class="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md text-gray-600">
+                                {{ $patients->bloodtype ?: 'Not specified' }}
+                                <span class="text-xs text-gray-500">(Contact staff to update)</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Emergency Contact -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Emergency Contact</h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-2">

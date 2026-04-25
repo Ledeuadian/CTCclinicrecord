@@ -24,7 +24,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-        
+
         <!-- Chart.js -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -94,24 +94,24 @@
             if (currentPath.includes('/staff/')) sectionPrefix = 'staff';
             else if (currentPath.includes('/doctor/')) sectionPrefix = 'doctor';
             else if (currentPath.includes('/patient/')) sectionPrefix = 'patients';
-            
+
             // Select nav links for current section
             const sectionLinks = document.querySelectorAll('nav a[href*="/' + sectionPrefix + '/"], nav a[href*="' + sectionPrefix + '."]');
-            
+
             sectionLinks.forEach(link => {
                 link.addEventListener('click', async function(e) {
                     const href = this.getAttribute('href');
                     // Skip form actions, edit/create, and methods other than GET
-                    if (href.includes('/edit') || href.includes('/store') || 
+                    if (href.includes('/edit') || href.includes('/store') ||
                         href.includes('/update') || href.includes('/delete') ||
                         href.includes('/destroy') || href.includes('/generate') ||
                         href.includes('/export') || href.includes('/view/') ||
                         this.getAttribute('method') || this.closest('form') || href.includes('#')) {
                         return;
                     }
-                    
+
                     e.preventDefault();
-                    
+
                     // Update active state
                     sectionLinks.forEach(l => {
                         l.classList.remove('text-blue-600', 'bg-blue-50', 'border-blue-600');
@@ -119,13 +119,13 @@
                     });
                     this.classList.add('text-blue-600', 'bg-blue-50', 'border-blue-600');
                     this.classList.remove('text-gray-500', 'border-transparent');
-                    
+
                     // Show loading
                     const mainContent = document.getElementById('main-content');
                     if (mainContent) {
                         mainContent.innerHTML = '<div class="flex items-center justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div><span class="ml-3 text-gray-600">Loading...</span></div>';
                     }
-                    
+
                     try {
                         const response = await fetch(href, {
                             headers: {
@@ -133,28 +133,28 @@
                                 'Accept': 'text/html, application/xhtml+xml'
                             }
                         });
-                        
+
                         if (!response.ok) throw new Error('HTTP ' + response.status);
-                        
+
                         const html = await response.text();
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
-                        
+
                         // Extract the content area from response
-                        const sourceContent = doc.querySelector('#main-content') || 
+                        const sourceContent = doc.querySelector('#main-content') ||
                                               doc.querySelector('.container') ||
                                               doc.body;
-                        
+
                         if (mainContent && sourceContent) {
                             mainContent.innerHTML = sourceContent.innerHTML;
                             // Re-bind nav links in new content
                             bindNavLinks();
                         }
-                        
+
                         // Update URL without reload
                         history.pushState({path: href}, '', href);
                         if (doc.title) document.title = doc.title;
-                        
+
                     } catch (error) {
                         console.error('Tab loading error:', error);
                         if (mainContent) {
@@ -163,7 +163,7 @@
                     }
                 });
             });
-            
+
             function bindNavLinks() {
                 const newSectionLinks = document.querySelectorAll('nav a[href*="/' + sectionPrefix + '/"], nav a[href*="' + sectionPrefix + '."]');
                 newSectionLinks.forEach(link => {
@@ -173,7 +173,7 @@
                     }
                 });
             }
-            
+
             // Handle browser back/forward
             window.addEventListener('popstate', function(e) {
                 if (e.state && e.state.path) {
@@ -183,5 +183,9 @@
         });
         </script>
         @endif
+
+        <!-- Push Scripts -->
+        @stack('scripts')
+        @stack('modals')
     </body>
 </html>

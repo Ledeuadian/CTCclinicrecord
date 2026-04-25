@@ -13,6 +13,7 @@ use App\Models\DentalExamination;
 use App\Models\Immunization;
 use App\Models\Medicine;
 use App\Models\GeneratedReport;
+use App\Models\CertificateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -67,6 +68,42 @@ class StaffDashboardController extends Controller
             'recentAppointments',
             'monthlyStats'
         ));
+    }
+
+    // AJAX Tab Methods for Shell Navigation
+    public function ajaxDashboard()
+    {
+        return $this->index();
+    }
+
+    public function ajaxAppointments()
+    {
+        return $this->appointments(request());
+    }
+
+    public function ajaxPatients()
+    {
+        return $this->patients(request());
+    }
+
+    public function ajaxHealthRecords()
+    {
+        return $this->healthRecords(request());
+    }
+
+    public function ajaxMedicines()
+    {
+        return $this->medications(request());
+    }
+
+    public function ajaxPrescriptions()
+    {
+        return $this->prescriptions(request());
+    }
+
+    public function ajaxReports()
+    {
+        return $this->reports(request());
     }
 
     /**
@@ -172,15 +209,16 @@ class StaffDashboardController extends Controller
                 $q->whereIn('user_type', [1, 2]); // Students and Staff only
             });
 
-        // Search functionality
+        // Search functionality - search in user name, email, and patient data
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('f_name', 'like', "%{$search}%")
-                  ->orWhere('m_name', 'like', "%{$search}%")
-                  ->orWhere('l_name', 'like', "%{$search}%")
-                  ->orWhere('student_id', 'like', "%{$search}%")
-                  ->orWhere('contact_number', 'like', "%{$search}%");
+                $q->whereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhere('id', 'like', "%{$search}%")
+                ->orWhere('school_id', 'like', "%{$search}%");
             });
         }
 
@@ -220,6 +258,24 @@ class StaffDashboardController extends Controller
             ->get();
 
         return view('staff.patient-details', compact('patient', 'healthRecords', 'appointments', 'prescriptions'));
+    }
+
+    /**
+     * Update patient information
+     */
+    public function updatePatient(Request $request, $patientId)
+    {
+        $patient = Patients::findOrFail($patientId);
+
+        $request->validate([
+            'bloodtype' => 'nullable|string|max:10',
+        ]);
+
+        $patient->update([
+            'bloodtype' => $request->bloodtype,
+        ]);
+
+        return back()->with('success', 'Patient information updated successfully.');
     }
 
     /**
@@ -1065,5 +1121,121 @@ class StaffDashboardController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Display certificate requests for staff to review
+     */
+    public function certificateRequests(Request $request)
+    {
+        $user = Auth::user();
+
+        // Build query for certificate requests
+        $query = CertificateRequest::query()
+            ->with(['patient.user', 'certificateType']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'pending');
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('patient.user', function($q) use ($search) {
+                $q->where('firstname', 'like', '%' . $search . '%')
+                  ->orWhere('lastname', 'like', '%' . $search . '%');
+            });
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Get counts for tabs
+        $pendingCount = CertificateRequest::where('status', 'pending')->count();
+        $approvedCount = CertificateRequest::where('status', 'approved')->count();
+        $issuedCount = CertificateRequest::where('status', 'issued')->count();
+        $rejectedCount = CertificateRequest::where('status', 'rejected')->count();
+
+        return view('staff.certificate-requests', compact(
+            'requests',
+            'pendingCount',
+            'approvedCount',
+            'issuedCount',
+            'rejectedCount'
+        ));
+    }
+
+    /**
+     * Show details of a certificate request
+     */
+    public function showCertificateRequest($id)
+    {
+        $request = CertificateRequest::with(['patient.user', 'certificateType', 'appointment'])
+            ->findOrFail($id);
+
+        return view('staff.certificate-request-detail', compact('request'));
+    }
+
+    /**
+     * Approve a certificate request
+     */
+    public function approveCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $staffDoctor = Doctors::where('user_id', $user->id)->first();
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'doctor_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_APPROVED,
+            'doctor_id' => $staffDoctor->id ?? null,
+            'doctor_notes' => $validated['doctor_notes'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request approved successfully.');
+    }
+
+    /**
+     * Reject a certificate request
+     */
+    public function rejectCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $staffDoctor = Doctors::where('user_id', $user->id)->first();
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_REJECTED,
+            'doctor_id' => $staffDoctor->id ?? null,
+            'doctor_notes' => $validated['rejection_reason'],
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request rejected.');
+    }
+
+    /**
+     * Mark a certificate as issued
+     */
+    public function issueCertificateRequest($id)
+    {
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_ISSUED,
+            'issued_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate marked as issued.');
     }
 }

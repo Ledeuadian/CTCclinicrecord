@@ -13,20 +13,25 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if(Auth::user()->user_type == 1)
-                        <!-- Student Navigation (Limited) -->
-                        <a href="{{ route('patients.dashboard') }}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
+                        <!-- Student Navigation (with AJAX tab switching) -->
+                        <a href="#" onclick="navigateToPatientTab('dashboard'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.dashboard') || request()->routeIs('patient.*') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Dashboard') }}
                         </a>
 
-                        <a href="{{ route('patients.health.records') }}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.health.records') ? 'text-blue-600 bg-blue-50' : '' }}">
+                        <a href="#" onclick="navigateToPatientTab('health-records'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
                             {{ __('Health Records') }}
                         </a>
 
-                        <a href="{{ route('patients.appointments') }}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.appointments') ? 'text-blue-600 bg-blue-50' : '' }}">
+                        <a href="#" onclick="navigateToPatientTab('appointments'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
                             {{ __('Appointments') }}
+                        </a>
+
+                        <a href="#" onclick="navigateToPatientTab('certificates'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
+                            {{ __('Certificates') }}
                         </a>
                     @elseif(Auth::user()->user_type == 2)
                         <!-- Faculty & Staff Navigation with Toggle -->
@@ -94,6 +99,15 @@
                                 </svg>
                                 {{ __('Reports') }}
                             </a>
+
+                            <a href="{{ route('staff.certificate-requests') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.certificate-requests') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                {{ __('Certificates') }}
+                            </a>
                         @else
                             <!-- Personal Page Mode -->
                             <a href="{{ route('patients.dashboard') }}"
@@ -109,6 +123,11 @@
                             <a href="{{ route('patients.appointments') }}"
                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.appointments') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 {{ __('Appointments') }}
+                            </a>
+
+                            <a href="{{ route('patients.certificates.index') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.certificates.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                {{ __('Certificates') }}
                             </a>
                         @endif
                     @else
@@ -146,6 +165,11 @@
                         <a href="{{ route('doctor.reports') }}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.reports') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Reports') }}
+                        </a>
+
+                        <a href="{{ route('doctor.certificate-requests') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.certificate-requests') ? 'text-blue-600 bg-blue-50' : '' }}">
+                            {{ __('Certificates') }}
                         </a>
                     @endif
                 </div>
@@ -190,7 +214,7 @@
                     <x-slot name="content">
                         @if(Auth::user()->user_type == 1 || Auth::user()->user_type == 2)
                             <!-- Student and Faculty & Staff Profile Links -->
-                            <x-dropdown-link :href="route('patients.profile')">
+                            <x-dropdown-link :href="'#'" onclick="navigateToPatientTab('profile'); return false;">
                                 {{ __('Profile') }}
                             </x-dropdown-link>
                         @else
@@ -230,17 +254,21 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             @if(Auth::user()->user_type == 1)
-                <!-- Student Mobile Navigation (Limited) -->
-                <a href="{{ route('patients.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                <!-- Student Mobile Navigation (with AJAX tab switching) -->
+                <a href="#" onclick="navigateToPatientTab('dashboard'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Dashboard') }}
                 </a>
 
-                <a href="{{ route('patients.health.records') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                <a href="#" onclick="navigateToPatientTab('health-records'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Health Records') }}
                 </a>
 
-                <a href="{{ route('patients.appointments') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                <a href="#" onclick="navigateToPatientTab('appointments'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Appointments') }}
+                </a>
+
+                <a href="#" onclick="navigateToPatientTab('certificates'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                    {{ __('Certificates') }}
                 </a>
             @elseif(Auth::user()->user_type == 2)
                 <!-- Faculty & Staff Mobile Toggle -->
@@ -347,7 +375,7 @@
             <div class="mt-3 space-y-1">
                 @if(Auth::user()->user_type == 1 || Auth::user()->user_type == 2)
                     <!-- Student and Faculty & Staff Mobile Profile -->
-                    <a href="{{ route('patients.profile') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                    <a href="#" onclick="navigateToPatientTab('profile'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Profile') }}
                     </a>
                 @else
@@ -373,3 +401,20 @@
         </div>
     </div>
 </nav>
+
+<script>
+    // Navigate to patient tab (AJAX-based navigation within patient shell)
+    function navigateToPatientTab(tab) {
+        const currentPath = window.location.pathname;
+
+        // If already on a patient shell page, use AJAX to switch tabs
+        if (currentPath.startsWith('/patient') && typeof switchTab === 'function') {
+            switchTab(tab);
+            return;
+        }
+
+        // Otherwise navigate to the shell page - the shell will handle AJAX loading
+        const url = '/patient/' + (tab === 'dashboard' ? 'dashboard' : tab);
+        window.location.href = url;
+    }
+</script>

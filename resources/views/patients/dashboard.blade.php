@@ -22,7 +22,7 @@
             @endif
 
             <!-- Quick Actions -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-blue-50 p-6 rounded-lg">
                     <h3 class="text-lg font-medium text-blue-800 mb-3">Schedule Appointment</h3>
                     <p class="text-blue-600 mb-4">Book an appointment with a doctor</p>
@@ -47,6 +47,15 @@
                     <a href="{{ route('patients.profile') }}"
                        class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
                         Edit Profile
+                    </a>
+                </div>
+
+                <div class="bg-amber-50 p-6 rounded-lg">
+                    <h3 class="text-lg font-medium text-amber-800 mb-3">Request Certificate</h3>
+                    <p class="text-amber-600 mb-4">Request medical certificates</p>
+                    <a href="{{ route('patients.certificates.create') }}"
+                       class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition">
+                        Request Now
                     </a>
                 </div>
             </div>
