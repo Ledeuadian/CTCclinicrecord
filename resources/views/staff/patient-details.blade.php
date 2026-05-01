@@ -27,22 +27,54 @@
                 <form action="{{ route('staff.patients.update', $patient->id) }}" method="POST">
                     @csrf
                     @method('PUT')
-                    <div class="mb-4">
-                        <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">Blood Type</label>
-                        <select name="bloodtype" id="bloodtype" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select Blood Type...</option>
-                            <option value="A+" {{ $patient->bloodtype == 'A+' ? 'selected' : '' }}>A+</option>
-                            <option value="A-" {{ $patient->bloodtype == 'A-' ? 'selected' : '' }}>A-</option>
-                            <option value="B+" {{ $patient->bloodtype == 'B+' ? 'selected' : '' }}>B+</option>
-                            <option value="B-" {{ $patient->bloodtype == 'B-' ? 'selected' : '' }}>B-</option>
-                            <option value="AB+" {{ $patient->bloodtype == 'AB+' ? 'selected' : '' }}>AB+</option>
-                            <option value="AB-" {{ $patient->bloodtype == 'AB-' ? 'selected' : '' }}>AB-</option>
-                            <option value="O+" {{ $patient->bloodtype == 'O+' ? 'selected' : '' }}>O+</option>
-                            <option value="O-" {{ $patient->bloodtype == 'O-' ? 'selected' : '' }}>O-</option>
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mb-4">
+                            <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">Blood Type</label>
+                            <select name="bloodtype" id="bloodtype"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Blood Type...</option>
+                                <option value="A+" {{ $patient->bloodtype == 'A+' ? 'selected' : '' }}>A+</option>
+                                <option value="A-" {{ $patient->bloodtype == 'A-' ? 'selected' : '' }}>A-</option>
+                                <option value="B+" {{ $patient->bloodtype == 'B+' ? 'selected' : '' }}>B+</option>
+                                <option value="B-" {{ $patient->bloodtype == 'B-' ? 'selected' : '' }}>B-</option>
+                                <option value="AB+" {{ $patient->bloodtype == 'AB+' ? 'selected' : '' }}>AB+</option>
+                                <option value="AB-" {{ $patient->bloodtype == 'AB-' ? 'selected' : '' }}>AB-</option>
+                                <option value="O+" {{ $patient->bloodtype == 'O+' ? 'selected' : '' }}>O+</option>
+                                <option value="O-" {{ $patient->bloodtype == 'O-' ? 'selected' : '' }}>O-</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                            <input type="text" name="address" id="address" value="{{ $patient->address }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4 md:col-span-2">
+                            <label for="medical_condition" class="block text-sm font-medium text-gray-700 mb-2">Medical Conditions</label>
+                            <textarea name="medical_condition" id="medical_condition" rows="2"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $patient->medical_condition }}</textarea>
+                        </div>
+                        <div class="mb-4 md:col-span-2">
+                            <label for="allergies" class="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
+                            <textarea name="allergies" id="allergies" rows="2"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $patient->allergies }}</textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name</label>
+                            <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ $patient->emergency_contact_name }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="emergency_contact_number" class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Number</label>
+                            <input type="text" name="emergency_contact_number" id="emergency_contact_number" value="{{ $patient->emergency_contact_number }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="emergency_relationship" class="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Relationship</label>
+                            <input type="text" name="emergency_relationship" id="emergency_relationship" value="{{ $patient->emergency_relationship }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
                     </div>
-                    <div class="flex justify-end space-x-2">
+                    <div class="flex justify-end space-x-2 mt-4">
                         <button type="button" onclick="closeEditModal()"
                                 class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition">
                             Cancel
@@ -388,7 +420,7 @@
                                                         $teethStatus = is_string($exam->teeth_status) ? json_decode($exam->teeth_status, true) : $exam->teeth_status;
                                                     @endphp
                                                     @foreach($teethStatus as $toothNum => $status)
-                                                        @if($status !== 'healthy')
+                                                        @if(is_string($status) && $status !== 'healthy')
                                                             <div class="text-center p-2 rounded
                                                                 @if($status === 'cavity') bg-red-100 text-red-700
                                                                 @elseif($status === 'missing') bg-gray-200 text-gray-700

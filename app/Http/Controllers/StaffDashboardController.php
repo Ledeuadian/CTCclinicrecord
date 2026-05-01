@@ -14,8 +14,12 @@ use App\Models\Immunization;
 use App\Models\Medicine;
 use App\Models\GeneratedReport;
 use App\Models\CertificateRequest;
+use App\Models\User;
+use App\Models\Course;
+use App\Models\EducationalLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class StaffDashboardController extends Controller
@@ -60,50 +64,158 @@ class StaffDashboardController extends Controller
         });
         $monthlyStats = $allMonths->merge($monthlyStats);
 
+        // Statistics by course
+        $byCourse = DB::table('patients')
+            ->join('courses', 'patients.course_id', '=', 'courses.id')
+            ->select('courses.id', 'courses.course_name', DB::raw('COUNT(*) as total_patients'))
+            ->groupBy('courses.id', 'courses.course_name')
+            ->orderBy('total_patients', 'desc')
+            ->get();
+
+        // Statistics by educational level
+        $byEducationalLevel = DB::table('patients')
+            ->join('educational_level', 'patients.edulvl_id', '=', 'educational_level.id')
+            ->select('educational_level.id', 'educational_level.level_name', DB::raw('COUNT(*) as total_patients'))
+            ->groupBy('educational_level.id', 'educational_level.level_name')
+            ->orderBy('total_patients', 'desc')
+            ->get();
+
         return view('staff.dashboard', compact(
             'todayAppointments',
             'weeklyAppointments',
             'totalPatients',
             'pendingAppointments',
             'recentAppointments',
-            'monthlyStats'
+            'monthlyStats',
+            'byCourse',
+            'byEducationalLevel'
         ));
     }
 
     // AJAX Tab Methods for Shell Navigation
     public function ajaxDashboard()
     {
-        return $this->index();
+        $user = Auth::user();
+
+        $todayAppointments = Appointment::whereDate('date', Carbon::today())->count();
+        $totalPatients = Patients::whereHas('user', function($query) {
+            $query->whereIn('user_type', [1, 2]);
+        })->count();
+        $pendingAppointments = Appointment::where('status', Appointment::STATUS_PENDING)->count();
+        $healthRecordsCount = HealthRecords::count();
+
+        return view('staff.partials.dashboard', compact(
+            'todayAppointments',
+            'totalPatients',
+            'pendingAppointments',
+            'healthRecordsCount'
+        ));
     }
 
     public function ajaxAppointments()
     {
-        return $this->appointments(request());
+        return view('staff.partials.appointments');
     }
 
     public function ajaxPatients()
     {
-        return $this->patients(request());
+        return view('staff.partials.patients');
     }
 
     public function ajaxHealthRecords()
     {
-        return $this->healthRecords(request());
+        return view('staff.partials.health-records');
     }
 
     public function ajaxMedicines()
     {
-        return $this->medications(request());
+        return view('staff.partials.medicines');
     }
 
     public function ajaxPrescriptions()
     {
-        return $this->prescriptions(request());
+        $patients = Patients::with('user')->get();
+        $medicines = Medicine::all();
+        return view('staff.partials.prescriptions', compact('patients', 'medicines'));
+    }
+
+    public function ajaxStatistics()
+    {
+        $totalPatients = Patients::count();
+
+        // By course
+        $byCourse = DB::table('patients')
+            ->join('courses', 'patients.course_id', '=', 'courses.id')
+            ->select('courses.id', 'courses.course_name', DB::raw('COUNT(*) as total_patients'))
+            ->groupBy('courses.id', 'courses.course_name')
+            ->orderBy('total_patients', 'desc')
+            ->get();
+
+        // By educational level
+        $byEducationalLevel = DB::table('patients')
+            ->join('educational_level', 'patients.edulvl_id', '=', 'educational_level.id')
+            ->select('educational_level.id', 'educational_level.level_name', DB::raw('COUNT(*) as total_patients'))
+            ->groupBy('educational_level.id', 'educational_level.level_name')
+            ->orderBy('total_patients', 'desc')
+            ->get();
+
+        return view('staff.partials.statistics', compact('totalPatients', 'byCourse', 'byEducationalLevel'));
+    }
+
+    /**
+     * Show patients by course
+     */
+    public function patientsByCourse($courseId)
+    {
+        $course = Course::findOrFail($courseId);
+        $patients = Patients::with('user', 'educationalLevel')
+            ->where('course_id', $courseId)
+            ->get();
+
+        return view('staff.statistics.by-course', compact('course', 'patients'));
+    }
+
+    /**
+     * Show patients by educational level
+     */
+    public function patientsByLevel($levelId)
+    {
+        $level = EducationalLevel::findOrFail($levelId);
+        $patients = Patients::with('user', 'course')
+            ->where('edulvl_id', $levelId)
+            ->get();
+
+        return view('staff.statistics.by-level', compact('level', 'patients'));
+    }
+
+    public function ajaxImport()
+    {
+        return view('staff.partials.import');
+    }
+
+    /**
+     * Show form for creating a new medicine
+     */
+    public function createMedicine()
+    {
+        return view('staff.medicines.create');
+    }
+
+    /**
+     * Show form for creating a new prescription
+     */
+    public function createPrescription()
+    {
+        $patients = Patients::with('user')->whereHas('user', function($q) {
+            $q->whereIn('user_type', [1, 2]);
+        })->get();
+        $medicines = Medicine::where('quantity', '>', 0)->get();
+        return view('staff.prescriptions.create', compact('patients', 'medicines'));
     }
 
     public function ajaxReports()
     {
-        return $this->reports(request());
+        return view('staff.partials.reports');
     }
 
     /**
@@ -241,7 +353,6 @@ class StaffDashboardController extends Controller
 
         // Get health records
         $healthRecords = HealthRecords::where('patient_id', $patientId)
-            ->with(['physicalExamination', 'dentalExamination', 'immunizationRecords'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -257,7 +368,76 @@ class StaffDashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('staff.patient-details', compact('patient', 'healthRecords', 'appointments', 'prescriptions'));
+        // Get physical examinations
+        $physicalExams = PhysicalExamination::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get dental examinations
+        $dentalExams = DentalExamination::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get immunization records
+        $immunizations = ImmunizationRecords::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('staff.patient-details', compact('patient', 'healthRecords', 'appointments', 'prescriptions', 'physicalExams', 'dentalExams', 'immunizations'));
+    }
+
+    /**
+     * Show create patient form
+     */
+    public function createPatient()
+    {
+        return view('staff.patients-create');
+    }
+
+    /**
+     * Store new patient
+     */
+    public function storePatient(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'patient_type' => 'required|in:1,2',
+            'school_id' => 'nullable|string|max:50',
+            'bloodtype' => 'nullable|string|max:10',
+            'address' => 'nullable|string|max:255',
+            'medical_condition' => 'nullable|string|max:500',
+            'allergies' => 'nullable|string|max:500',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_relationship' => 'nullable|string|max:50',
+        ]);
+
+        // Create user account
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'user_type' => $request->patient_type,
+        ]);
+
+        // Create patient record
+        $patient = Patients::create([
+            'user_id' => $user->id,
+            'patient_type' => $request->patient_type,
+            'school_id' => $request->school_id,
+            'bloodtype' => $request->bloodtype,
+            'address' => $request->address,
+            'medical_condition' => $request->medical_condition,
+            'allergies' => $request->allergies,
+            'emergency_contact_name' => $request->emergency_contact_name,
+            'emergency_contact_number' => $request->emergency_contact_number,
+            'emergency_relationship' => $request->emergency_relationship,
+        ]);
+
+        return redirect()->route('staff.patient-details', $patient->id)
+            ->with('success', 'Patient created successfully!');
     }
 
     /**
@@ -269,10 +449,22 @@ class StaffDashboardController extends Controller
 
         $request->validate([
             'bloodtype' => 'nullable|string|max:10',
+            'address' => 'nullable|string|max:255',
+            'medical_condition' => 'nullable|string|max:500',
+            'allergies' => 'nullable|string|max:500',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_relationship' => 'nullable|string|max:50',
         ]);
 
         $patient->update([
             'bloodtype' => $request->bloodtype,
+            'address' => $request->address,
+            'medical_condition' => $request->medical_condition,
+            'allergies' => $request->allergies,
+            'emergency_contact_name' => $request->emergency_contact_name,
+            'emergency_contact_number' => $request->emergency_contact_number,
+            'emergency_relationship' => $request->emergency_relationship,
         ]);
 
         return back()->with('success', 'Patient information updated successfully.');
@@ -328,6 +520,33 @@ class StaffDashboardController extends Controller
             ->paginate(15);
 
         return view('staff.health-records', compact('healthRecords', 'totalHealthRecords', 'totalPhysicalExams', 'totalDentalExams', 'totalImmunizations', 'diagnosisStats', 'physicalExaminations', 'dentalExaminations', 'immunizationRecords'));
+    }
+
+    /**
+     * Print health record for a specific patient
+     */
+    public function printHealthRecord($patientId)
+    {
+        $patient = Patients::with(['user', 'healthRecords', 'physicalExaminations', 'dentalExaminations', 'immunizations'])
+            ->where('id', $patientId)
+            ->first();
+
+        if (!$patient) {
+            abort(404, 'Patient not found');
+        }
+
+        $healthRecords = $patient->healthRecords;
+        $physicalExaminations = $patient->physicalExaminations;
+        $dentalExaminations = $patient->dentalExaminations;
+        $immunizationRecords = $patient->immunizations;
+
+        return view('staff.printable.health-record', compact(
+            'patient',
+            'healthRecords',
+            'physicalExaminations',
+            'dentalExaminations',
+            'immunizationRecords'
+        ));
     }
 
     /**

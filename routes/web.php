@@ -18,8 +18,8 @@ use App\Http\Controllers\PatientsUpdatePersonalInformation;use App\Http\Controll
 use App\Http\Controllers\DoctorDashboardController;
 // Staff Controllers
 use App\Http\Controllers\StaffDashboardController;
+use App\Http\Controllers\ImportController;
 // Admin Controllers
-use App\Http\Controllers\AdminLoginController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminAppointments;
 use App\Http\Controllers\AdminUsers;
@@ -31,6 +31,7 @@ use App\Http\Controllers\AdminReports;
 use App\Http\Controllers\AdminDentalExamination;
 use App\Http\Controllers\AdminPhysicalExamination;
 use App\Http\Controllers\AdminPrescription;
+use App\Http\Controllers\AdminPatientStatistics;
 
 Route::get('/', function () {
     return view('welcome');
@@ -132,6 +133,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/ajax/certificates', [PatientsController::class, 'ajaxCertificates'])->name('ajax.certificates');
     });
     Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'check.user.type:3'])->group(function () {
+        Route::get('/', function() {
+            return view('doctor.shells.doctor-shell');
+        })->name('index');
         Route::get('/dashboard', function() {
             return view('doctor.shells.doctor-shell');
         })->name('dashboard');
@@ -145,6 +149,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/health-records', [DoctorDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
         Route::get('/health-records/{id}/edit', [DoctorDashboardController::class, 'editHealthRecord'])->name('health-records.edit');
         Route::put('/health-records/{id}', [DoctorDashboardController::class, 'updateHealthRecord'])->name('health-records.update');
+
+        // Print Health Records
+        Route::get('/print/health-record/{patientId}', [DoctorDashboardController::class, 'printHealthRecord'])->name('print.health-record');
 
         // Physical Examinations
         Route::get('/physical-exams/{id}/edit', [DoctorDashboardController::class, 'editPhysicalExam'])->name('physical-exams.edit');
@@ -192,17 +199,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/ajax/medications', [DoctorDashboardController::class, 'ajaxMedications'])->name('ajax.medications');
         Route::get('/ajax/prescriptions', [DoctorDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
         Route::get('/ajax/reports', [DoctorDashboardController::class, 'ajaxReports'])->name('ajax.reports');
+
+        // Create Routes for full-page forms
+        Route::get('/medicines/create', [DoctorDashboardController::class, 'createMedicine'])->name('medicines.create');
+        Route::get('/prescriptions/create', [DoctorDashboardController::class, 'createPrescriptionRecord'])->name('prescriptions.create-page');
     });
+    // End Doctor Routes
 
     // Staff Routes - for user_type = 2 (Faculty & Staff)
     // Staff have access to doctor-like functionalities for managing patients
     Route::prefix('staff')->name('staff.')->middleware(['auth', 'check.user.type:2'])->group(function () {
-        Route::get('/dashboard', function() {
-            return view('staff.shells.staff-shell');
-        })->name('dashboard');
+        Route::get('/', [StaffDashboardController::class, 'index'])->name('index');
+        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
         Route::get('/appointments', [StaffDashboardController::class, 'appointments'])->name('appointments');
         Route::patch('/appointments/{appointmentId}/status', [StaffDashboardController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
         Route::get('/patients', [StaffDashboardController::class, 'patients'])->name('patients');
+        Route::get('/patients/create', [StaffDashboardController::class, 'createPatient'])->name('patients.create');
+        Route::post('/patients', [StaffDashboardController::class, 'storePatient'])->name('patients.store');
         Route::get('/patients/{patientId}', [StaffDashboardController::class, 'viewPatient'])->name('patient-details');
         Route::put('/patients/{patientId}', [StaffDashboardController::class, 'updatePatient'])->name('patients.update');
         Route::get('/health-records', [StaffDashboardController::class, 'healthRecords'])->name('health-records');
@@ -210,6 +223,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/health-records', [StaffDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
         Route::get('/health-records/{id}/edit', [StaffDashboardController::class, 'editHealthRecord'])->name('health-records.edit');
         Route::put('/health-records/{id}', [StaffDashboardController::class, 'updateHealthRecord'])->name('health-records.update');
+
+        // Print Health Records
+        Route::get('/print/health-record/{patientId}', [StaffDashboardController::class, 'printHealthRecord'])->name('print.health-record');
 
         // Physical Examinations
         Route::get('/physical-exams/{id}/edit', [StaffDashboardController::class, 'editPhysicalExam'])->name('physical-exams.edit');
@@ -228,7 +244,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/medicine', [StaffDashboardController::class, 'storeMedicine'])->name('medicine.store');
         Route::put('/medicine/{id}', [StaffDashboardController::class, 'updateMedicine'])->name('medicine.update');
 
-        // Prescriptions Management
+        // Staff Prescriptions Management
         Route::get('/prescriptions', [StaffDashboardController::class, 'prescriptions'])->name('prescriptions');
         Route::post('/prescription', [StaffDashboardController::class, 'storePrescription'])->name('prescription.store');
         Route::put('/prescription/{id}', [StaffDashboardController::class, 'updatePrescriptionRecord'])->name('prescription.update');
@@ -251,6 +267,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/ajax/medicines', [StaffDashboardController::class, 'ajaxMedicines'])->name('ajax.medicines');
         Route::get('/ajax/prescriptions', [StaffDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
         Route::get('/ajax/reports', [StaffDashboardController::class, 'ajaxReports'])->name('ajax.reports');
+        Route::get('/ajax/statistics', [StaffDashboardController::class, 'ajaxStatistics'])->name('ajax.statistics');
+        Route::get('/ajax/import', [StaffDashboardController::class, 'ajaxImport'])->name('ajax.import');
+
+        // Statistics Routes (detail pages)
+        Route::get('/statistics/course/{id}', [StaffDashboardController::class, 'patientsByCourse'])->name('statistics.course');
+        Route::get('/statistics/level/{id}', [StaffDashboardController::class, 'patientsByLevel'])->name('statistics.level');
+
+        // Import routes (direct processing, not tab-based)
+        Route::post('/import/process/users', [ImportController::class, 'processUsers'])->name('import.process.users');
+        Route::post('/import/process/medicines', [ImportController::class, 'processMedicines'])->name('import.process.medicines');
+        Route::get('/import/sample/users', [ImportController::class, 'downloadUsersSample'])->name('import.sample.users');
+        Route::get('/import/sample/medicines', [ImportController::class, 'downloadMedicinesSample'])->name('import.sample.medicines');
+
+        // Create Routes for full-page forms
+        Route::get('/medicines/create', [StaffDashboardController::class, 'createMedicine'])->name('medicines.create');
+        Route::get('/prescriptions/create', [StaffDashboardController::class, 'createPrescription'])->name('prescriptions.create-page');
 
         // Certificate Requests
         Route::get('/certificate-requests', [StaffDashboardController::class, 'certificateRequests'])->name('certificate-requests');
@@ -264,9 +296,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
-Route::get('/admin/login', [AdminLoginController::class , 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
 
 Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
     Route::resource('/admin/appointments',AdminAppointments::class)->names([
@@ -293,6 +322,7 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.doctors.update',
         'destroy' => 'admin.doctors.destroy',
     ]);
+    Route::get('/admin/medicines/export', [AdminMedicines::class, 'export'])->name('admin.medicines.export')->middleware('auth');
     Route::resource('/admin/medicines', AdminMedicines::class)->names([
         'index' => 'admin.medicines.index',
         'create' => 'admin.medicines.create',
@@ -301,6 +331,17 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.medicines.update',
         'destroy' => 'admin.medicines.destroy',
     ]);
+
+    // Import routes
+    Route::get('/admin/import', [ImportController::class, 'index'])->name('admin.import.index')->middleware('auth');
+    Route::get('/admin/import/users', [ImportController::class, 'users'])->name('admin.import.users')->middleware('auth');
+    Route::post('/admin/import/process/users', [ImportController::class, 'processUsers'])->name('admin.import.process.users')->middleware('auth');
+    Route::get('/admin/import/sample/users', [ImportController::class, 'downloadUsersSample'])->name('admin.import.sample.users');
+    Route::get('/admin/import/medicines', [ImportController::class, 'medicines'])->name('admin.import.medicines')->middleware('auth');
+    Route::post('/admin/import/process/medicines', [ImportController::class, 'processMedicines'])->name('admin.import.process.medicines')->middleware('auth');
+    Route::get('/admin/import/sample/medicines', [ImportController::class, 'downloadMedicinesSample'])->name('admin.import.sample.medicines');
+
+    Route::get('/admin/patients/export', [AdminPatients::class, 'export'])->name('admin.patients.export')->middleware('auth');
     Route::resource('/admin/patients', AdminPatients::class)->names([
         'index' => 'admin.patients.index',
         'create' => 'admin.patients.create',
@@ -309,7 +350,6 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.patients.update',
         'destroy' => 'admin.patients.destroy',
     ]);
-    Route::resource('/admin/reports', AdminReports::class);
     Route::resource('/admin/immunization', AdminImmunization::class)->names([
         'index' => 'admin.immunization.index',
         'create' => 'admin.immunization.create',
@@ -342,10 +382,12 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.prescription.update',
         'destroy' => 'admin.prescription.destroy',
     ]);
-    Route::get('/admin/prescription/{id}/edit2', [AdminPrescription::class, 'updateWithType'])->name('admin.prescription.updateWithType');
-    Route::delete('/admin/prescription/{id}/delete2', [AdminPrescription::class, 'deleteWithType'])->name('admin.prescription.deleteWithType');
-    Route::post('/admin/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
+    Route::get('/admin/prescription/export', [AdminPrescription::class, 'export'])->name('admin.prescription.export')->middleware('auth');
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Patient Statistics Routes
+    Route::get('/admin/statistics/course/{id}', [AdminPatientStatistics::class, 'byCourse'])->name('admin.statistics.course');
+    Route::get('/admin/statistics/level/{id}', [AdminPatientStatistics::class, 'byEducationalLevel'])->name('admin.statistics.level');
 });
 
 Route::post('/update-course/{id}', function (Request $request, $id) {

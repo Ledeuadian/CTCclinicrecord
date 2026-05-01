@@ -147,6 +147,19 @@
 
                         if (mainContent && sourceContent) {
                             mainContent.innerHTML = sourceContent.innerHTML;
+
+                            // Execute any scripts found in the loaded content
+                            const newScripts = mainContent.querySelectorAll('script');
+                            newScripts.forEach(script => {
+                                const newScript = document.createElement('script');
+                                if (script.src) {
+                                    newScript.src = script.src;
+                                } else {
+                                    newScript.textContent = script.textContent;
+                                }
+                                document.body.appendChild(newScript);
+                            });
+
                             // Re-bind nav links in new content
                             bindNavLinks();
                         }
@@ -184,7 +197,8 @@
         </script>
         @endif
 
-        <!-- Push Scripts -->
+        <!-- Scripts Section -->
+        @yield('scripts')
         @stack('scripts')
         @stack('modals')
     </body>

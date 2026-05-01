@@ -85,37 +85,85 @@ class DoctorDashboardController extends Controller
     // AJAX Tab Methods for Shell Navigation
     public function ajaxDashboard()
     {
-        return $this->index();
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return '<div class="p-4 text-red-600">Doctor profile not found.</div>';
+        }
+
+        $todayAppointments = Appointment::where('doc_id', $doctor->id)->whereDate('date', Carbon::today())->count();
+        $weeklyAppointments = Appointment::where('doc_id', $doctor->id)->whereBetween('date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count();
+        $totalPatients = Appointment::where('doc_id', $doctor->id)->distinct('patient_id')->count();
+        $pendingAppointments = Appointment::where('doc_id', $doctor->id)->where('status', Appointment::STATUS_PENDING)->count();
+
+        $recentAppointments = Appointment::where('doc_id', $doctor->id)->with(['patient.user'])->orderBy('date', 'desc')->orderBy('time', 'desc')->take(5)->get();
+
+        $monthlyStats = Appointment::where('doc_id', $doctor->id)->selectRaw('MONTH(date) as month, COUNT(*) as count')->whereYear('date', Carbon::now()->year)->groupBy('month')->pluck('count', 'month')->toArray();
+        $allMonths = collect(range(1, 12))->mapWithKeys(function($m) { return [$m => 0]; })->toArray();
+        $monthlyStats = $allMonths + $monthlyStats;
+        ksort($monthlyStats);
+
+        return view('doctor.partials.dashboard', compact('doctor', 'todayAppointments', 'weeklyAppointments', 'totalPatients', 'pendingAppointments', 'recentAppointments', 'monthlyStats'));
     }
 
     public function ajaxAppointments()
     {
-        return $this->appointments();
+        return view('doctor.partials.appointments');
     }
 
     public function ajaxPatients()
     {
-        return $this->patients(request());
+        return view('doctor.partials.patients');
     }
 
     public function ajaxHealthRecords()
     {
-        return $this->healthRecords();
+        return view('doctor.partials.health-records');
     }
 
     public function ajaxMedications()
     {
-        return $this->medications();
+        $medicines = Medicine::all();
+        return view('doctor.partials.medications', compact('medicines'));
     }
 
     public function ajaxPrescriptions()
     {
-        return $this->prescriptions(request());
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+        $patients = $doctor ? Patients::whereHas('appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })->with('user')->get() : collect();
+        $medicines = Medicine::all();
+        return view('doctor.partials.prescriptions', compact('patients', 'medicines'));
     }
 
     public function ajaxReports()
     {
-        return $this->reports();
+        return view('doctor.partials.reports');
+    }
+
+    /**
+     * Show form for creating a new medicine
+     */
+    public function createMedicine()
+    {
+        return view('doctor.medications.create');
+    }
+
+    /**
+     * Show form for creating a new prescription record
+     */
+    public function createPrescriptionRecord()
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+        $patients = $doctor ? Patients::whereHas('appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })->with('user')->get() : collect();
+        $medicines = Medicine::where('quantity', '>', 0)->get();
+        return view('doctor.prescriptions.create', compact('patients', 'medicines'));
     }
 
     /**
@@ -520,6 +568,43 @@ class DoctorDashboardController extends Controller
             'totalImmunizations',
             'recentRecords',
             'diagnosisStats'
+        ));
+    }
+
+    /**
+     * Print health record for a specific patient
+     */
+    public function printHealthRecord($patientId)
+    {
+        $doctor = Doctors::where('user_id', Auth::id())->first();
+
+        if (!$doctor) {
+            abort(403, 'Doctor profile not found');
+        }
+
+        // Verify patient has appointments with this doctor
+        $patient = Patients::whereHas('appointments', function($query) use ($doctor) {
+            $query->where('doc_id', $doctor->id);
+        })
+        ->where('id', $patientId)
+        ->with(['user', 'healthRecords', 'physicalExaminations', 'dentalExaminations', 'immunizations'])
+        ->first();
+
+        if (!$patient) {
+            abort(404, 'Patient not found or no appointments with you');
+        }
+
+        $healthRecords = $patient->healthRecords;
+        $physicalExaminations = $patient->physicalExaminations;
+        $dentalExaminations = $patient->dentalExaminations;
+        $immunizationRecords = $patient->immunizations;
+
+        return view('staff.printable.health-record', compact(
+            'patient',
+            'healthRecords',
+            'physicalExaminations',
+            'dentalExaminations',
+            'immunizationRecords'
         ));
     }
 

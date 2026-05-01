@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Medicine;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\DB;
 
 class AdminMedicines extends Controller
 {
@@ -15,6 +17,41 @@ class AdminMedicines extends Controller
         //
         $medicines = Medicine::all();
         return view('admin.medicines.index', compact('medicines'));
+    }
+
+    /**
+     * Export medicines data to CSV
+     */
+    public function export()
+    {
+        $medicines = Medicine::all();
+
+        $csvContent = "ID,Name,Description,Quantity,Expiration Date,Medicine Type,Created At,Updated At\n";
+
+        foreach ($medicines as $medicine) {
+            $csvContent .= sprintf(
+                "%d,\"%s\",\"%s\",%d,%s,%s,%s,%s\n",
+                $medicine->id,
+                str_replace('"', '""', $medicine->name ?? ''),
+                str_replace('"', '""', $medicine->description ?? ''),
+                $medicine->quantity ?? 0,
+                $medicine->expiration_date ?? '',
+                $medicine->medicine_type ?? '',
+                $medicine->created_at ?? '',
+                $medicine->updated_at ?? ''
+            );
+        }
+
+        // Add BOM for Excel UTF-8 compatibility
+        $csvContent = "\xEF\xBB\xBF" . $csvContent;
+
+        return response($csvContent, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="medicines.csv"',
+            'Cache-Control' => 'no-cache, private',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**

@@ -35,6 +35,7 @@
 <!-- Patients count display -->
     <div class="patients-count mb-4 text-sm text-gray-600">
         Showing <strong>{{ $patients->count() }}</strong> of <strong>{{ $patients->total() }}</strong> patients
+    </div>
 
     <!-- Patients Grid -->
     @if($patients->count() > 0)
@@ -134,6 +135,10 @@
                                 <a href="{{ route('doctor.patient-details', $patient->id) }}"
                                    class="flex-1 bg-blue-700 hover:bg-blue-700 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-blue-700 transition-all duration-200">
                                     View Details
+                                </a>
+                                <a href="{{ route('doctor.print.health-record', $patient->id) }}" target="_blank"
+                                   class="flex-1 bg-purple-600 hover:bg-purple-600 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-purple-600 transition-all duration-200">
+                                    🖨️ Print Record
                                 </a>
                                 <button class="bg-gray-300 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200"
                                         onclick="quickContact('{{ $patient->user->email }}')">

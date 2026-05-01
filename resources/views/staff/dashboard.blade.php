@@ -98,6 +98,10 @@
                    class="block w-full bg-indigo-600 text-white text-center py-2 px-4 rounded hover:bg-indigo-700 transition">
                     📊 Generate Custom Report
                 </a>
+                <a href="javascript:void(0)" onclick="scrollToSection('import-section')"
+                   class="block w-full bg-teal-600 text-white text-center py-2 px-4 rounded hover:bg-teal-700 transition">
+                    📁 Import Data
+                </a>
             </div>
         </div>
 
@@ -138,14 +142,168 @@
         </div>
     </div>
 
-    <!-- Monthly Statistics Chart -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Monthly Appointment Trends</h3>
-        <div style="position: relative; height: 100px; max-height: 100px; max-width: 100%;">
-            <canvas id="monthlyChart"></canvas>
+    <!-- Patient Statistics by Course & Educational Level -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- By Course -->
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Patients by Course</h3>
+            @if(isset($byCourse) && $byCourse->count() > 0)
+                <div class="overflow-x-auto max-h-48 overflow-y-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2">Course Name</th>
+                                <th class="px-3 py-2 text-center">Total</th>
+                                <th class="px-3 py-2 text-center">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($byCourse as $course)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-3 py-2">
+                                    <a href="{{ route('staff.statistics.course', $course->id) }}" class="text-blue-600 hover:underline">{{ $course->course_name }}</a>
+                                </td>
+                                <td class="px-3 py-2 text-center">{{ $course->total_patients }}</td>
+                                <td class="px-3 py-2 text-center">{{ $totalPatients > 0 ? round(($course->total_patients / $totalPatients) * 100, 1) : 0 }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-gray-500 text-center py-4">No course data available.</p>
+            @endif
+        </div>
+
+        <!-- By Educational Level -->
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Patients by Educational Level</h3>
+            @if(isset($byEducationalLevel) && $byEducationalLevel->count() > 0)
+                <div class="overflow-x-auto max-h-48 overflow-y-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2">Level Name</th>
+                                <th class="px-3 py-2 text-center">Total</th>
+                                <th class="px-3 py-2 text-center">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($byEducationalLevel as $level)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-3 py-2">
+                                    <a href="{{ route('staff.statistics.level', $level->id) }}" class="text-blue-600 hover:underline">{{ $level->level_name }}</a>
+                                </td>
+                                <td class="px-3 py-2 text-center">{{ $level->total_patients }}</td>
+                                <td class="px-3 py-2 text-center">{{ $totalPatients > 0 ? round(($level->total_patients / $totalPatients) * 100, 1) : 0 }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-gray-500 text-center py-4">No educational level data available.</p>
+            @endif
+        </div>
+    </div>
+
+    <!-- Import Section -->
+    <div id="import-section" class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Import Data</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Import Users -->
+            <div class="border rounded-lg p-4">
+                <h4 class="font-medium text-gray-700 mb-3">Import Users</h4>
+                <form action="{{ route('staff.import.process.users') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <input type="file" name="file" accept=".csv,.xlsx,.xls" required class="w-full text-sm border rounded p-2">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="text-gray-600">Name Column #</label>
+                            <input type="number" name="name_column" value="0" min="0" required class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Email Column #</label>
+                            <input type="number" name="email_column" value="1" min="0" required class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Password #</label>
+                            <input type="number" name="password_column" value="2" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">User Type #</label>
+                            <input type="number" name="user_type_column" value="3" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-sm">
+                        Import Users
+                    </button>
+                    <a href="{{ route('staff.import.sample.users') }}" class="block text-center text-blue-600 hover:underline text-xs">
+                        Download Sample CSV
+                    </a>
+                </form>
+            </div>
+
+            <!-- Import Medicines -->
+            <div class="border rounded-lg p-4">
+                <h4 class="font-medium text-gray-700 mb-3">Import Medicines</h4>
+                <form action="{{ route('staff.import.process.medicines') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <input type="file" name="file" accept=".csv,.xlsx,.xls" required class="w-full text-sm border rounded p-2">
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <label class="text-gray-600">Name #</label>
+                            <input type="number" name="name_column" value="0" min="0" required class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Desc #</label>
+                            <input type="number" name="description_column" value="1" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Qty #</label>
+                            <input type="number" name="quantity_column" value="2" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Expiry #</label>
+                            <input type="number" name="expiration_date_column" value="3" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="text-gray-600">Type #</label>
+                            <input type="number" name="medicine_type_column" value="4" min="0" class="w-full border rounded px-2 py-1">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded text-sm">
+                        Import Medicines
+                    </button>
+                    <a href="{{ route('staff.import.sample.medicines') }}" class="block text-center text-green-600 hover:underline text-xs">
+                        Download Sample CSV
+                    </a>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+@if(session('success'))
+<div class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+    {{ session('success') }}
+</div>
+@endif
+
+@if(session('error'))
+<div class="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+    {{ session('error') }}
+</div>
+@endif
+
+<script>
+function scrollToSection(id) {
+    const section = document.getElementById(id);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -160,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {{ $monthlyStats->get($m, 0) }},
         @endfor
     ];
-    
+
     new Chart(ctx, {
         type: 'line',
         data: {

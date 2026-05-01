@@ -45,19 +45,19 @@
         <!-- Search Form -->
         <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
             <form method="GET" action="{{ route('staff.certificate-requests') }}" class="flex gap-4 items-center">
-                @if($request->status)
-                    <input type="hidden" name="status" value="{{ $request->status }}">
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
                 @endif
                 <div class="flex-1">
                     <input type="text" name="search" placeholder="Search by patient name..."
-                           value="{{ $request->search }}"
+                           value="{{ request('search') }}"
                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
                     Search
                 </button>
-                @if($request->search)
-                    <a href="{{ route('staff.certificate-requests', ['status' => $request->status]) }}"
+                @if(request('search'))
+                    <a href="{{ route('staff.certificate-requests', ['status' => request('status')]) }}"
                        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
                         Clear
                     </a>
