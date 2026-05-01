@@ -30,5 +30,8 @@ class DatabaseSeeder extends Seeder
         $this->call(DentalExaminationSeeder::class);
         $this->call(ImmunizationRecordsSeeder::class);
         $this->call(PrescriptionRecordSeeder::class);
+        
+        // Certificate types
+        $this->call(CertificateTypeSeeder::class);
     }
 }

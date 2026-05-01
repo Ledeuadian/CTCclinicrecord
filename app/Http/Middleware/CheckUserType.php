@@ -23,7 +23,20 @@ class CheckUserType
         }
 
         if (Auth::user()->user_type != $userType) {
-            return redirect()->route('dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
+            // Redirect to the appropriate dashboard based on user type
+            $userType = Auth::user()->user_type;
+            switch ($userType) {
+                case 0:
+                    return redirect()->route('admin.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
+                case 1:
+                    return redirect()->route('patients.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
+                case 2:
+                    return redirect()->route('staff.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
+                case 3:
+                    return redirect()->route('doctor.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
+                default:
+                    return redirect()->route('login')->with('error', 'Access denied. You do not have permission to access this page.');
+            }
         }
 
         return $next($request);

@@ -14,8 +14,7 @@ use App\Http\Controllers\ReportsController;
 // Patient Controllers (Separated)
 use App\Http\Controllers\PatientsAppointmentScheduler;
 use App\Http\Controllers\PatientsViewPersonalHealthRecord;
-use App\Http\Controllers\PatientsUpdatePersonalInformation;
-// Doctor Controllers
+use App\Http\Controllers\PatientsUpdatePersonalInformation;use App\Http\Controllers\PatientCertificateController;// Doctor Controllers
 use App\Http\Controllers\DoctorDashboardController;
 // Staff Controllers
 use App\Http\Controllers\StaffDashboardController;
@@ -37,11 +36,24 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
+    // Generic dashboard - redirects to appropriate user dashboard
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        switch ($user->user_type) {
+            case 0: // Admin
+                return redirect()->route('admin.dashboard');
+            case 1: // Student/Patient
+                return redirect()->route('patients.dashboard');
+            case 2: // Faculty & Staff
+                return redirect()->route('staff.dashboard');
+            case 3: // Doctor
+                return redirect()->route('doctor.dashboard');
+            default:
+                return redirect()->route('patients.dashboard');
+        }
+    })->middleware(['auth', 'verified'])->name('dashboard');
+
     Route::resource('/appointments', AppointmentController::class);
     Route::resource('/health-records', HealthRecordsController::class);
     Route::resource('/doctors', DoctorsController::class);
@@ -53,42 +65,81 @@ Route::middleware('auth')->group(function () {
 
     // Patient-specific routes
     Route::prefix('patient')->name('patients.')->group(function () {
-        // Dashboard (main controller)
-        Route::get('/dashboard', [PatientsController::class, 'index'])->name('dashboard');
+        // Dashboard (main shell) - returns the shell view
+        Route::get('/dashboard', function() {
+            return view('patients.shells.patient-shell');
+        })->name('dashboard');
 
-        // Appointment Scheduling Routes
+        // Tab routes - all return the shell view, content loaded via AJAX
+        Route::get('/appointments', function() {
+            return view('patients.shells.patient-shell');
+        })->name('appointments');
+
+        Route::get('/health-records', function() {
+            return view('patients.shells.patient-shell');
+        })->name('health-records');
+
+        // Alias for health-records (some views may use this route name)
+        Route::get('/health-records', function() {
+            return view('patients.shells.patient-shell');
+        })->name('health.records');
+
+        Route::get('/profile', function() {
+            return view('patients.shells.patient-shell');
+        })->name('profile');
+
+        Route::get('/certificates', function() {
+            return view('patients.shells.patient-shell');
+        })->name('certificates');
+
+        // Alias for certificates.index (some code uses this route name)
+        Route::get('/certificates', function() {
+            return view('patients.shells.patient-shell');
+        })->name('certificates.index');
+
+        // Appointment Scheduling Routes (separate pages, not in shell)
         Route::get('/schedule-appointment', [PatientsAppointmentScheduler::class, 'scheduleAppointment'])->name('schedule.appointment');
         Route::post('/schedule-appointment', [PatientsAppointmentScheduler::class, 'storeAppointment'])->name('store.appointment');
-        Route::get('/appointments', [PatientsAppointmentScheduler::class, 'appointments'])->name('appointments');
         Route::patch('/appointments/{appointmentId}/cancel', [PatientsAppointmentScheduler::class, 'cancelAppointment'])->name('appointments.cancel');
 
-        // Health Records Viewing Routes
-        Route::get('/health-records', [PatientsViewPersonalHealthRecord::class, 'healthRecords'])->name('health.records');
+        // Health Records Viewing Routes (separate pages, not in shell)
         Route::get('/health-records/detailed', [PatientsViewPersonalHealthRecord::class, 'detailedHealthRecords'])->name('health.records.detailed');
         Route::get('/immunization-records', [PatientsViewPersonalHealthRecord::class, 'immunizationRecords'])->name('immunization.records');
         Route::get('/prescription-history', [PatientsViewPersonalHealthRecord::class, 'prescriptionHistory'])->name('prescription.history');
         Route::get('/examination-history', [PatientsViewPersonalHealthRecord::class, 'examinationHistory'])->name('examination.history');
         Route::get('/health-summary', [PatientsViewPersonalHealthRecord::class, 'healthSummary'])->name('health.summary');
 
-        // Personal Information Management Routes
-        Route::get('/profile', [PatientsUpdatePersonalInformation::class, 'profile'])->name('profile');
+        // Personal Information Management Routes (separate pages, not in shell)
         Route::get('/profile/create', [PatientsUpdatePersonalInformation::class, 'create'])->name('profile.create');
         Route::post('/profile', [PatientsUpdatePersonalInformation::class, 'store'])->name('profile.store');
         Route::get('/profile/edit', [PatientsUpdatePersonalInformation::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [PatientsUpdatePersonalInformation::class, 'update'])->name('profile.update');
         Route::patch('/profile/password', [PatientsUpdatePersonalInformation::class, 'updatePassword'])->name('profile.password.update');
         Route::patch('/profile/basic-info', [PatientsUpdatePersonalInformation::class, 'updateBasicInfo'])->name('profile.basic.update');
-        Route::patch('/profile/medical-info', [PatientsUpdatePersonalInformation::class, 'updateMedicalInfo'])->name('profile.medical.update');
-        Route::patch('/profile/emergency-contact', [PatientsUpdatePersonalInformation::class, 'updateEmergencyContact'])->name('profile.emergency.update');
-    });
+        Route::patch('/profile/medical-info', [PatientsUpdatePersonalInformation::class, 'updateMedicalInfo'])->name('profile.medical.info');
+        Route::patch('/profile/emergency-contact', [PatientsUpdatePersonalInformation::class, 'updateEmergencyContact'])->name('profile.emergency.contact');
 
-    // Doctor Routes - for user_type = 3 (Doctors)
+        // Certificate Request Routes (separate pages, not in shell)
+        Route::get('/certificates/create', [PatientCertificateController::class, 'create'])->name('certificates.create');
+        Route::post('/certificates', [PatientCertificateController::class, 'store'])->name('certificates.store');
+        Route::get('/certificates/{id}', [PatientCertificateController::class, 'show'])->name('certificates.show');
+
+        // AJAX Tab Content Routes (inside patient prefix, used by shell)
+        Route::get('/ajax/dashboard', [PatientsController::class, 'ajaxDashboard'])->name('ajax.dashboard');
+        Route::get('/ajax/appointments', [PatientsController::class, 'ajaxAppointments'])->name('ajax.appointments');
+        Route::get('/ajax/health-records', [PatientsController::class, 'ajaxHealthRecords'])->name('ajax.health-records');
+        Route::get('/ajax/profile', [PatientsController::class, 'ajaxProfile'])->name('ajax.profile');
+        Route::get('/ajax/certificates', [PatientsController::class, 'ajaxCertificates'])->name('ajax.certificates');
+    });
     Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'check.user.type:3'])->group(function () {
-        Route::get('/dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', function() {
+            return view('doctor.shells.doctor-shell');
+        })->name('dashboard');
         Route::get('/appointments', [DoctorDashboardController::class, 'appointments'])->name('appointments');
         Route::patch('/appointments/{appointmentId}/status', [DoctorDashboardController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
         Route::get('/patients', [DoctorDashboardController::class, 'patients'])->name('patients');
         Route::get('/patients/{patientId}', [DoctorDashboardController::class, 'viewPatient'])->name('patient-details');
+        Route::put('/patients/{patientId}', [DoctorDashboardController::class, 'updatePatient'])->name('patients.update');
         Route::get('/health-records', [DoctorDashboardController::class, 'healthRecords'])->name('health-records');
         Route::get('/health-records/create', [DoctorDashboardController::class, 'createHealthRecord'])->name('health-records.create');
         Route::post('/health-records', [DoctorDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
@@ -125,16 +176,35 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/medications', [DoctorDashboardController::class, 'medications'])->name('medications');
         Route::get('/reports', [DoctorDashboardController::class, 'reports'])->name('reports');
+
+        // Certificate Requests
+        Route::get('/certificate-requests', [DoctorDashboardController::class, 'certificateRequests'])->name('certificate-requests');
+        Route::get('/certificate-requests/{id}', [DoctorDashboardController::class, 'showCertificateRequest'])->name('certificate-requests.show');
+        Route::post('/certificate-requests/{id}/approve', [DoctorDashboardController::class, 'approveCertificateRequest'])->name('certificate-requests.approve');
+        Route::post('/certificate-requests/{id}/reject', [DoctorDashboardController::class, 'rejectCertificateRequest'])->name('certificate-requests.reject');
+        Route::post('/certificate-requests/{id}/issue', [DoctorDashboardController::class, 'issueCertificateRequest'])->name('certificate-requests.issue');
+
+        // AJAX Tab Content Routes
+        Route::get('/ajax/dashboard', [DoctorDashboardController::class, 'ajaxDashboard'])->name('ajax.dashboard');
+        Route::get('/ajax/appointments', [DoctorDashboardController::class, 'ajaxAppointments'])->name('ajax.appointments');
+        Route::get('/ajax/patients', [DoctorDashboardController::class, 'ajaxPatients'])->name('ajax.patients');
+        Route::get('/ajax/health-records', [DoctorDashboardController::class, 'ajaxHealthRecords'])->name('ajax.health-records');
+        Route::get('/ajax/medications', [DoctorDashboardController::class, 'ajaxMedications'])->name('ajax.medications');
+        Route::get('/ajax/prescriptions', [DoctorDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
+        Route::get('/ajax/reports', [DoctorDashboardController::class, 'ajaxReports'])->name('ajax.reports');
     });
 
     // Staff Routes - for user_type = 2 (Faculty & Staff)
     // Staff have access to doctor-like functionalities for managing patients
     Route::prefix('staff')->name('staff.')->middleware(['auth', 'check.user.type:2'])->group(function () {
-        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', function() {
+            return view('staff.shells.staff-shell');
+        })->name('dashboard');
         Route::get('/appointments', [StaffDashboardController::class, 'appointments'])->name('appointments');
         Route::patch('/appointments/{appointmentId}/status', [StaffDashboardController::class, 'updateAppointmentStatus'])->name('appointments.update-status');
         Route::get('/patients', [StaffDashboardController::class, 'patients'])->name('patients');
         Route::get('/patients/{patientId}', [StaffDashboardController::class, 'viewPatient'])->name('patient-details');
+        Route::put('/patients/{patientId}', [StaffDashboardController::class, 'updatePatient'])->name('patients.update');
         Route::get('/health-records', [StaffDashboardController::class, 'healthRecords'])->name('health-records');
         Route::get('/health-records/create', [StaffDashboardController::class, 'createHealthRecord'])->name('health-records.create');
         Route::post('/health-records', [StaffDashboardController::class, 'storeHealthRecord'])->name('health-records.store');
@@ -172,6 +242,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports/view/{id}', [StaffDashboardController::class, 'viewReport'])->name('reports.view');
         Route::delete('/reports/{id}', [StaffDashboardController::class, 'deleteReport'])->name('reports.delete');
         Route::get('/reports/export/{id}/{format}', [StaffDashboardController::class, 'exportReport'])->name('reports.export');
+
+        // AJAX Tab Content Routes
+        Route::get('/ajax/dashboard', [StaffDashboardController::class, 'ajaxDashboard'])->name('ajax.dashboard');
+        Route::get('/ajax/appointments', [StaffDashboardController::class, 'ajaxAppointments'])->name('ajax.appointments');
+        Route::get('/ajax/patients', [StaffDashboardController::class, 'ajaxPatients'])->name('ajax.patients');
+        Route::get('/ajax/health-records', [StaffDashboardController::class, 'ajaxHealthRecords'])->name('ajax.health-records');
+        Route::get('/ajax/medicines', [StaffDashboardController::class, 'ajaxMedicines'])->name('ajax.medicines');
+        Route::get('/ajax/prescriptions', [StaffDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
+        Route::get('/ajax/reports', [StaffDashboardController::class, 'ajaxReports'])->name('ajax.reports');
+
+        // Certificate Requests
+        Route::get('/certificate-requests', [StaffDashboardController::class, 'certificateRequests'])->name('certificate-requests');
+        Route::get('/certificate-requests/{id}', [StaffDashboardController::class, 'showCertificateRequest'])->name('certificate-requests.show');
+        Route::post('/certificate-requests/{id}/approve', [StaffDashboardController::class, 'approveCertificateRequest'])->name('certificate-requests.approve');
+        Route::post('/certificate-requests/{id}/reject', [StaffDashboardController::class, 'rejectCertificateRequest'])->name('certificate-requests.reject');
+        Route::post('/certificate-requests/{id}/issue', [StaffDashboardController::class, 'issueCertificateRequest'])->name('certificate-requests.issue');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -182,7 +268,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/admin/login', [AdminLoginController::class , 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
 
-Route::middleware('auth:admin')->group(function ()  {
+Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
     Route::resource('/admin/appointments',AdminAppointments::class)->names([
         'index' => 'admin.appointments.index',
         'create' => 'admin.appointments.create',

@@ -86,10 +86,9 @@
                 <x-application-logo class="w-32 h-auto" />
             </div>
             <h1>{{ config('app.name', 'Crist the King') }}</h1>
-            <p>Choose how you want to sign in to the clinic record system.</p>
+            <p>Sign in to the clinic record system.</p>
             <div class="buttons">
-                <a href="{{ route('login') }}" class="button button-secondary">User Log in</a>
-                <a href="{{ route('admin.login') }}" class="button button-primary">Admin Log in</a>
+                <a href="{{ route('login') }}" class="button button-primary">Log in</a>
             </div>
         </div>
     </body>

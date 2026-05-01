@@ -359,7 +359,7 @@
                                             </div>
                                         @endif
 
-                                        @if($record->teeth_status && count($record->teeth_status) > 0)
+                                        @if($record->teeth_status && is_array($record->teeth_status) && count($record->teeth_status) > 0)
                                             <div class="mb-4">
                                                 <h4 class="font-medium text-gray-800 mb-3">Teeth Status</h4>
                                                 <div class="grid grid-cols-8 gap-2 p-4 bg-purple-50 rounded-lg border border-purple-200">
@@ -596,7 +596,7 @@
                                     </div>
                                 @endif
 
-                                @if($exam->teeth_status && count($exam->teeth_status) > 0)
+                                @if($exam->teeth_status && is_array($exam->teeth_status) && count($exam->teeth_status) > 0)
                                     <div class="mb-4">
                                         <h4 class="font-medium text-gray-800 mb-3">Teeth Status</h4>
                                         <div class="grid grid-cols-8 gap-2 p-4 bg-gray-50 rounded-lg">

@@ -23,6 +23,7 @@ class Patients extends Model
         'edulvl_id',
         'user_id',
         'school_id',
+        'bloodtype',
         'address',
         'medical_condition',
         'medical_illness',

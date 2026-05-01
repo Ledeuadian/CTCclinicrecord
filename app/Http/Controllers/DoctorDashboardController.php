@@ -12,6 +12,7 @@ use App\Models\PhysicalExamination;
 use App\Models\DentalExamination;
 use App\Models\Immunization;
 use App\Models\Medicine;
+use App\Models\CertificateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -27,7 +28,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get statistics
@@ -55,13 +56,20 @@ class DoctorDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Monthly appointment statistics
+        // Monthly appointment statistics - show all 12 months
         $monthlyStats = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('strftime("%m", date) as month, COUNT(*) as count')
+            ->selectRaw('MONTH(date) as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->pluck('count', 'month')
             ->toArray();
+
+        // Fill in missing months with 0
+        $allMonths = collect(range(1, 12))->mapWithKeys(function($m) {
+            return [$m => 0];
+        })->toArray();
+        $monthlyStats = $allMonths + $monthlyStats;
+        ksort($monthlyStats);
 
         return view('doctor.dashboard', compact(
             'doctor',
@@ -74,6 +82,42 @@ class DoctorDashboardController extends Controller
         ));
     }
 
+    // AJAX Tab Methods for Shell Navigation
+    public function ajaxDashboard()
+    {
+        return $this->index();
+    }
+
+    public function ajaxAppointments()
+    {
+        return $this->appointments();
+    }
+
+    public function ajaxPatients()
+    {
+        return $this->patients(request());
+    }
+
+    public function ajaxHealthRecords()
+    {
+        return $this->healthRecords();
+    }
+
+    public function ajaxMedications()
+    {
+        return $this->medications();
+    }
+
+    public function ajaxPrescriptions()
+    {
+        return $this->prescriptions(request());
+    }
+
+    public function ajaxReports()
+    {
+        return $this->reports();
+    }
+
     /**
      * Display appointment management for doctors
      */
@@ -83,7 +127,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get pending appointments
@@ -172,23 +216,42 @@ class DoctorDashboardController extends Controller
     /**
      * Display doctor's patients
      */
-    public function patients()
+    public function patients(Request $request)
     {
         $user = Auth::user();
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Get patients who have appointments with this doctor
-        $patients = Patients::whereHas('appointments', function($query) use ($doctor) {
+        $query = Patients::whereHas('appointments', function($query) use ($doctor) {
                 $query->where('doc_id', $doctor->id);
             })
             ->with(['user', 'appointments' => function($query) use ($doctor) {
                 $query->where('doc_id', $doctor->id)->latest();
-            }])
-            ->paginate(15);
+            }]);
+
+        // Search functionality - search in user name, email, and patient data
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhere('id', 'like', "%{$search}%")
+                ->orWhere('school_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by patient type
+        if ($request->filled('patient_type')) {
+            $query->where('patient_type', $request->patient_type);
+        }
+
+        $patients = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return view('doctor.patients', compact('patients', 'doctor'));
     }
@@ -202,7 +265,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         $patient = Patients::with('user')->findOrFail($patientId);
@@ -242,6 +305,40 @@ class DoctorDashboardController extends Controller
             'dentalExams',
             'appointments'
         ));
+    }
+
+    /**
+     * Update patient information
+     */
+    public function updatePatient(Request $request, $patientId)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        // Check if doctor has an appointment with this patient
+        $hasAppointment = Appointment::where('doc_id', $doctor->id)
+            ->where('patient_id', $patientId)
+            ->exists();
+
+        if (!$hasAppointment) {
+            return back()->with('error', 'You can only update patients you have treated.');
+        }
+
+        $patient = Patients::findOrFail($patientId);
+
+        $request->validate([
+            'bloodtype' => 'nullable|string|max:10',
+        ]);
+
+        $patient->update([
+            'bloodtype' => $request->bloodtype,
+        ]);
+
+        return back()->with('success', 'Patient information updated successfully.');
     }
 
     /**
@@ -291,7 +388,7 @@ class DoctorDashboardController extends Controller
         $doctor = Doctors::where('user_id', $user->id)->first();
 
         if (!$doctor) {
-            return redirect()->route('dashboard')->with('error', 'Doctor profile not found.');
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
         }
 
         // Generate various statistics
@@ -322,7 +419,7 @@ class DoctorDashboardController extends Controller
 
         // Monthly appointment trends
         $monthlyTrends = Appointment::where('doc_id', $doctor->id)
-            ->selectRaw('strftime("%m", date) as month, strftime("%Y", date) as year, COUNT(*) as count')
+            ->selectRaw('DATE_FORMAT(date, "%m") as month, DATE_FORMAT(date, "%Y") as year, COUNT(*) as count')
             ->whereYear('date', '>=', Carbon::now()->subYear()->year)
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
@@ -1078,5 +1175,149 @@ class DoctorDashboardController extends Controller
             ->get();
 
         return response()->json($prescriptions);
+    }
+
+    /**
+     * Display certificate requests for the doctor to review
+     */
+    public function certificateRequests(Request $request)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        // Build query for certificate requests
+        $query = CertificateRequest::query()
+            ->with(['patient.user', 'certificateType']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        } else {
+            // Default to pending requests
+            $query->where('status', 'pending');
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('patient.user', function($q) use ($search) {
+                $q->where('firstname', 'like', '%' . $search . '%')
+                  ->orWhere('lastname', 'like', '%' . $search . '%');
+            });
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Get counts for tabs
+        $pendingCount = CertificateRequest::where('status', 'pending')->count();
+        $approvedCount = CertificateRequest::where('status', 'approved')->count();
+        $issuedCount = CertificateRequest::where('status', 'issued')->count();
+        $rejectedCount = CertificateRequest::where('status', 'rejected')->count();
+
+        return view('doctor.certificate-requests', compact(
+            'requests',
+            'pendingCount',
+            'approvedCount',
+            'issuedCount',
+            'rejectedCount'
+        ));
+    }
+
+    /**
+     * Show details of a certificate request
+     */
+    public function showCertificateRequest($id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $request = CertificateRequest::with(['patient.user', 'certificateType', 'appointment'])
+            ->findOrFail($id);
+
+        return view('doctor.certificate-request-detail', compact('request', 'doctor'));
+    }
+
+    /**
+     * Approve a certificate request
+     */
+    public function approveCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'doctor_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_APPROVED,
+            'doctor_id' => $doctor->id,
+            'doctor_notes' => $validated['doctor_notes'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request approved successfully.');
+    }
+
+    /**
+     * Reject a certificate request
+     */
+    public function rejectCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_REJECTED,
+            'doctor_id' => $doctor->id,
+            'doctor_notes' => $validated['rejection_reason'],
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request rejected.');
+    }
+
+    /**
+     * Mark a certificate as issued
+     */
+    public function issueCertificateRequest($id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_ISSUED,
+            'issued_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate marked as issued.');
     }
 }

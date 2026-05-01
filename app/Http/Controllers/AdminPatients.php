@@ -97,6 +97,7 @@ class AdminPatients extends Controller
             'edulvl_id' => $request->edulvl_id,
             'user_id' => $request->user_id,
             'school_id' => $request->school_id,
+            'bloodtype' => $request->bloodtype,
             'address' => $request->address,
             'medical_condition' => $request->medical_condition,
             'medical_illness' => $request->medical_illness,
@@ -185,6 +186,7 @@ class AdminPatients extends Controller
         $patients->edulvl_id = $request->input('edulvl_id');
         $patients->user_id = $request->input('user_id');
         $patients->school_id = $request->input('school_id');
+        $patients->bloodtype = $request->input('bloodtype');
         $patients->address = $request->input('address');
         $patients->medical_condition = $request->input('medical_condition');
         $patients->medical_illness = $request->input('medical_illness');

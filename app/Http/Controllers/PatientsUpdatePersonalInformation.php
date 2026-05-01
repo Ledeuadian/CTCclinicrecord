@@ -65,9 +65,18 @@ class PatientsUpdatePersonalInformation extends Controller
                 ->with('error', 'Patient profile already exists.');
         }
 
+        // Convert patient_type string to integer: 1 = Student, 2 = Faculty & Staff
+        $patientTypeMap = [
+            'student' => 1,
+            'staff' => 2,
+            'faculty' => 2,
+            'external' => 2,
+        ];
+        $patientType = $patientTypeMap[$request->patient_type] ?? 1;
+
         Patients::create([
             'user_id' => $user->id,
-            'patient_type' => $request->patient_type,
+            'patient_type' => $patientType,
             'school_id' => $request->school_id ?? null,
             'edulvl_id' => $request->edulvl_id ?? null,
             'address' => $request->address,

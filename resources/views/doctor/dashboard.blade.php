@@ -125,22 +125,70 @@
         </div>
     </div>
 
-    <!-- Monthly Statistics Chart Placeholder -->
+    <!-- Monthly Statistics Chart -->
     <div class="bg-white p-6 rounded-lg shadow-sm border">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Monthly Appointment Trends</h3>
-        <div class="h-64 bg-gray-50 rounded flex items-center justify-center">
-            <div class="text-center">
-                <p class="text-gray-600 mb-2">Appointment Statistics</p>
-                <div class="grid grid-cols-6 gap-4 text-sm">
-                    @for($month = 1; $month <= 12; $month++)
-                        <div class="text-center">
-                            <div class="text-gray-500">{{ DateTime::createFromFormat('!m', $month)->format('M') }}</div>
-                            <div class="font-bold text-blue-600">{{ $monthlyStats[$month] ?? 0 }}</div>
-                        </div>
-                    @endfor
-                </div>
-            </div>
+        <div style="position: relative; height: 100px; max-height: 100px; max-width: 100%;">
+            <canvas id="monthlyChart"></canvas>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('monthlyChart');
+    const months = [
+        @for($m = 1; $m <= 12; $m++)
+            '{{ date('M', mktime(0, 0, 0, $m, 1)) }}',
+        @endfor
+    ];
+    const data = [
+        @for($m = 1; $m <= 12; $m++)
+            {{ is_array($monthlyStats) ? ($monthlyStats[$m] ?? 0) : ($monthlyStats->get($m, 0)) }},
+        @endfor
+    ];
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Appointments',
+                data: data,
+                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' appointments';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 },
+                    grid: { display: false }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+});
+</script>
 @endsection

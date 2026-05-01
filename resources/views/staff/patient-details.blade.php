@@ -8,11 +8,62 @@
                 <h1 class="text-2xl font-semibold text-gray-800">Patient Details</h1>
                 <p class="text-gray-600">Complete medical record for {{ $patient->user->name }}</p>
             </div>
-            <a href="{{ route('staff.patients') }}"
-               class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
-                ← Back to Patients
-            </a>
+            <div class="flex space-x-2">
+                <button onclick="openEditModal()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                    Edit Patient Info
+                </button>
+                <a href="{{ route('staff.patients') }}"
+                   class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
+                    ← Back to Patients
+                </a>
+            </div>
         </div>
+
+        <!-- Edit Blood Type Modal -->
+        <div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Edit Patient Information</h3>
+                <form action="{{ route('staff.patients.update', $patient->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="mb-4">
+                        <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">Blood Type</label>
+                        <select name="bloodtype" id="bloodtype" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Blood Type...</option>
+                            <option value="A+" {{ $patient->bloodtype == 'A+' ? 'selected' : '' }}>A+</option>
+                            <option value="A-" {{ $patient->bloodtype == 'A-' ? 'selected' : '' }}>A-</option>
+                            <option value="B+" {{ $patient->bloodtype == 'B+' ? 'selected' : '' }}>B+</option>
+                            <option value="B-" {{ $patient->bloodtype == 'B-' ? 'selected' : '' }}>B-</option>
+                            <option value="AB+" {{ $patient->bloodtype == 'AB+' ? 'selected' : '' }}>AB+</option>
+                            <option value="AB-" {{ $patient->bloodtype == 'AB-' ? 'selected' : '' }}>AB-</option>
+                            <option value="O+" {{ $patient->bloodtype == 'O+' ? 'selected' : '' }}>O+</option>
+                            <option value="O-" {{ $patient->bloodtype == 'O-' ? 'selected' : '' }}>O-</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeEditModal()"
+                                class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openEditModal() {
+                document.getElementById('editModal').classList.remove('hidden');
+            }
+            function closeEditModal() {
+                document.getElementById('editModal').classList.add('hidden');
+            }
+        </script>
 
         <div class="p-6">
             <!-- Patient Basic Information -->
@@ -47,6 +98,10 @@
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <label class="block text-sm font-medium text-gray-600 mb-1">Address</label>
                         <p class="text-gray-800">{{ $patient->address ?? 'N/A' }}</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-lg border border-red-200">
+                        <label class="block text-sm font-medium text-red-700 mb-2">Blood Type</label>
+                        <p class="text-gray-800 font-medium">{{ $patient->bloodtype ?? 'Not specified' }}</p>
                     </div>
                 </div>
             </div>

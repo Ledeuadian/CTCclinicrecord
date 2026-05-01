@@ -87,6 +87,11 @@
                                 <label class="block text-sm font-medium text-gray-600">Allergies</label>
                                 <p class="text-gray-800">{{ $patient->allergies ?: 'None reported' }}</p>
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Blood Type</label>
+                                <p class="text-gray-800">{{ $patient->bloodtype ?: 'Not specified' }}</p>
+                            </div>
                         </div>
                     </div>
 

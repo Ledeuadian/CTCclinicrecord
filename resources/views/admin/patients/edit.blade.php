@@ -94,6 +94,22 @@
         </div>
         <div class="grid md:grid-cols-2 md:gap-6">
             <div class="relative z-0 w-full mb-5 group">
+                <label for="bloodtype" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Blood Type</label>
+                <select id="bloodtype" name="bloodtype" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option value="">Select Blood Type</option>
+                    <option value="A+" {{ $patients->bloodtype == 'A+' ? 'selected' : '' }}>A+</option>
+                    <option value="A-" {{ $patients->bloodtype == 'A-' ? 'selected' : '' }}>A-</option>
+                    <option value="B+" {{ $patients->bloodtype == 'B+' ? 'selected' : '' }}>B+</option>
+                    <option value="B-" {{ $patients->bloodtype == 'B-' ? 'selected' : '' }}>B-</option>
+                    <option value="AB+" {{ $patients->bloodtype == 'AB+' ? 'selected' : '' }}>AB+</option>
+                    <option value="AB-" {{ $patients->bloodtype == 'AB-' ? 'selected' : '' }}>AB-</option>
+                    <option value="O+" {{ $patients->bloodtype == 'O+' ? 'selected' : '' }}>O+</option>
+                    <option value="O-" {{ $patients->bloodtype == 'O-' ? 'selected' : '' }}>O-</option>
+                </select>
+            </div>
+        </div>
+        <div class="grid md:grid-cols-2 md:gap-6">
+            <div class="relative z-0 w-full mb-5 group">
                 <label for="date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Address</label>
                 <textarea id="address" name="address" rows="3" class="mt-1 p-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $patients->address }}</textarea>
             </div>

@@ -13,6 +13,7 @@ use App\Models\DentalExamination;
 use App\Models\Immunization;
 use App\Models\Medicine;
 use App\Models\GeneratedReport;
+use App\Models\CertificateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -45,13 +46,19 @@ class StaffDashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Monthly appointment statistics
-        $monthlyStats = Appointment::selectRaw('strftime("%m", date) as month, COUNT(*) as count')
+        // Monthly appointment statistics - show all 12 months
+        $monthlyStats = Appointment::selectRaw('MONTH(date) as month, COUNT(*) as count')
             ->whereYear('date', Carbon::now()->year)
             ->groupBy('month')
             ->orderBy('month')
             ->get()
             ->pluck('count', 'month');
+
+        // Fill in missing months with 0
+        $allMonths = collect(range(1, 12))->mapWithKeys(function($m) {
+            return [$m => 0];
+        });
+        $monthlyStats = $allMonths->merge($monthlyStats);
 
         return view('staff.dashboard', compact(
             'todayAppointments',
@@ -61,6 +68,42 @@ class StaffDashboardController extends Controller
             'recentAppointments',
             'monthlyStats'
         ));
+    }
+
+    // AJAX Tab Methods for Shell Navigation
+    public function ajaxDashboard()
+    {
+        return $this->index();
+    }
+
+    public function ajaxAppointments()
+    {
+        return $this->appointments(request());
+    }
+
+    public function ajaxPatients()
+    {
+        return $this->patients(request());
+    }
+
+    public function ajaxHealthRecords()
+    {
+        return $this->healthRecords(request());
+    }
+
+    public function ajaxMedicines()
+    {
+        return $this->medications(request());
+    }
+
+    public function ajaxPrescriptions()
+    {
+        return $this->prescriptions(request());
+    }
+
+    public function ajaxReports()
+    {
+        return $this->reports(request());
     }
 
     /**
@@ -166,15 +209,16 @@ class StaffDashboardController extends Controller
                 $q->whereIn('user_type', [1, 2]); // Students and Staff only
             });
 
-        // Search functionality
+        // Search functionality - search in user name, email, and patient data
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('f_name', 'like', "%{$search}%")
-                  ->orWhere('m_name', 'like', "%{$search}%")
-                  ->orWhere('l_name', 'like', "%{$search}%")
-                  ->orWhere('student_id', 'like', "%{$search}%")
-                  ->orWhere('contact_number', 'like', "%{$search}%");
+                $q->whereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhere('id', 'like', "%{$search}%")
+                ->orWhere('school_id', 'like', "%{$search}%");
             });
         }
 
@@ -217,11 +261,30 @@ class StaffDashboardController extends Controller
     }
 
     /**
+     * Update patient information
+     */
+    public function updatePatient(Request $request, $patientId)
+    {
+        $patient = Patients::findOrFail($patientId);
+
+        $request->validate([
+            'bloodtype' => 'nullable|string|max:10',
+        ]);
+
+        $patient->update([
+            'bloodtype' => $request->bloodtype,
+        ]);
+
+        return back()->with('success', 'Patient information updated successfully.');
+    }
+
+    /**
      * Display health records page
      */
     public function healthRecords(Request $request)
     {
-        $query = HealthRecords::with(['patient.user', 'physicalExamination', 'dentalExamination', 'immunizationRecords']);
+        // Load only existing relationships: patient.user
+        $query = HealthRecords::with(['patient.user']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -242,10 +305,11 @@ class StaffDashboardController extends Controller
         $totalDentalExams = DentalExamination::count();
         $totalImmunizations = ImmunizationRecords::count();
 
-        // Top diagnoses
+        // Top diagnoses - ensure diagnosis is a valid string before counting
         $diagnosisStats = HealthRecords::select('diagnosis', \DB::raw('count(*) as count'))
             ->whereNotNull('diagnosis')
             ->where('diagnosis', '!=', '')
+            ->whereRaw('LENGTH(diagnosis) > 0')
             ->groupBy('diagnosis')
             ->orderBy('count', 'desc')
             ->get();
@@ -301,7 +365,7 @@ class StaffDashboardController extends Controller
         $totalMedicines = Medicine::count();
         $availableMedicines = Medicine::where('quantity', '>', 0)->count();
         $lowStockMedicines = Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count();
-        $expiredMedicines = Medicine::where('expiry_date', '<', Carbon::now())->count();
+        $expiredMedicines = Medicine::where('expiration_date', '<', Carbon::now())->count();
 
         return view('staff.medicines', compact('medicines', 'totalMedicines', 'availableMedicines', 'lowStockMedicines', 'expiredMedicines'));
     }
@@ -318,7 +382,7 @@ class StaffDashboardController extends Controller
             'dosage' => 'required|string|max:100',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
-            'expiry_date' => 'required|date',
+            'expiration_date' => 'required|date',
             'description' => 'nullable|string',
         ]);
 
@@ -339,7 +403,7 @@ class StaffDashboardController extends Controller
             'dosage' => 'required|string|max:100',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
-            'expiry_date' => 'required|date',
+            'expiration_date' => 'required|date',
             'description' => 'nullable|string',
         ]);
 
@@ -491,7 +555,7 @@ class StaffDashboardController extends Controller
         ];
 
         // Monthly trends (last 12 months)
-        $monthlyTrends = Appointment::selectRaw('strftime("%m", date) as month, strftime("%Y", date) as year, COUNT(*) as count')
+        $monthlyTrends = Appointment::selectRaw('DATE_FORMAT(date, "%m") as month, DATE_FORMAT(date, "%Y") as year, COUNT(*) as count')
             ->whereNotNull('date')
             ->groupBy('month', 'year')
             ->orderBy('year', 'desc')
@@ -514,7 +578,7 @@ class StaffDashboardController extends Controller
             'in_stock' => Medicine::where('quantity', '>', 10)->count(),
             'low_stock' => Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count(),
             'out_of_stock' => Medicine::where('quantity', '<=', 0)->count(),
-            'expired' => Medicine::where('expiry_date', '<', Carbon::now())->count(),
+            'expired' => Medicine::where('expiration_date', '<', Carbon::now())->count(),
         ];
 
         return view('staff.reports', compact('appointmentStats', 'patientStats', 'monthlyTrends', 'topConditions', 'recentHealthRecords', 'medicineStats'));
@@ -836,7 +900,7 @@ class StaffDashboardController extends Controller
 
         $dateFrom = Carbon::parse($report->parameters['date_from']);
         $dateTo = Carbon::parse($report->parameters['date_to']);
-        
+
         $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
 
         return view('staff.view-report', compact('report', 'reportData', 'dateFrom', 'dateTo'));
@@ -874,7 +938,7 @@ class StaffDashboardController extends Controller
 
         $dateFrom = Carbon::parse($report->parameters['date_from']);
         $dateTo = Carbon::parse($report->parameters['date_to']);
-        
+
         $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
 
         if ($format === 'csv') {
@@ -941,7 +1005,7 @@ class StaffDashboardController extends Controller
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->groupBy('status')
                 ->get(),
-            'by_month' => Appointment::selectRaw('strftime("%Y-%m", date) as month, COUNT(*) as count')
+            'by_month' => Appointment::selectRaw('DATE_FORMAT(date, "%Y-%m") as month, COUNT(*) as count')
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->groupBy('month')
                 ->orderBy('month')
@@ -1000,16 +1064,16 @@ class StaffDashboardController extends Controller
             'in_stock' => Medicine::where('quantity', '>', 10)->count(),
             'low_stock' => Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->count(),
             'out_of_stock' => Medicine::where('quantity', '<=', 0)->count(),
-            'expired' => Medicine::where('expiry_date', '<', Carbon::now())->count(),
-            'expiring_soon' => Medicine::where('expiry_date', '>', Carbon::now())
-                ->where('expiry_date', '<=', Carbon::now()->addMonths(3))
+            'expired' => Medicine::where('expiration_date', '<', Carbon::now())->count(),
+            'expiring_soon' => Medicine::where('expiration_date', '>', Carbon::now())
+                ->where('expiration_date', '<=', Carbon::now()->addMonths(3))
                 ->count(),
             'low_stock_items' => Medicine::where('quantity', '>', 0)
                 ->where('quantity', '<=', 10)
                 ->orderBy('quantity')
                 ->get(),
-            'expired_items' => Medicine::where('expiry_date', '<', Carbon::now())
-                ->orderBy('expiry_date')
+            'expired_items' => Medicine::where('expiration_date', '<', Carbon::now())
+                ->orderBy('expiration_date')
                 ->get(),
         ];
     }
@@ -1017,7 +1081,7 @@ class StaffDashboardController extends Controller
     private function exportAsCSV($report, $reportData)
     {
         $filename = str_replace(' ', '_', $report->title) . '_' . now()->format('YmdHis') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -1025,19 +1089,19 @@ class StaffDashboardController extends Controller
 
         $callback = function() use ($reportData, $report) {
             $file = fopen('php://output', 'w');
-            
+
             // Add report header
             fputcsv($file, ['Report Title', $report->title]);
             fputcsv($file, ['Report Type', str_replace('_', ' ', ucwords($report->report_type))]);
             fputcsv($file, ['Generated On', $report->created_at->format('Y-m-d H:i:s')]);
             fputcsv($file, ['Date Range', $report->parameters['date_from'] . ' to ' . $report->parameters['date_to']]);
             fputcsv($file, []);
-            
+
             // Add data based on report type
             foreach ($reportData as $key => $value) {
                 if (is_array($value) || is_object($value)) {
                     fputcsv($file, [ucwords(str_replace('_', ' ', $key))]);
-                    
+
                     if ($value instanceof \Illuminate\Support\Collection) {
                         $items = $value->toArray();
                         if (count($items) > 0) {
@@ -1052,10 +1116,126 @@ class StaffDashboardController extends Controller
                     fputcsv($file, [ucwords(str_replace('_', ' ', $key)), $value]);
                 }
             }
-            
+
             fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Display certificate requests for staff to review
+     */
+    public function certificateRequests(Request $request)
+    {
+        $user = Auth::user();
+
+        // Build query for certificate requests
+        $query = CertificateRequest::query()
+            ->with(['patient.user', 'certificateType']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'pending');
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('patient.user', function($q) use ($search) {
+                $q->where('firstname', 'like', '%' . $search . '%')
+                  ->orWhere('lastname', 'like', '%' . $search . '%');
+            });
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Get counts for tabs
+        $pendingCount = CertificateRequest::where('status', 'pending')->count();
+        $approvedCount = CertificateRequest::where('status', 'approved')->count();
+        $issuedCount = CertificateRequest::where('status', 'issued')->count();
+        $rejectedCount = CertificateRequest::where('status', 'rejected')->count();
+
+        return view('staff.certificate-requests', compact(
+            'requests',
+            'pendingCount',
+            'approvedCount',
+            'issuedCount',
+            'rejectedCount'
+        ));
+    }
+
+    /**
+     * Show details of a certificate request
+     */
+    public function showCertificateRequest($id)
+    {
+        $request = CertificateRequest::with(['patient.user', 'certificateType', 'appointment'])
+            ->findOrFail($id);
+
+        return view('staff.certificate-request-detail', compact('request'));
+    }
+
+    /**
+     * Approve a certificate request
+     */
+    public function approveCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $staffDoctor = Doctors::where('user_id', $user->id)->first();
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'doctor_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_APPROVED,
+            'doctor_id' => $staffDoctor->id ?? null,
+            'doctor_notes' => $validated['doctor_notes'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request approved successfully.');
+    }
+
+    /**
+     * Reject a certificate request
+     */
+    public function rejectCertificateRequest(Request $request, $id)
+    {
+        $user = Auth::user();
+        $staffDoctor = Doctors::where('user_id', $user->id)->first();
+
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_REJECTED,
+            'doctor_id' => $staffDoctor->id ?? null,
+            'doctor_notes' => $validated['rejection_reason'],
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate request rejected.');
+    }
+
+    /**
+     * Mark a certificate as issued
+     */
+    public function issueCertificateRequest($id)
+    {
+        $certificateRequest = CertificateRequest::findOrFail($id);
+
+        $certificateRequest->update([
+            'status' => CertificateRequest::STATUS_ISSUED,
+            'issued_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Certificate marked as issued.');
     }
 }

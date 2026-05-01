@@ -15,7 +15,7 @@ class AdminSeeder extends Seeder
             'email' => 'admin@ckc.edu',
             'password' => bcrypt('password123'),
             'email_verified_at' => now(),
-            'user_type' => 2, // Admin
+            'user_type' => 0, // Admin
             'f_name' => 'Admin',
             'm_name' => 'System',
             'l_name' => 'User',

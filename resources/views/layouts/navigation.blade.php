@@ -13,92 +13,164 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if(Auth::user()->user_type == 1)
-                        <!-- Student Navigation (Limited) -->
-                        <x-nav-link :href="route('patients.dashboard')" :active="request()->routeIs('patients.dashboard')">
+                        <!-- Student Navigation (with AJAX tab switching) -->
+                        <a href="#" onclick="navigateToPatientTab('dashboard'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.dashboard') || request()->routeIs('patient.*') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Dashboard') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('patients.health.records')" :active="request()->routeIs('patients.health.records')">
+                        <a href="#" onclick="navigateToPatientTab('health-records'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
                             {{ __('Health Records') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('patients.appointments')" :active="request()->routeIs('patients.appointments')">
+                        <a href="#" onclick="navigateToPatientTab('appointments'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
                             {{ __('Appointments') }}
-                        </x-nav-link>
+                        </a>
+
+                        <a href="#" onclick="navigateToPatientTab('certificates'); return false;"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
+                            {{ __('Certificates') }}
+                        </a>
                     @elseif(Auth::user()->user_type == 2)
                         <!-- Faculty & Staff Navigation with Toggle -->
                         @if(request()->routeIs('staff.*'))
                             <!-- Staff Duties Mode -->
-                            <x-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
+                            <a href="{{ route('staff.dashboard') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
                                 {{ __('Dashboard') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.appointments')" :active="request()->routeIs('staff.appointments')">
+                            <a href="{{ route('staff.appointments') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.appointments') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
                                 {{ __('Appointments') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.patients')" :active="request()->routeIs('staff.patients')">
+                            <a href="{{ route('staff.patients') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.patients') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
                                 {{ __('Patients') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.health-records')" :active="request()->routeIs('staff.health-records')">
+                            <a href="{{ route('staff.health-records') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.health-records') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
                                 {{ __('Health Records') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.medications')" :active="request()->routeIs('staff.medications')">
+                            <a href="{{ route('staff.medications') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.medications') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                                </svg>
                                 {{ __('Medicines') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.prescriptions')" :active="request()->routeIs('staff.prescriptions')">
+                            <a href="{{ route('staff.prescriptions') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.prescriptions') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
                                 {{ __('Prescriptions') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('staff.reports')" :active="request()->routeIs('staff.reports')">
+                            <a href="{{ route('staff.reports') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.reports') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
                                 {{ __('Reports') }}
-                            </x-nav-link>
+                            </a>
+
+                            <a href="{{ route('staff.certificate-requests') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.certificate-requests') ? 'text-blue-600 bg-blue-50' : '' }}"
+                               data-turbo-frame="staff-content">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                {{ __('Certificates') }}
+                            </a>
                         @else
                             <!-- Personal Page Mode -->
-                            <x-nav-link :href="route('patients.dashboard')" :active="request()->routeIs('patients.dashboard')">
+                            <a href="{{ route('patients.dashboard') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 {{ __('Dashboard') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('patients.health.records')" :active="request()->routeIs('patients.health.records')">
+                            <a href="{{ route('patients.health.records') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.health.records') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 {{ __('Health Records') }}
-                            </x-nav-link>
+                            </a>
 
-                            <x-nav-link :href="route('patients.appointments')" :active="request()->routeIs('patients.appointments')">
+                            <a href="{{ route('patients.appointments') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.appointments') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 {{ __('Appointments') }}
-                            </x-nav-link>
+                            </a>
+
+                            <a href="{{ route('patients.certificates.index') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('patients.certificates.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                {{ __('Certificates') }}
+                            </a>
                         @endif
                     @else
                         <!-- Doctor Navigation (Full Access) -->
-                        <x-nav-link :href="route('doctor.dashboard')" :active="request()->routeIs('doctor.dashboard')">
+                        <a href="{{ route('doctor.dashboard') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Dashboard') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.appointments')" :active="request()->routeIs('doctor.appointments')">
+                        <a href="{{ route('doctor.appointments') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.appointments') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Appointments') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.patients')" :active="request()->routeIs('doctor.patients')">
+                        <a href="{{ route('doctor.patients') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.patients') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Patients') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.health-records')" :active="request()->routeIs('doctor.health-records')">
+                        <a href="{{ route('doctor.health-records') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.health-records') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Health Records') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.medications')" :active="request()->routeIs('doctor.medications')">
+                        <a href="{{ route('doctor.medications') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.medications') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Medicines') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.prescriptions')" :active="request()->routeIs('doctor.prescriptions')">
+                        <a href="{{ route('doctor.prescriptions') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.prescriptions') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Prescriptions') }}
-                        </x-nav-link>
+                        </a>
 
-                        <x-nav-link :href="route('doctor.reports')" :active="request()->routeIs('doctor.reports')">
+                        <a href="{{ route('doctor.reports') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.reports') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Reports') }}
-                        </x-nav-link>
+                        </a>
+
+                        <a href="{{ route('doctor.certificate-requests') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.certificate-requests') ? 'text-blue-600 bg-blue-50' : '' }}">
+                            {{ __('Certificates') }}
+                        </a>
                     @endif
                 </div>
             </div>
@@ -142,7 +214,7 @@
                     <x-slot name="content">
                         @if(Auth::user()->user_type == 1 || Auth::user()->user_type == 2)
                             <!-- Student and Faculty & Staff Profile Links -->
-                            <x-dropdown-link :href="route('patients.profile')">
+                            <x-dropdown-link :href="'#'" onclick="navigateToPatientTab('profile'); return false;">
                                 {{ __('Profile') }}
                             </x-dropdown-link>
                         @else
@@ -182,18 +254,22 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             @if(Auth::user()->user_type == 1)
-                <!-- Student Mobile Navigation (Limited) -->
-                <x-responsive-nav-link :href="route('patients.dashboard')" :active="request()->routeIs('patients.dashboard')">
+                <!-- Student Mobile Navigation (with AJAX tab switching) -->
+                <a href="#" onclick="navigateToPatientTab('dashboard'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Dashboard') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('patients.health.records')" :active="request()->routeIs('patients.health.records')">
+                <a href="#" onclick="navigateToPatientTab('health-records'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Health Records') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('patients.appointments')" :active="request()->routeIs('patients.appointments')">
+                <a href="#" onclick="navigateToPatientTab('appointments'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Appointments') }}
-                </x-responsive-nav-link>
+                </a>
+
+                <a href="#" onclick="navigateToPatientTab('certificates'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                    {{ __('Certificates') }}
+                </a>
             @elseif(Auth::user()->user_type == 2)
                 <!-- Faculty & Staff Mobile Toggle -->
                 <div class="px-4 py-3">
@@ -216,76 +292,76 @@
 
                 @if(request()->routeIs('staff.*'))
                     <!-- Staff Duties Mobile Navigation -->
-                    <x-responsive-nav-link :href="route('staff.dashboard')" :active="request()->routeIs('staff.dashboard')">
+                    <a href="{{ route('staff.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Dashboard') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.appointments')" :active="request()->routeIs('staff.appointments')">
+                    <a href="{{ route('staff.appointments') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Appointments') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.patients')" :active="request()->routeIs('staff.patients')">
+                    <a href="{{ route('staff.patients') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Patients') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.health-records')" :active="request()->routeIs('staff.health-records')">
+                    <a href="{{ route('staff.health-records') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Health Records') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.medications')" :active="request()->routeIs('staff.medications')">
+                    <a href="{{ route('staff.medications') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Medicines') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.prescriptions')" :active="request()->routeIs('staff.prescriptions')">
+                    <a href="{{ route('staff.prescriptions') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Prescriptions') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('staff.reports')" :active="request()->routeIs('staff.reports')">
+                    <a href="{{ route('staff.reports') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Reports') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @else
                     <!-- Personal Page Mobile Navigation -->
-                    <x-responsive-nav-link :href="route('patients.dashboard')" :active="request()->routeIs('patients.dashboard')">
+                    <a href="{{ route('patients.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Dashboard') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('patients.health.records')" :active="request()->routeIs('patients.health.records')">
+                    <a href="{{ route('patients.health.records') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Health Records') }}
-                    </x-responsive-nav-link>
+                    </a>
 
-                    <x-responsive-nav-link :href="route('patients.appointments')" :active="request()->routeIs('patients.appointments')">
+                    <a href="{{ route('patients.appointments') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Appointments') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @endif
             @else
                 <!-- Doctor Mobile Navigation (Full Access) -->
-                <x-responsive-nav-link :href="route('doctor.dashboard')" :active="request()->routeIs('doctor.dashboard')">
+                <a href="{{ route('doctor.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Dashboard') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.appointments')" :active="request()->routeIs('doctor.appointments')">
+                <a href="{{ route('doctor.appointments') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Appointments') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.patients')" :active="request()->routeIs('doctor.patients')">
+                <a href="{{ route('doctor.patients') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Patients') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.health-records')" :active="request()->routeIs('doctor.health-records')">
+                <a href="{{ route('doctor.health-records') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Health Records') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.medications')" :active="request()->routeIs('doctor.medications')">
+                <a href="{{ route('doctor.medications') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Medicines') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.prescriptions')" :active="request()->routeIs('doctor.prescriptions')">
+                <a href="{{ route('doctor.prescriptions') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Prescriptions') }}
-                </x-responsive-nav-link>
+                </a>
 
-                <x-responsive-nav-link :href="route('doctor.reports')" :active="request()->routeIs('doctor.reports')">
+                <a href="{{ route('doctor.reports') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Reports') }}
-                </x-responsive-nav-link>
+                </a>
             @endif
         </div>
 
@@ -299,28 +375,46 @@
             <div class="mt-3 space-y-1">
                 @if(Auth::user()->user_type == 1 || Auth::user()->user_type == 2)
                     <!-- Student and Faculty & Staff Mobile Profile -->
-                    <x-responsive-nav-link :href="route('patients.profile')">
+                    <a href="#" onclick="navigateToPatientTab('profile'); return false;" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Profile') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @else
                     <!-- Doctor Mobile Profile -->
-                    <x-responsive-nav-link :href="route('profile.edit')">
+                    <a href="{{ route('profile.edit') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Profile') }}
-                    </x-responsive-nav-link>
+                    </a>
                 @endif
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
-                    <x-responsive-nav-link :href="route('logout')"
+                    <a href="{{ route('logout') }}"
+                            class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();"
                             onKeyDown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.closest('form').submit(); }">
                         {{ __('Log Out') }}
-                    </x-responsive-nav-link>
+                    </a>
                 </form>
             </div>
         </div>
     </div>
 </nav>
+
+<script>
+    // Navigate to patient tab (AJAX-based navigation within patient shell)
+    function navigateToPatientTab(tab) {
+        const currentPath = window.location.pathname;
+
+        // If already on a patient shell page, use AJAX to switch tabs
+        if (currentPath.startsWith('/patient') && typeof switchTab === 'function') {
+            switchTab(tab);
+            return;
+        }
+
+        // Otherwise navigate to the shell page - the shell will handle AJAX loading
+        const url = '/patient/' + (tab === 'dashboard' ? 'dashboard' : tab);
+        window.location.href = url;
+    }
+</script>

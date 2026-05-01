@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             // 1 = Student, 2 = Faculty & Staff
             $table->string('school_id',20);
+            $table->string('bloodtype', 10)->nullable();
             $table->integer('patient_type');
             $table->integer('edulvl_id');
             // Foreign ID to User
