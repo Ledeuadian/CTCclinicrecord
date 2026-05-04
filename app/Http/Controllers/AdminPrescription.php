@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PrescriptionRecord;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Patients;
+use App\Models\Medicine;
 
 class AdminPrescription extends Controller
 {
@@ -81,8 +81,9 @@ class AdminPrescription extends Controller
     public function create()
     {
         //
-        $users = User::all();
-        return view('admin.prescription.create', compact('users'));
+        $patients = Patients::with('user')->get();
+        $medicines = Medicine::all();
+        return view('admin.prescription.create', compact('patients', 'medicines'));
     }
 
     /**

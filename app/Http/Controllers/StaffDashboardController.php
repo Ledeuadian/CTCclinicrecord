@@ -305,10 +305,7 @@ class StaffDashboardController extends Controller
         $appointment->status = $request->status;
         $appointment->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment status updated successfully'
-        ]);
+        return redirect()->route('staff.dashboard')->with('success', 'Appointment ' . strtolower($request->status) . ' successfully.');
     }
 
     /**
@@ -702,14 +699,18 @@ class StaffDashboardController extends Controller
     {
         $request->validate([
             'dosage' => 'required|string|max:255',
-            'frequency' => 'required|string|max:255',
-            'duration' => 'required|string|max:255',
-            'instructions' => 'nullable|string',
-            'status' => 'required|in:active,completed,discontinued',
+            'frequency' => 'nullable|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'instruction' => 'nullable|string',
         ]);
 
         $prescription = PrescriptionRecord::findOrFail($id);
-        $prescription->update($request->all());
+        $prescription->update([
+            'dosage' => $request->dosage,
+            'frequency' => $request->frequency,
+            'duration' => $request->duration,
+            'instruction' => $request->instruction,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -720,10 +721,12 @@ class StaffDashboardController extends Controller
     /**
      * Discontinue prescription
      */
-    public function discontinuePrescription($id)
+    public function discontinuePrescription(Request $request, $id)
     {
         $prescription = PrescriptionRecord::findOrFail($id);
         $prescription->status = 'discontinued';
+        $prescription->discontinuation_reason = $request->discontinuation_reason;
+        $prescription->date_discontinued = now();
         $prescription->save();
 
         return response()->json([

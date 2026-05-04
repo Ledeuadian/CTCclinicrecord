@@ -340,7 +340,7 @@
                 <button type="button" onclick="closeUpdateModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="button" onclick="submitUpdate()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                     Update Prescription
                 </button>
             </div>
@@ -371,14 +371,14 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Discontinuation *</label>
-                    <textarea name="discontinuation_reason" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Please provide a reason..."></textarea>
+                    <textarea name="discontinuation_reason" id="disc_reason" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Please provide a reason..."></textarea>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeDiscontinueModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                <button type="button" onclick="submitDiscontinue()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
                     Discontinue
                 </button>
             </div>
@@ -424,9 +424,65 @@ function openUpdateModal(prescription) {
     document.getElementById('update_instruction').value = prescription.instruction || '';
 
     const form = document.getElementById('updateForm');
-    form.action = '/doctor/prescription/' + prescription.id;
-
+    form.action = '/staff/prescription/' + prescription.id;
+    updateFormAction = '/staff/prescription/' + prescription.id;
     document.getElementById('updateModal').classList.remove('hidden');
+}
+
+let updateFormAction = '';
+
+function submitUpdate() {
+    const dosage = document.getElementById('update_dosage').value;
+    if (!dosage.trim()) {
+        alert('Dosage is required.');
+        return;
+    }
+
+    const formData = {
+        dosage: document.getElementById('update_dosage').value,
+        frequency: document.getElementById('update_frequency').value,
+        duration: document.getElementById('update_duration').value,
+        instruction: document.getElementById('update_instruction').value
+    };
+
+    fetch(updateFormAction, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(async response => {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned non-JSON: ' + text.substring(0, 200));
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            closeUpdateModal();
+            showToast('Prescription updated successfully.');
+            setTimeout(() => window.location.href = '/staff/prescriptions', 1500);
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Update error:', error);
+        alert('Error updating prescription: ' + error.message);
+    });
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
 }
 
 function closeUpdateModal() {
@@ -442,9 +498,51 @@ function openDiscontinueModal(prescription) {
     document.getElementById('disc_dosage').textContent = prescription.dosage;
 
     const form = document.getElementById('discontinueForm');
-    form.action = '/doctor/prescription/' + prescription.id + '/discontinue';
+    form.action = '/staff/prescription/' + prescription.id + '/discontinue';
+    discontinueFormAction = '/staff/prescription/' + prescription.id + '/discontinue';
 
     document.getElementById('discontinueModal').classList.remove('hidden');
+}
+
+let discontinueFormAction = '';
+
+function submitDiscontinue() {
+    const reason = document.getElementById('disc_reason').value;
+    if (!reason.trim()) {
+        alert('Please provide a reason for discontinuation.');
+        return;
+    }
+
+    fetch(discontinueFormAction, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ discontinuation_reason: reason })
+    })
+    .then(async response => {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned non-JSON: ' + text.substring(0, 200));
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            closeDiscontinueModal();
+            showToast('Prescription discontinued successfully.');
+            setTimeout(() => window.location.href = '/staff/prescriptions', 1500);
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Discontinue error:', error);
+        alert('Error discontinuing prescription: ' + error.message);
+    });
 }
 
 function closeDiscontinueModal() {
@@ -455,7 +553,7 @@ function viewPrescriptionHistory(patientId) {
     document.getElementById('historyModal').classList.remove('hidden');
     document.getElementById('historyContent').innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2 text-gray-600">Loading history...</p></div>';
 
-    fetch('/doctor/prescription/history/' + patientId)
+    fetch('/staff/prescription/history/' + patientId)
         .then(response => response.json())
         .then(data => {
             let html = '<div class="space-y-4">';

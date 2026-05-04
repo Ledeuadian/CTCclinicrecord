@@ -258,7 +258,7 @@ class DoctorDashboardController extends Controller
 
         $appointment->update(['status' => $request->status]);
 
-        return back()->with('success', 'Appointment status updated successfully.');
+        return redirect()->route('doctor.dashboard')->with('success', 'Appointment ' . strtolower($request->status) . ' successfully.');
     }
 
     /**

@@ -1,7 +1,7 @@
 @extends('admin.layout.navigation')
 
 @section('content')
-<div class="relative overflow-x-auto">
+<div class="relative overflow-x-auto p-6">
     @if (session('success'))
     <div id="alert-border-3" class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800" role="alert">
         <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
@@ -24,89 +24,86 @@
             </div>
         @endforeach
     @endif
-    <h2 class="text-xl font-semibold text-white">New Prescription</h2>
-    <form class="max-w mx-auto" action="{{ route('admin.doctors.store') }}" method="POST">
-        @csrf
-        <div class="grid md:grid-cols-2 md:gap-6">
-            <div class="relative z-0 w-12 mb-6 group">
-                <input type="number" id="searchValue" name="user_id" hidden>
-                <!-- Search Input -->
-                <input
-                    type="text"
-                    placeholder=""
-                    id="searchInput"
-                    class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                    oninput="filterOptions()"
-                    onclick="toggleDropdown()"
-                />
 
-                <!-- Dropdown Options -->
-                <div id="dropdown" class="block w-full p-2.5 bg-white border border-gray-300 rounded-lg shadow-lg hidden">
-                    <ul id="optionsList" class="max-h-40 overflow-y-auto">
-                    <!-- Loop through options from the database -->
-                    @foreach($users as $user)
-                        <li class="px-4 py-2 cursor-pointer hover:bg-blue-100" onclick="selectOption('{{ $user['name'] }}','{{ $user['id'] }}', event)">
-                        {{ $user['name'] }}
-                        </li>
-                    @endforeach
-                    </ul>
-                </div>
-                <label for="searchInput" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">User Account</label>
+    <h2 class="text-xl font-semibold text-white mb-6">New Prescription</h2>
+
+    <form class="max-w-4xl mx-auto" action="{{ route('admin.prescription.store') }}" method="POST">
+        @csrf
+
+        <!-- Patient Selection -->
+        <div class="mb-6">
+            <label for="patient_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Patient</label>
+            <select name="patient_id" id="patient_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                <option value="">Select Patient</option>
+                @foreach($patients as $patient)
+                    <option value="{{ $patient->id }}">{{ $patient->user->name ?? 'Patient #'.$patient->id }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <!-- Medicine Selection -->
+        <div class="mb-6">
+            <label for="medicine_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Medicine</label>
+            <select name="medicine_id" id="medicine_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                <option value="">Select Medicine</option>
+                @foreach($medicines as $medicine)
+                    <option value="{{ $medicine->id }}">{{ $medicine->name }} ({{ $medicine->category ?? 'N/A' }})</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+            <!-- Dosage -->
+            <div>
+                <label for="dosage" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Dosage</label>
+                <input type="text" name="dosage" id="dosage" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="e.g. 500mg" required>
+            </div>
+
+            <!-- Frequency -->
+            <div>
+                <label for="frequency" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Frequency</label>
+                <input type="text" name="frequency" id="frequency" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="e.g. 3x daily">
+            </div>
+
+            <!-- Duration -->
+            <div>
+                <label for="duration" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Duration</label>
+                <input type="text" name="duration" id="duration" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="e.g. 7 days">
             </div>
         </div>
-        <div class="grid md:grid-cols-2 md:gap-6">
-            <div class="relative z-0 w-full mb-5 group">
-                <input type="text" name="specialization" id="specialization" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required />
-                <label for="specialization" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Specialization</label>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <!-- Date Prescribed -->
+            <div>
+                <label for="date_prescribed" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Date Prescribed</label>
+                <input type="date" name="date_prescribed" id="date_prescribed" value="{{ date('Y-m-d') }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label for="status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+                <select name="status" id="status" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="discontinued">Discontinued</option>
+                </select>
             </div>
         </div>
-        <div class="grid md:grid-cols-2 md:gap-6">
-            <div class="relative z-0 w-full mb-5 group">
-                <label for="address" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Clinic Address</label>
-                <textarea name="address" id="address" rows="4" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder=" "></textarea>
-            </div>
+
+        <!-- Instructions -->
+        <div class="mb-6">
+            <label for="instruction" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Instructions</label>
+            <textarea name="instruction" id="instruction" rows="4" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter usage instructions..."></textarea>
         </div>
-        <div class="flex justify-start space-x-2">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Save Doctors
+
+        <div class="flex justify-start space-x-4">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                Save Prescription
             </button>
+            <a href="{{ route('admin.prescription.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">
+                Cancel
+            </a>
         </div>
     </form>
-    <script>
-        function toggleDropdown() {
-            const dropdown = document.getElementById('dropdown');
-            dropdown.classList.toggle('hidden');
-        }
-
-        function filterOptions() {
-            const input = document.getElementById('searchInput').value.toLowerCase();
-            const options = document.getElementById('optionsList').getElementsByTagName('li');
-
-            Array.from(options).forEach(option => {
-                const text = option.textContent || option.innerText;
-                option.style.display = text.toLowerCase().includes(input) ? "" : "none";
-            });
-        }
-
-        function selectOption(value,id) {
-            const input = document.getElementById('searchInput');
-            const inputVal = document.querySelector("#searchValue");
-            const dropdown = document.getElementById('dropdown');
-
-            input.value = value; // Set the selected option in the input
-            inputVal.value = id; //
-            dropdown.classList.add('hidden'); // Hide the dropdown
-        }
-
-        // Hide dropdown if clicked outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('dropdown');
-            const input = document.getElementById('searchInput');
-
-            if (!dropdown.contains(event.target) && event.target !== input) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    </script>
 </div>
 @endsection
