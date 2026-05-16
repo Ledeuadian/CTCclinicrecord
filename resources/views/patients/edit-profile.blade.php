@@ -1,6 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const patientTypeSelect = document.getElementById('patient_type');
+    const schoolIdField = document.getElementById('school_id_field');
+    const edulvlField = document.getElementById('edulvl_field');
+
+    function toggleStudentFields() {
+        const isStudent = patientTypeSelect && patientTypeSelect.value === 'student';
+        if (schoolIdField) schoolIdField.style.display = isStudent ? 'block' : 'none';
+        if (edulvlField) edulvlField.style.display = isStudent ? 'block' : 'none';
+    }
+
+    if (patientTypeSelect) {
+        patientTypeSelect.addEventListener('change', toggleStudentFields);
+        toggleStudentFields();
+    }
+});
+</script>
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -50,13 +68,60 @@
                             <label for="patient_type" class="block text-sm font-medium text-gray-700 mb-2">
                                 Patient Type <span class="text-red-500">*</span>
                             </label>
+                            @php
+                                $patientTypeLabels = [1 => 'student', 2 => 'staff'];
+                                $currentPatientTypeStr = $patientTypeLabels[$patients->patient_type] ?? 'student';
+                            @endphp
                             <select name="patient_type" id="patient_type" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">Select patient type...</option>
-                                <option value="student" {{ old('patient_type', $patients->patient_type) == 'student' ? 'selected' : '' }}>Student</option>
-                                <option value="staff" {{ old('patient_type', $patients->patient_type) == 'staff' ? 'selected' : '' }}>Staff</option>
-                                <option value="faculty" {{ old('patient_type', $patients->patient_type) == 'faculty' ? 'selected' : '' }}>Faculty</option>
-                                <option value="external" {{ old('patient_type', $patients->patient_type) == 'external' ? 'selected' : '' }}>External</option>
+                                <option value="student" {{ old('patient_type', $currentPatientTypeStr) == 'student' ? 'selected' : '' }}>Student</option>
+                                <option value="staff" {{ old('patient_type', $currentPatientTypeStr) == 'staff' ? 'selected' : '' }}>Staff</option>
+                                <option value="faculty" {{ old('patient_type', $currentPatientTypeStr) == 'faculty' ? 'selected' : '' }}>Faculty</option>
+                                <option value="external" {{ old('patient_type', $currentPatientTypeStr) == 'external' ? 'selected' : '' }}>External</option>
+                            </select>
+                        </div>
+
+                        <!-- School ID (for students) -->
+                        <div id="school_id_field">
+                            <label for="school_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                School ID
+                            </label>
+                            <input type="text" name="school_id" id="school_id"
+                                   value="{{ old('school_id', $patients->school_id) }}"
+                                   placeholder="Enter your School ID"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Educational Level (for students) -->
+                        <div id="edulvl_field">
+                            <label for="edulvl_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Educational Level
+                            </label>
+                            <select name="edulvl_id" id="edulvl_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select educational level...</option>
+                                @if(isset($edulvl))
+                                    @foreach($edulvl as $level)
+                                        <option value="{{ $level->id }}" {{ old('edulvl_id', $patients->edulvl_id) == $level->id ? 'selected' : '' }}>
+                                            {{ $level->level_name }} - {{ $level->year_level }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+
+                        <!-- Blood Type -->
+                        <div>
+                            <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">
+                                Blood Type
+                            </label>
+                            <select name="bloodtype" id="bloodtype"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select blood type...</option>
+                                @foreach(['A+','A-','B+','B-','O+','O-','AB+','AB-'] as $bt)
+                                    <option value="{{ $bt }}" {{ old('bloodtype', $patients->bloodtype) == $bt ? 'selected' : '' }}>{{ $bt }}</option>
+                                @endforeach
                             </select>
                         </div>
 

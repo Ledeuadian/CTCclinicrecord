@@ -16,6 +16,7 @@ use App\Http\Controllers\PatientsAppointmentScheduler;
 use App\Http\Controllers\PatientsViewPersonalHealthRecord;
 use App\Http\Controllers\PatientsUpdatePersonalInformation;use App\Http\Controllers\PatientCertificateController;// Doctor Controllers
 use App\Http\Controllers\DoctorDashboardController;
+use App\Http\Controllers\DoctorProfileController;
 // Staff Controllers
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\ImportController;
@@ -65,7 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('/reports', ReportsController::class);
 
     // Patient-specific routes
-    Route::prefix('patient')->name('patients.')->group(function () {
+    Route::prefix('patient')->name('patients.')->middleware(['auth', 'ensure.patient.profile'])->group(function () {
         // Dashboard (main shell) - returns the shell view
         Route::get('/dashboard', function() {
             return view('patients.shells.patient-shell');
@@ -110,16 +111,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/examination-history', [PatientsViewPersonalHealthRecord::class, 'examinationHistory'])->name('examination.history');
         Route::get('/health-summary', [PatientsViewPersonalHealthRecord::class, 'healthSummary'])->name('health.summary');
 
-        // Personal Information Management Routes (separate pages, not in shell)
-        Route::get('/profile/create', [PatientsUpdatePersonalInformation::class, 'create'])->name('profile.create');
-        Route::post('/profile', [PatientsUpdatePersonalInformation::class, 'store'])->name('profile.store');
-        Route::get('/profile/edit', [PatientsUpdatePersonalInformation::class, 'edit'])->name('profile.edit');
-        Route::put('/profile', [PatientsUpdatePersonalInformation::class, 'update'])->name('profile.update');
-        Route::patch('/profile/password', [PatientsUpdatePersonalInformation::class, 'updatePassword'])->name('profile.password.update');
-        Route::patch('/profile/basic-info', [PatientsUpdatePersonalInformation::class, 'updateBasicInfo'])->name('profile.basic.update');
-        Route::patch('/profile/medical-info', [PatientsUpdatePersonalInformation::class, 'updateMedicalInfo'])->name('profile.medical.info');
-        Route::patch('/profile/emergency-contact', [PatientsUpdatePersonalInformation::class, 'updateEmergencyContact'])->name('profile.emergency.contact');
-
         // Certificate Request Routes (separate pages, not in shell)
         Route::get('/certificates/create', [PatientCertificateController::class, 'create'])->name('certificates.create');
         Route::post('/certificates', [PatientCertificateController::class, 'store'])->name('certificates.store');
@@ -131,6 +122,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/ajax/health-records', [PatientsController::class, 'ajaxHealthRecords'])->name('ajax.health-records');
         Route::get('/ajax/profile', [PatientsController::class, 'ajaxProfile'])->name('ajax.profile');
         Route::get('/ajax/certificates', [PatientsController::class, 'ajaxCertificates'])->name('ajax.certificates');
+    });
+
+    // Profile creation/editing routes — no patient profile check (allows new users to create profile)
+    Route::prefix('patient')->name('patients.')->group(function () {
+        Route::get('/profile/create', [PatientsUpdatePersonalInformation::class, 'create'])->name('profile.create');
+        Route::post('/profile', [PatientsUpdatePersonalInformation::class, 'store'])->name('profile.store');
+        Route::get('/profile/edit', [PatientsUpdatePersonalInformation::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [PatientsUpdatePersonalInformation::class, 'update'])->name('profile.update');
+        Route::patch('/profile/password', [PatientsUpdatePersonalInformation::class, 'updatePassword'])->name('profile.password.update');
+        Route::patch('/profile/basic-info', [PatientsUpdatePersonalInformation::class, 'updateBasicInfo'])->name('profile.basic.update');
+        Route::patch('/profile/medical-info', [PatientsUpdatePersonalInformation::class, 'updateMedicalInfo'])->name('profile.medical.info');
+        Route::patch('/profile/emergency-contact', [PatientsUpdatePersonalInformation::class, 'updateEmergencyContact'])->name('profile.emergency.contact');
     });
     Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'check.user.type:3'])->group(function () {
         Route::get('/', function() {
@@ -199,6 +202,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/ajax/medications', [DoctorDashboardController::class, 'ajaxMedications'])->name('ajax.medications');
         Route::get('/ajax/prescriptions', [DoctorDashboardController::class, 'ajaxPrescriptions'])->name('ajax.prescriptions');
         Route::get('/ajax/reports', [DoctorDashboardController::class, 'ajaxReports'])->name('ajax.reports');
+
+        // Doctor Profile Routes
+        Route::get('/profile', [DoctorProfileController::class, 'show'])->name('profile.show');
+        Route::get('/profile/edit', [DoctorProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');
+        Route::patch('/profile/password', [DoctorProfileController::class, 'updatePassword'])->name('profile.password.update');
 
         // Create Routes for full-page forms
         Route::get('/medicines/create', [DoctorDashboardController::class, 'createMedicine'])->name('medicines.create');

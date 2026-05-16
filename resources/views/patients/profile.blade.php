@@ -53,7 +53,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-600">Patient Type</label>
-                                <p class="text-gray-800">{{ ucfirst($patient->patient_type) }}</p>
+                                <p class="text-gray-800">@if($patient->patient_type == 1) Student @elseif($patient->patient_type == 2) Faculty & Staff @else {{ $patient->patient_type }} @endif</p>
                             </div>
 
                             <div>

@@ -34,7 +34,9 @@ class PatientsUpdatePersonalInformation extends Controller
                 ->with('info', 'You already have a patient profile.');
         }
 
-        return view('patients.create-profile');
+        $edulvl = \App\Models\EducationalLevel::all();
+
+        return view('patients.create-profile', compact('edulvl'));
     }
 
     /**
@@ -46,6 +48,7 @@ class PatientsUpdatePersonalInformation extends Controller
             'patient_type' => 'required|string',
             'school_id' => 'nullable|string|max:255',
             'edulvl_id' => 'nullable|integer|exists:educational_level,id',
+            'bloodtype' => 'nullable|string|max:10',
             'address' => 'required|string|max:255',
             'medical_condition' => 'nullable|string',
             'medical_illness' => 'nullable|string',
@@ -79,6 +82,7 @@ class PatientsUpdatePersonalInformation extends Controller
             'patient_type' => $patientType,
             'school_id' => $request->school_id ?? null,
             'edulvl_id' => $request->edulvl_id ?? null,
+            'bloodtype' => $request->bloodtype ?? null,
             'address' => $request->address,
             'medical_condition' => $request->medical_condition,
             'medical_illness' => $request->medical_illness,
@@ -106,7 +110,9 @@ class PatientsUpdatePersonalInformation extends Controller
                 ->with('info', 'Please create your patient profile first.');
         }
 
-        return view('patients.edit-profile', compact('user', 'patients'));
+        $edulvl = \App\Models\EducationalLevel::all();
+
+        return view('patients.edit-profile', compact('user', 'patients', 'edulvl'));
     }
 
     /**
@@ -118,6 +124,8 @@ class PatientsUpdatePersonalInformation extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
             'patient_type' => 'required|string',
+            'school_id' => 'nullable|string|max:255',
+            'bloodtype' => 'nullable|string|max:10',
             'address' => 'required|string|max:255',
             'medical_condition' => 'nullable|string',
             'medical_illness' => 'nullable|string',
@@ -142,9 +150,19 @@ class PatientsUpdatePersonalInformation extends Controller
             'email' => $request->email,
         ]);
 
+        // Convert patient_type string to integer: 1 = Student, 2 = Faculty & Staff
+        $patientTypeMap = [
+            'student' => 1,
+            'staff' => 2,
+            'faculty' => 2,
+            'external' => 2,
+        ];
+
         // Update patient information
         $patients->update([
-            'patient_type' => $request->patient_type,
+            'patient_type' => $patientTypeMap[$request->patient_type] ?? $patients->patient_type,
+            'school_id' => $request->school_id ?? $patients->school_id,
+            'bloodtype' => $request->bloodtype ?? $patients->bloodtype,
             'address' => $request->address,
             'medical_condition' => $request->medical_condition,
             'medical_illness' => $request->medical_illness,

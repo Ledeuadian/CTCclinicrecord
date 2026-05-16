@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'check.user.type' => \App\Http\Middleware\CheckUserType::class,
+            'ensure.patient.profile' => \App\Http\Middleware\EnsurePatientProfileExists::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
