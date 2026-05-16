@@ -495,7 +495,7 @@ class StaffDashboardController extends Controller
         $totalImmunizations = ImmunizationRecords::count();
 
         // Top diagnoses - ensure diagnosis is a valid string before counting
-        $diagnosisStats = HealthRecords::select('diagnosis', \DB::raw('count(*) as count'))
+        $diagnosisStats = HealthRecords::select('diagnosis', DB::raw('count(*) as count'))
             ->whereNotNull('diagnosis')
             ->where('diagnosis', '!=', '')
             ->whereRaw('LENGTH(diagnosis) > 0')
@@ -1066,7 +1066,7 @@ class StaffDashboardController extends Controller
     public function showReportGeneration()
     {
         $savedReports = GeneratedReport::where('generated_by_type', 'staff')
-            ->where('generated_by_id', auth()->id())
+            ->where('generated_by_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1101,7 +1101,7 @@ class StaffDashboardController extends Controller
                 'date_to' => $dateTo->toDateString(),
             ],
             'generated_by_type' => 'staff',
-            'generated_by_id' => auth()->id(),
+            'generated_by_id' => Auth::id(),
             'status' => 'completed',
         ]);
 
@@ -1116,7 +1116,7 @@ class StaffDashboardController extends Controller
         $report = GeneratedReport::findOrFail($id);
 
         // Check authorization
-        if ($report->generated_by_id !== auth()->id() && $report->generated_by_type !== 'staff') {
+        if ($report->generated_by_id !== Auth::id() && $report->generated_by_type !== 'staff') {
             abort(403, 'Unauthorized access to this report.');
         }
 
@@ -1136,7 +1136,7 @@ class StaffDashboardController extends Controller
         $report = GeneratedReport::findOrFail($id);
 
         // Check authorization
-        if ($report->generated_by_id !== auth()->id() && $report->generated_by_type !== 'staff') {
+        if ($report->generated_by_id !== Auth::id() && $report->generated_by_type !== 'staff') {
             abort(403, 'Unauthorized to delete this report.');
         }
 
@@ -1154,7 +1154,7 @@ class StaffDashboardController extends Controller
         $report = GeneratedReport::findOrFail($id);
 
         // Check authorization
-        if ($report->generated_by_id !== auth()->id() && $report->generated_by_type !== 'staff') {
+        if ($report->generated_by_id !== Auth::id() && $report->generated_by_type !== 'staff') {
             abort(403, 'Unauthorized to export this report.');
         }
 
