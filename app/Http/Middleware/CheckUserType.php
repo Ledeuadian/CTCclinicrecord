@@ -18,27 +18,41 @@ class CheckUserType
      */
     public function handle(Request $request, Closure $next, $userType)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        if (Auth::user()->user_type != $userType) {
-            // Redirect to the appropriate dashboard based on user type
-            $userType = Auth::user()->user_type;
-            switch ($userType) {
-                case 0:
-                    return redirect()->route('admin.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
-                case 1:
-                    return redirect()->route('patients.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
-                case 2:
-                    return redirect()->route('staff.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
-                case 3:
-                    return redirect()->route('doctor.dashboard')->with('error', 'Access denied. You do not have permission to access this page.');
-                default:
-                    return redirect()->route('login')->with('error', 'Access denied. You do not have permission to access this page.');
+        // Check 'admin' guard first (for admin login)
+        if (Auth::guard('admin')->check()) {
+            $user = Auth::guard('admin')->user();
+            if ($user->user_type == $userType) {
+                return $next($request);
             }
+            return $this->denyAccess($user->user_type);
         }
 
-        return $next($request);
+        // Also check default guard (for other login methods)
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->user_type == $userType) {
+                return $next($request);
+            }
+            return $this->denyAccess($user->user_type);
+        }
+
+        // Not logged in - redirect to login
+        return redirect()->route('login');
+    }
+
+    private function denyAccess($userType)
+    {
+        switch ($userType) {
+            case 0:
+                return redirect()->route('admin.dashboard')->with('error', 'Access denied.');
+            case 1:
+                return redirect()->route('patients.dashboard')->with('error', 'Access denied.');
+            case 2:
+                return redirect()->route('staff.dashboard')->with('error', 'Access denied.');
+            case 3:
+                return redirect()->route('doctor.dashboard')->with('error', 'Access denied.');
+            default:
+                return redirect()->route('login')->with('error', 'Access denied.');
+        }
     }
 }

@@ -19,12 +19,12 @@
                     <h1 class="text-2xl font-semibold text-gray-800">Prescription Management</h1>
                     <p class="text-gray-600">Manage patient prescriptions and medication records</p>
                 </div>
-                <button onclick="openPrescribeModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
+                <a href="{{ route('staff.prescriptions.create-page') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Prescribe New Medication
-                </button>
+                </a>
             </div>
         </div>
 
@@ -88,31 +88,16 @@
                 </div>
             </div>
 
-            <!-- Search and Filter -->
+            <!-- Live Search -->
             <div class="mb-6">
-                <form action="{{ route('staff.prescriptions') }}" method="GET" class="flex gap-4">
-                    <div class="flex-1">
-                        <input type="text" name="search" value="{{ request('search') }}"
-                               placeholder="Search by patient name or ID..."
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
                     </div>
-                    <div>
-                        <select name="status" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="discontinued" {{ request('status') == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
-                        Search
-                    </button>
-                    @if(request('search') || request('status'))
-                        <a href="{{ route('staff.prescriptions') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-md">
-                            Clear
-                        </a>
-                    @endif
-                </form>
+                    <input type="text" id="prescriptionSearch" placeholder="Search by patient name, medicine, or dosage..." class="w-full ps-10 p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
             </div>
 
             <!-- Prescriptions Table -->
@@ -131,9 +116,9 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody id="prescriptionsTable" class="divide-y divide-gray-200">
                             @foreach($prescriptions as $prescription)
-                                <tr class="hover:bg-gray-50">
+                                <tr class="prescription-row hover:bg-gray-50" data-search="{{ strtolower(($prescription->patient && $prescription->patient->user ? $prescription->patient->user->name : '') . ' ' . ($prescription->medicine ? $prescription->medicine->name : '') . ' ' . $prescription->dosage) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($prescription->patient && $prescription->patient->user)
                                             <div class="font-medium text-gray-900">{{ $prescription->patient->user->name }}</div>
@@ -205,7 +190,7 @@
                     </div>
                 @endif
             @else
-                <div class="text-center py-12">
+                <div id="noPrescriptionResults" class="hidden text-center py-12">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -289,6 +274,28 @@
     </div>
 </div>
 
+@push('scripts')
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'prescriptionSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.prescription-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noPrescriptionResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+    });
+})();
+</script>
+@endpush
+
 <!-- Update Prescription Modal -->
 <div id="updateModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
@@ -333,7 +340,7 @@
                 <button type="button" onclick="closeUpdateModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="button" onclick="submitUpdate()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                     Update Prescription
                 </button>
             </div>
@@ -364,14 +371,14 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Discontinuation *</label>
-                    <textarea name="discontinuation_reason" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Please provide a reason..."></textarea>
+                    <textarea name="discontinuation_reason" id="disc_reason" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Please provide a reason..."></textarea>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeDiscontinueModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                <button type="button" onclick="submitDiscontinue()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
                     Discontinue
                 </button>
             </div>
@@ -417,9 +424,65 @@ function openUpdateModal(prescription) {
     document.getElementById('update_instruction').value = prescription.instruction || '';
 
     const form = document.getElementById('updateForm');
-    form.action = '/doctor/prescription/' + prescription.id;
-
+    form.action = '/staff/prescription/' + prescription.id;
+    updateFormAction = '/staff/prescription/' + prescription.id;
     document.getElementById('updateModal').classList.remove('hidden');
+}
+
+let updateFormAction = '';
+
+function submitUpdate() {
+    const dosage = document.getElementById('update_dosage').value;
+    if (!dosage.trim()) {
+        alert('Dosage is required.');
+        return;
+    }
+
+    const formData = {
+        dosage: document.getElementById('update_dosage').value,
+        frequency: document.getElementById('update_frequency').value,
+        duration: document.getElementById('update_duration').value,
+        instruction: document.getElementById('update_instruction').value
+    };
+
+    fetch(updateFormAction, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(async response => {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned non-JSON: ' + text.substring(0, 200));
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            closeUpdateModal();
+            showToast('Prescription updated successfully.');
+            setTimeout(() => window.location.href = '/staff/prescriptions', 1500);
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Update error:', error);
+        alert('Error updating prescription: ' + error.message);
+    });
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
 }
 
 function closeUpdateModal() {
@@ -435,9 +498,51 @@ function openDiscontinueModal(prescription) {
     document.getElementById('disc_dosage').textContent = prescription.dosage;
 
     const form = document.getElementById('discontinueForm');
-    form.action = '/doctor/prescription/' + prescription.id + '/discontinue';
+    form.action = '/staff/prescription/' + prescription.id + '/discontinue';
+    discontinueFormAction = '/staff/prescription/' + prescription.id + '/discontinue';
 
     document.getElementById('discontinueModal').classList.remove('hidden');
+}
+
+let discontinueFormAction = '';
+
+function submitDiscontinue() {
+    const reason = document.getElementById('disc_reason').value;
+    if (!reason.trim()) {
+        alert('Please provide a reason for discontinuation.');
+        return;
+    }
+
+    fetch(discontinueFormAction, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ discontinuation_reason: reason })
+    })
+    .then(async response => {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error('Server returned non-JSON: ' + text.substring(0, 200));
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            closeDiscontinueModal();
+            showToast('Prescription discontinued successfully.');
+            setTimeout(() => window.location.href = '/staff/prescriptions', 1500);
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Discontinue error:', error);
+        alert('Error discontinuing prescription: ' + error.message);
+    });
 }
 
 function closeDiscontinueModal() {
@@ -448,7 +553,7 @@ function viewPrescriptionHistory(patientId) {
     document.getElementById('historyModal').classList.remove('hidden');
     document.getElementById('historyContent').innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p class="mt-2 text-gray-600">Loading history...</p></div>';
 
-    fetch('/doctor/prescription/history/' + patientId)
+    fetch('/staff/prescription/history/' + patientId)
         .then(response => response.json())
         .then(data => {
             let html = '<div class="space-y-4">';

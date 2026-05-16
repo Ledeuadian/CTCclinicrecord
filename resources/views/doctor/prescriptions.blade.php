@@ -9,12 +9,12 @@
                     <h1 class="text-2xl font-semibold text-gray-800">Prescription Management</h1>
                     <p class="text-gray-600">Manage patient prescriptions and medication records</p>
                 </div>
-                <button onclick="openPrescribeModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
+                <a href="{{ route('doctor.prescriptions.create-page') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Prescribe New Medication
-                </button>
+                </a>
             </div>
         </div>
 
@@ -78,31 +78,16 @@
                 </div>
             </div>
 
-            <!-- Search and Filter -->
+            <!-- Live Search -->
             <div class="mb-6">
-                <form action="{{ route('doctor.prescriptions') }}" method="GET" class="flex gap-4">
-                    <div class="flex-1">
-                        <input type="text" name="search" value="{{ request('search') }}"
-                               placeholder="Search by patient name or ID..."
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
                     </div>
-                    <div>
-                        <select name="status" class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="discontinued" {{ request('status') == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
-                        Search
-                    </button>
-                    @if(request('search') || request('status'))
-                        <a href="{{ route('doctor.prescriptions') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-md">
-                            Clear
-                        </a>
-                    @endif
-                </form>
+                    <input type="text" id="prescriptionSearch" placeholder="Search by patient name, medicine, or dosage..." class="w-full ps-10 p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
             </div>
 
             <!-- Prescriptions Table -->
@@ -121,9 +106,9 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody id="prescriptionsTable" class="divide-y divide-gray-200">
                             @foreach($prescriptions as $prescription)
-                                <tr class="hover:bg-gray-50">
+                                <tr class="prescription-row hover:bg-gray-50" data-search="{{ strtolower(($prescription->patient && $prescription->patient->user ? $prescription->patient->user->name : '') . ' ' . ($prescription->medicine ? $prescription->medicine->name : '') . ' ' . $prescription->dosage) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($prescription->patient && $prescription->patient->user)
                                             <div class="font-medium text-gray-900">{{ $prescription->patient->user->name }}</div>
@@ -195,7 +180,7 @@
                     </div>
                 @endif
             @else
-                <div class="text-center py-12">
+                <div id="noPrescriptionResults" class="hidden text-center py-12">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -478,6 +463,49 @@ function viewPrescriptionHistory(patientId) {
 function closeHistoryModal() {
     document.getElementById('historyModal').classList.add('hidden');
 }
+</script>
+
+@push('scripts')
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'prescriptionSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.prescription-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noPrescriptionResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+    });
+})();
+</script>
+@endpush
+
+<!-- Inline script for AJAX loaded content -->
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'prescriptionSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.prescription-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noPrescriptionResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+    });
+})();
 </script>
 
 @endsection

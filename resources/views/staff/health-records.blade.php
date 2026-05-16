@@ -486,9 +486,10 @@
                                             Add Follow-up
                                         </button>
                                         <span class="text-gray-300">|</span>
-                                        <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                                        <a href="{{ route('staff.print.health-record', $patient->id) }}" target="_blank"
+                                           class="text-purple-600 hover:text-purple-800 text-sm font-medium">
                                             Print Record
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                             </div>

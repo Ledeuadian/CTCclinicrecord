@@ -37,8 +37,8 @@
                         <!-- Faculty & Staff Navigation with Toggle -->
                         @if(request()->routeIs('staff.*'))
                             <!-- Staff Duties Mode -->
-                            <a href="{{ route('staff.dashboard') }}"
-                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}"
+                            <a href="{{ route('staff.index') }}"
+                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('staff.index', 'staff.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}"
                                data-turbo-frame="staff-content">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -132,8 +132,8 @@
                         @endif
                     @else
                         <!-- Doctor Navigation (Full Access) -->
-                        <a href="{{ route('doctor.dashboard') }}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
+                        <a href="{{ route('doctor.index') }}"
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors {{ request()->routeIs('doctor.index') || request()->routeIs('doctor.dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                             {{ __('Dashboard') }}
                         </a>
 
@@ -188,7 +188,7 @@
                                 My Profile
                             </a>
                         @else
-                            <a href="{{ route('staff.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                            <a href="{{ route('staff.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
@@ -281,7 +281,7 @@
                             Switch to My Profile
                         </a>
                     @else
-                        <a href="{{ route('staff.dashboard') }}" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 transition ease-in-out duration-150">
+                        <a href="{{ route('staff.index') }}" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 transition ease-in-out duration-150">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
@@ -292,7 +292,7 @@
 
                 @if(request()->routeIs('staff.*'))
                     <!-- Staff Duties Mobile Navigation -->
-                    <a href="{{ route('staff.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                    <a href="{{ route('staff.index') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Dashboard') }}
                     </a>
 
@@ -335,7 +335,7 @@
                 @endif
             @else
                 <!-- Doctor Mobile Navigation (Full Access) -->
-                <a href="{{ route('doctor.dashboard') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                <a href="{{ route('doctor.index') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                     {{ __('Dashboard') }}
                 </a>
 

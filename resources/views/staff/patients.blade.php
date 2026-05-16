@@ -14,9 +14,15 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h1 class="text-2xl font-semibold text-gray-800">My Patients</h1>
-            <p class="text-gray-600">Patients who have appointments with you</p>
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">My Patients</h1>
+                <p class="text-gray-600">Patients who have appointments with you</p>
+            </div>
+            <a href="{{ route('staff.patients.create') }}"
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                + Add Patient
+            </a>
         </div>
 
         <div class="p-6">
@@ -147,6 +153,10 @@
                                    class="flex-1 bg-blue-700 hover:bg-blue-700 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-blue-700 transition-all duration-200">
                                     View Details
                                 </a>
+                                <a href="{{ route('staff.print.health-record', $patient->id) }}" target="_blank"
+                                   class="flex-1 bg-purple-600 hover:bg-purple-600 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-purple-600 transition-all duration-200">
+                                    🖨️ Print Record
+                                </a>
                                 <button class="bg-gray-300 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200"
                                         onclick="quickContact('{{ $patient->user->email }}')">
                                     Contact
@@ -238,4 +248,107 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+<!-- Inline script for AJAX loaded content -->
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'searchPatients') {
+            const searchInput = document.getElementById('searchPatients');
+            const typeFilter = document.getElementById('filterType');
+            const patientCards = document.querySelectorAll('.patient-card');
+            const countDisplay = document.querySelector('.patients-count');
+
+            if (!searchInput || !typeFilter || patientCards.length === 0) return;
+
+            let searchTimeout;
+
+            function filterPatients() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedType = typeFilter.value;
+                let visibleCount = 0;
+
+                patientCards.forEach(card => {
+                    const name = card.dataset.name || '';
+                    const email = card.dataset.email || '';
+                    const id = card.dataset.id || '';
+                    const type = card.dataset.type || '';
+
+                    const matchesSearch = searchTerm === '' ||
+                        name.includes(searchTerm) ||
+                        email.includes(searchTerm) ||
+                        id.includes(searchTerm);
+                    const matchesType = selectedType === '' || type === selectedType;
+
+                    if (matchesSearch && matchesType) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (countDisplay) {
+                    const totalCount = patientCards.length;
+                    let countText = `Showing <strong>${visibleCount}</strong> of <strong>${totalCount}</strong> patients`;
+                    if (searchTerm || selectedType) {
+                        if (searchTerm) countText += ` matching "<strong>${searchTerm}</strong>"`;
+                        if (selectedType) countText += selectedType === '1' ? ' (<strong>Students</strong>)' : ' (<strong>Faculty & Staff</strong>)';
+                    }
+                    countDisplay.innerHTML = countText;
+                }
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterPatients, 200);
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'filterType') {
+            const searchInput = document.getElementById('searchPatients');
+            const typeFilter = document.getElementById('filterType');
+            const patientCards = document.querySelectorAll('.patient-card');
+            const countDisplay = document.querySelector('.patients-count');
+
+            if (!searchInput || !typeFilter || patientCards.length === 0) return;
+
+            let visibleCount = 0;
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedType = typeFilter.value;
+
+            patientCards.forEach(card => {
+                const name = card.dataset.name || '';
+                const email = card.dataset.email || '';
+                const id = card.dataset.id || '';
+                const type = card.dataset.type || '';
+
+                const matchesSearch = searchTerm === '' ||
+                    name.includes(searchTerm) ||
+                    email.includes(searchTerm) ||
+                    id.includes(searchTerm);
+                const matchesType = selectedType === '' || type === selectedType;
+
+                if (matchesSearch && matchesType) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (countDisplay) {
+                const totalCount = patientCards.length;
+                let countText = `Showing <strong>${visibleCount}</strong> of <strong>${totalCount}</strong> patients`;
+                if (searchTerm || selectedType) {
+                    if (searchTerm) countText += ` matching "<strong>${searchTerm}</strong>"`;
+                    if (selectedType) countText += selectedType === '1' ? ' (<strong>Students</strong>)' : ' (<strong>Faculty & Staff</strong>)';
+                }
+                countDisplay.innerHTML = countText;
+            }
+        }
+    });
+})();
+</script>
+
 @endsection

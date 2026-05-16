@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\EducationalLevel;
 use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminPatients extends Controller
 {
@@ -39,6 +40,65 @@ class AdminPatients extends Controller
             ->get();
         //
         return view('admin.patients.index', compact('patients'));
+    }
+
+    /**
+     * Export patients data to CSV
+     */
+    public function export()
+    {
+        $patients = Patients::join('users', 'users.id', '=', 'patients.user_id')
+            ->leftJoin('educational_level', 'educational_level.id', '=', 'patients.edulvl_id')
+            ->whereIn('users.user_type', [1, 2])
+            ->select(
+                'patients.id',
+                'users.name as patient_name',
+                'users.email',
+                DB::raw("CASE WHEN patients.patient_type = 1 THEN 'Student' ELSE 'Faculty & Staff' END as patient_type"),
+                'patients.school_id',
+                'patients.bloodtype',
+                'patients.address',
+                'patients.medical_condition',
+                'patients.allergies',
+                'patients.emergency_contact_name',
+                'patients.emergency_contact_number',
+                'patients.emergency_relationship',
+                'educational_level.level_name',
+                'patients.created_at'
+            )
+            ->get();
+
+        $csvContent = "ID,Patient Name,Email,Patient Type,School ID,Blood Type,Address,Medical Condition,Allergies,Emergency Contact Name,Emergency Contact Number,Emergency Relationship,Educational Level,Created At\n";
+
+        foreach ($patients as $patient) {
+            $csvContent .= sprintf(
+                "%d,\"%s\",\"%s\",\"%s\",%s,%s,\"%s\",\"%s\",\"%s\",\"%s\",%s,%s,%s,%s\n",
+                $patient->id,
+                str_replace('"', '""', $patient->patient_name ?? ''),
+                str_replace('"', '""', $patient->email ?? ''),
+                str_replace('"', '""', $patient->patient_type ?? ''),
+                $patient->school_id ?? '',
+                $patient->bloodtype ?? '',
+                str_replace('"', '""', $patient->address ?? ''),
+                str_replace('"', '""', $patient->medical_condition ?? ''),
+                str_replace('"', '""', $patient->allergies ?? ''),
+                str_replace('"', '""', $patient->emergency_contact_name ?? ''),
+                $patient->emergency_contact_number ?? '',
+                str_replace('"', '""', $patient->emergency_relationship ?? ''),
+                str_replace('"', '""', $patient->level_name ?? ''),
+                $patient->created_at ?? ''
+            );
+        }
+
+        // Add BOM for Excel UTF-8 compatibility
+        $csvContent = "\xEF\xBB\xBF" . $csvContent;
+
+        return response($csvContent, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="patients.csv"',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**

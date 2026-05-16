@@ -1,6 +1,16 @@
 @extends('admin.layout.navigation')
 
 @section('content')
+<div class="mb-4 flex justify-end">
+    <a href="{{ route('admin.prescription.export') }}"
+       class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Export to CSV
+    </a>
+</div>
+
 <div class="relative overflow-x-auto">
     @if (session('success'))
     <div id="alert-border-3" class="flex items-center p-4 mb-4 text-green-800 border-t-4 border-green-300 bg-green-50 dark:text-green-400 dark:bg-gray-800 dark:border-green-800" role="alert">
@@ -77,9 +87,9 @@
                     {{ $prescription->instruction }}
                 </td>
                 <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.prescription.updateWithType', $prescription->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                    <a href="{{ route('admin.prescription.edit', $prescription->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
                     <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
-                        <form action="{{ route('admin.prescription.deleteWithType', $prescription->id) }}" method="POST" style="display:inline-block'];">
+                        <form action="{{ route('admin.prescription.destroy', $prescription->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3r" onclick="return confirm('Are you sure?')">Remove</button>

@@ -19,12 +19,12 @@
                     <h1 class="text-2xl font-semibold text-gray-800">Medicines Inventory</h1>
                     <p class="text-gray-600">Manage your clinic's medicine inventory</p>
                 </div>
-                <button onclick="openAddMedicineModal()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
+                <a href="{{ route('staff.medicines.create') }}" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Add New Medicine
-                </button>
+                </a>
             </div>
         </div>
 
@@ -88,6 +88,18 @@
                 </div>
             </div>
 
+            <!-- Live Search -->
+            <div class="mb-6">
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                    </div>
+                    <input type="text" id="medicineSearch" placeholder="Search by medicine name or type..." class="w-full ps-10 p-4 border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500">
+                </div>
+            </div>
+
             <!-- Medicines Table -->
             @if($medicines->count() > 0)
                 <div class="overflow-x-auto">
@@ -103,9 +115,9 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody id="medicinesTable" class="divide-y divide-gray-200">
                             @foreach($medicines as $medicine)
-                                <tr class="hover:bg-gray-50">
+                                <tr class="medicine-row hover:bg-gray-50" data-search="{{ strtolower($medicine->name . ' ' . ($medicine->medicine_type ?? '')) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="font-medium text-gray-900">{{ $medicine->name }}</div>
                                     </td>
@@ -172,7 +184,7 @@
                     </div>
                 @endif
             @else
-                <div class="text-center py-12">
+                <div id="noMedicineResults" class="hidden text-center py-12">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -188,6 +200,53 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'medicineSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.medicine-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noMedicineResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+    });
+})();
+</script>
+@endpush
+
+<!-- Inline script for AJAX content loading -->
+<script>
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'medicineSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.medicine-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noMedicineResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+    });
+})();
+</script>
+
+@endsection
+
+@endsection
 
 <!-- Add Medicine Modal -->
 <div id="addMedicineModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -302,6 +361,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 function openAddMedicineModal() {
     document.getElementById('addMedicineModal').classList.remove('hidden');
@@ -319,7 +379,7 @@ function openEditMedicineModal(medicine) {
     document.getElementById('edit_expiration_date').value = medicine.expiration_date || '';
 
     const form = document.getElementById('editMedicineForm');
-    form.action = '/doctor/medicine/' + medicine.id;
+    form.action = '/staff/medicine/' + medicine.id;
 
     document.getElementById('editMedicineModal').classList.remove('hidden');
 }
@@ -327,6 +387,31 @@ function openEditMedicineModal(medicine) {
 function closeEditMedicineModal() {
     document.getElementById('editMedicineModal').classList.add('hidden');
 }
+
+(function() {
+    var searchInput = document.getElementById('medicineSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var searchValue = this.value.toLowerCase();
+            var rows = document.querySelectorAll('.medicine-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search');
+                if (searchText.includes(searchValue)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            var noResults = document.getElementById('noMedicineResults');
+            if (noResults) {
+                noResults.classList.toggle('hidden', visibleCount > 0);
+            }
+        });
+    }
+})();
 </script>
+@endpush
 
 @endsection

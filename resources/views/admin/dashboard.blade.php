@@ -99,7 +99,7 @@
     </div>
 
     <!-- Recent Appointments -->
-    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Appointments</h3>
         @if($recentAppointments->count() > 0)
             <div class="overflow-x-auto">
@@ -125,7 +125,7 @@
                             <td class="px-4 py-3">{{ $appointment->date }}</td>
                             <td class="px-4 py-3">{{ $appointment->time }}</td>
                             <td class="px-4 py-3">
-                                <span class="px-2 py-1 text-xs rounded-full 
+                                <span class="px-2 py-1 text-xs rounded-full
                                     @if($appointment->status == 'Pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300
                                     @elseif($appointment->status == 'Completed') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300
                                     @else bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
@@ -141,6 +141,75 @@
         @else
             <p class="text-gray-500 dark:text-gray-400 text-center py-4">No appointments found.</p>
         @endif
+    </div>
+
+    <!-- Statistics by Course and Educational Level -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- By Course -->
+        <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Patients by Course</h3>
+            @if($byCourse->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th class="px-4 py-3">Course Name</th>
+                                <th class="px-4 py-3 text-center">Total</th>
+                                <th class="px-4 py-3 text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($byCourse as $course)
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('admin.statistics.course', $course->id) }}" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
+                                        {{ $course->course_name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-center">{{ $course->total_patients }}</td>
+                                <td class="px-4 py-3 text-center">{{ $stats['totalPatients'] > 0 ? round(($course->total_patients / $stats['totalPatients']) * 100, 1) : 0 }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No course data available.</p>
+            @endif
+        </div>
+
+        <!-- By Educational Level -->
+        <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Patients by Educational Level</h3>
+            @if($byEducationalLevel->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th class="px-4 py-3">Level Name</th>
+                                <th class="px-4 py-3 text-center">Total</th>
+                                <th class="px-4 py-3 text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($byEducationalLevel as $level)
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('admin.statistics.level', $level->id) }}" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
+                                        {{ $level->level_name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-center">{{ $level->total_patients }}</td>
+                                <td class="px-4 py-3 text-center">{{ $stats['totalPatients'] > 0 ? round(($level->total_patients / $stats['totalPatients']) * 100, 1) : 0 }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No educational level data available.</p>
+            @endif
+        </div>
     </div>
 </div>
 @endsection

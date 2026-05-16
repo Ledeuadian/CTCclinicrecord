@@ -71,7 +71,7 @@
                                     @csrf
                                     @method('PATCH')
                                     <input type="hidden" name="status" value="Confirmed">
-                                    <button type="submit" class="w-full bg-green-600 text-white text-sm px-3 py-2 rounded hover:bg-green-700 transition">
+                                    <button type="button" onclick="showConfirmModal('confirm', {{ $appointment->id }}, '{{ $appointment->patient->user->name ?? 'this patient' }}')" class="w-full bg-green-600 text-white text-sm px-3 py-2 rounded hover:bg-green-700 transition">
                                         Confirm
                                     </button>
                                 </form>
@@ -79,7 +79,7 @@
                                     @csrf
                                     @method('PATCH')
                                     <input type="hidden" name="status" value="Cancelled">
-                                    <button type="submit" class="w-full bg-red-600 text-white text-sm px-3 py-2 rounded hover:bg-red-700 transition">
+                                    <button type="button" onclick="showConfirmModal('cancel', {{ $appointment->id }}, '{{ $appointment->patient->user->name ?? 'this patient' }}')" class="w-full bg-red-600 text-white text-sm px-3 py-2 rounded hover:bg-red-700 transition">
                                         Cancel
                                     </button>
                                 </form>
@@ -354,7 +354,7 @@
                                                 <option value="Completed" {{ $appointment->status === 'Completed' ? 'selected' : '' }}>Completed</option>
                                                 <option value="Cancelled" {{ $appointment->status === 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
                                             </select>
-                                            <button type="submit" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition">
+                                            <button type="button" onclick="showStatusModal({{ $appointment->id }})" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition">
                                                 Update
                                             </button>
                                         </div>
@@ -388,4 +388,95 @@
         </div>
     </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center" style="display:none;">
+    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closeModal()"></div>
+    <div class="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-half mx-4 z-10">
+        <h3 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-2"></h3>
+        <p id="modalMessage" class="text-gray-600 mb-6"></p>
+        <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
+                Cancel
+            </button>
+            <form id="modalForm" method="POST" class="inline">
+                @csrf
+                @method('PATCH')
+                <button type="submit" id="modalConfirmBtn" class="px-4 py-2 text-white rounded transition">
+                    Confirm
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showConfirmModal(action, appointmentId, patientName) {
+        const modal = document.getElementById('confirmModal');
+        const title = document.getElementById('modalTitle');
+        const message = document.getElementById('modalMessage');
+        const form = document.getElementById('modalForm');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const statusInput = document.createElement('input');
+
+        if (action === 'confirm') {
+            title.textContent = 'Confirm Appointment';
+            message.textContent = `Are you sure you want to confirm the appointment with ${patientName}?`;
+            confirmBtn.className = 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition';
+            confirmBtn.textContent = 'Confirm';
+            statusInput.name = 'status';
+            statusInput.value = 'Confirmed';
+            form.action = `/staff/appointments/${appointmentId}/status`;
+        } else if (action === 'cancel') {
+            title.textContent = 'Cancel Appointment';
+            message.textContent = `Are you sure you want to cancel the appointment with ${patientName}? This action cannot be undone.`;
+            confirmBtn.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition';
+            confirmBtn.textContent = 'Cancel Appointment';
+            statusInput.name = 'status';
+            statusInput.value = 'Cancelled';
+            form.action = `/staff/appointments/${appointmentId}/status`;
+        }
+
+        const existingInput = form.querySelector('input[name="status"]');
+        if (existingInput) existingInput.remove();
+        form.appendChild(statusInput);
+
+        modal.style.display = 'flex';
+    }
+
+    function showStatusModal(appointmentId) {
+        const select = document.querySelector(`form[action*="/${appointmentId}/status"] select`);
+        const status = select ? select.value : 'Confirmed';
+        const modal = document.getElementById('confirmModal');
+        const title = document.getElementById('modalTitle');
+        const message = document.getElementById('modalMessage');
+        const form = document.getElementById('modalForm');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const statusInput = document.createElement('input');
+
+        title.textContent = 'Update Appointment Status';
+        message.textContent = `Are you sure you want to change this appointment status to "${status}"?`;
+        confirmBtn.className = 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition';
+        confirmBtn.textContent = 'Update';
+        statusInput.name = 'status';
+        statusInput.value = status;
+
+        const existingInput = form.querySelector('input[name="status"]');
+        if (existingInput) existingInput.remove();
+        form.appendChild(statusInput);
+        form.action = `/staff/appointments/${appointmentId}/status`;
+
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+</script>
 @endsection

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
 use App\Models\EducationalLevel;
+use App\Models\Course;
 use App\Models\ImmunizationRecords;
 use App\Models\PrescriptionRecord;
 use App\Models\DentalExamination;
@@ -21,6 +22,7 @@ class Patients extends Model
     protected $fillable = [
         'patient_type',
         'edulvl_id',
+        'course_id',
         'user_id',
         'school_id',
         'bloodtype',
@@ -48,6 +50,14 @@ class Patients extends Model
     public function educationalLevel(): BelongsTo
     {
         return $this->belongsTo(EducationalLevel::class, 'edulvl_id', 'id');
+    }
+
+    /**
+     * Patient to Course Relationship (Foreign Key)
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course_id', 'id');
     }
 
     /**
