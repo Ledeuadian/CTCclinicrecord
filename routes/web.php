@@ -332,15 +332,16 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.appointments.update',
         'destroy' => 'admin.appointments.destroy',
     ]);
+    // Custom routes must be defined BEFORE Route::resource to avoid matching conflicts
+    Route::get('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'edit'])->name('admin.users.editWithType');
+    Route::put('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'update'])->name('admin.users.updateWithType');
+    Route::delete('/admin/users/destroy/{user}/{type}', [AdminUsers::class, 'deleteWithType'])->name('admin.users.deleteWithType');
     Route::resource('/admin/users', AdminUsers::class)->names([
         'index' => 'admin.users.index',
         'create' => 'admin.users.create',
         'store' => 'admin.users.store',
         'update' => 'admin.users.update',
     ]);
-    Route::get('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'edit'])->name('admin.users.updateWithType');
-    Route::put('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'update'])->name('admin.users.update');
-    Route::delete('/admin/users/destroy/{user}/{type}', [AdminUsers::class, 'deleteWithType'])->name('admin.users.deleteWithType');
     Route::resource('/admin/doctors', AdminDoctor::class)->names([
         'index' => 'admin.doctors.index',
         'create' => 'admin.doctors.create',

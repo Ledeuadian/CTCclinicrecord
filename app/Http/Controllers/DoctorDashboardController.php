@@ -685,17 +685,17 @@ class DoctorDashboardController extends Controller
     private function createPhysicalExamination(Request $request, $doctor)
     {
         $request->validate([
-            'height' => 'nullable|numeric',
-            'weight' => 'nullable|numeric',
-            'bp' => 'nullable|string|max:20',
-            'heart' => 'nullable|string|max:255',
-            'lungs' => 'nullable|string|max:255',
-            'eyes' => 'nullable|string|max:255',
-            'ears' => 'nullable|string|max:255',
-            'nose' => 'nullable|string|max:255',
-            'throat' => 'nullable|string|max:255',
-            'skin' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
+            'height' => 'required|numeric',
+            'weight' => 'required|numeric',
+            'bp' => 'required|string|max:20',
+            'heart' => 'required|string|max:255',
+            'lungs' => 'required|string|max:255',
+            'eyes' => 'required|string|max:255',
+            'ears' => 'required|string|max:255',
+            'nose' => 'required|string|max:255',
+            'throat' => 'required|string|max:255',
+            'skin' => 'required|string|max:255',
+            'remarks' => 'required|string',
         ]);
 
         // Get the patient's user_id
@@ -724,15 +724,40 @@ class DoctorDashboardController extends Controller
     private function createDentalExamination(Request $request, $doctor)
     {
         $request->validate([
-            'diagnosis' => 'nullable|string',
+            'diagnosis' => 'required|string',
             'teeth_status' => 'nullable|array',
         ]);
+
+        $teethStatus = $request->teeth_status ?? [];
+
+        // Form sends nested array teeth_status[upper][1], teeth_status[lower][1]
+        // Flatten to simple array with keys 1-32
+        if (is_array($teethStatus)) {
+            $flatTeethStatus = [];
+            foreach ($teethStatus as $key => $value) {
+                if (is_array($value)) {
+                    // Handle nested structure like ['upper' => [...], 'lower' => [...]]
+                    foreach ($value as $subKey => $subValue) {
+                        if ($key === 'upper') {
+                            $flatTeethStatus[(int)$subKey] = $subValue;
+                        } elseif ($key === 'lower') {
+                            // Lower teeth start from 17
+                            $flatTeethStatus[16 + (int)$subKey] = $subValue;
+                        }
+                    }
+                } elseif (is_numeric($key)) {
+                    // Already flat array with numeric keys
+                    $flatTeethStatus[(int)$key] = $value;
+                }
+            }
+            $teethStatus = $flatTeethStatus;
+        }
 
         DentalExamination::create([
             'patient_id' => $request->patient_id,
             'doctor_id' => $doctor->id,
             'diagnosis' => $request->diagnosis,
-            'teeth_status' => $request->teeth_status ?? [],
+            'teeth_status' => $teethStatus,
         ]);
     }
 
@@ -743,11 +768,11 @@ class DoctorDashboardController extends Controller
     {
         $request->validate([
             'vaccine_name' => 'required|string|max:255',
-            'vaccine_type' => 'nullable|string|max:255',
-            'dosage' => 'nullable|string|max:255',
-            'site_of_administration' => 'nullable|string|max:255',
-            'expiration_date' => 'nullable|date',
-            'notes' => 'nullable|string',
+            'vaccine_type' => 'required|string|max:255',
+            'dosage' => 'required|string|max:255',
+            'site_of_administration' => 'required|string|max:255',
+            'expiration_date' => 'required|date',
+            'notes' => 'required|string',
         ]);
 
         ImmunizationRecords::create([

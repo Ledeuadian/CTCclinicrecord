@@ -80,10 +80,10 @@
                                 <div class="text-center">
                                     <div class="tooth-selector p-3 border-2 rounded-lg cursor-pointer transition
                                         @if(($teethStatus[$i] ?? 'healthy') === 'healthy') border-green-300 bg-green-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-red-300 bg-red-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-gray-300 bg-gray-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-yellow-300 bg-yellow-50
-                                        @else border-orange-300 bg-orange-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-amber-800 bg-amber-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-amber-800 bg-amber-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-blue-300 bg-blue-50
+                                        @else border-amber-800 bg-amber-50
                                         @endif"
                                         data-tooth="{{ $i }}"
                                         onclick="toggleToothStatus({{ $i }})">
@@ -104,10 +104,10 @@
                                 <div class="text-center">
                                     <div class="tooth-selector p-3 border-2 rounded-lg cursor-pointer transition
                                         @if(($teethStatus[$i] ?? 'healthy') === 'healthy') border-green-300 bg-green-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-red-300 bg-red-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-gray-300 bg-gray-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-yellow-300 bg-yellow-50
-                                        @else border-orange-300 bg-orange-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-amber-800 bg-amber-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-amber-800 bg-amber-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-blue-300 bg-blue-50
+                                        @else border-amber-800 bg-amber-50
                                         @endif"
                                         data-tooth="{{ $i }}"
                                         onclick="toggleToothStatus({{ $i }})">
@@ -125,23 +125,23 @@
                         <h4 class="text-sm font-semibold text-gray-700 mb-2">Legend:</h4>
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-green-100 border border-green-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-green-500 border border-green-300 rounded mr-2"></div>
                                 <span class="text-sm">Healthy</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-red-100 border border-red-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-red-500 border border-red-300 rounded mr-2"></div>
                                 <span class="text-sm">Cavity</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-blue-500 border border-blue-300 rounded mr-2"></div>
                                 <span class="text-sm">Filled</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-gray-500 border border-gray-300 rounded mr-2"></div>
                                 <span class="text-sm">Missing</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-orange-100 border border-orange-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-yellow-500 border border-amber-800 rounded mr-2"></div>
                                 <span class="text-sm">Other</span>
                             </div>
                         </div>
@@ -169,9 +169,9 @@ const statuses = ['healthy', 'cavity', 'filled', 'missing', 'other'];
 const statusColors = {
     'healthy': { border: 'border-green-300', bg: 'bg-green-50' },
     'cavity': { border: 'border-red-300', bg: 'bg-red-50' },
-    'filled': { border: 'border-yellow-300', bg: 'bg-yellow-50' },
+    'filled': { border: 'border-blue-300', bg: 'bg-blue-50' },
     'missing': { border: 'border-gray-300', bg: 'bg-gray-50' },
-    'other': { border: 'border-orange-300', bg: 'bg-orange-50' }
+    'other': { border: 'border-amber-800', bg: 'bg-amber-50' }
 };
 
 function toggleToothStatus(toothNum) {

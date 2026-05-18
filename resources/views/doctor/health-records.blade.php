@@ -221,22 +221,22 @@
                                                 <p class="text-sm text-gray-600">{{ $record->created_at->format('g:i A') }}</p>
                                             </div>
                                             @if($type === 'health')
-                                                <a href="{{ route('doctor.health-records.edit', $record->id) }}" 
+                                                <a href="{{ route('doctor.health-records.edit', $record->id) }}"
                                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                                                     Edit
                                                 </a>
                                             @elseif($type === 'physical')
-                                                <a href="{{ route('doctor.physical-exams.edit', $record->id) }}" 
+                                                <a href="{{ route('doctor.physical-exams.edit', $record->id) }}"
                                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                                                     Edit
                                                 </a>
                                             @elseif($type === 'dental')
-                                                <a href="{{ route('doctor.dental-exams.edit', $record->id) }}" 
+                                                <a href="{{ route('doctor.dental-exams.edit', $record->id) }}"
                                                    class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                                                     Edit
                                                 </a>
                                             @elseif($type === 'immunization')
-                                                <a href="{{ route('doctor.immunizations.edit', $record->id) }}" 
+                                                <a href="{{ route('doctor.immunizations.edit', $record->id) }}"
                                                    class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                                                     Edit
                                                 </a>
@@ -362,37 +362,87 @@
                                         @if($record->teeth_status && is_array($record->teeth_status) && count($record->teeth_status) > 0)
                                             <div class="mb-4">
                                                 <h4 class="font-medium text-gray-800 mb-3">Teeth Status</h4>
-                                                <div class="grid grid-cols-8 gap-2 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                                                    @for($i = 1; $i <= 32; $i++)
-                                                        @php
-                                                            $status = $record->teeth_status[$i] ?? null;
-                                                            if ($status === 'healthy') {
-                                                                $bgColor = 'bg-green-100 text-green-800';
-                                                                $symbol = '✓';
-                                                            } elseif ($status === 'cavity') {
-                                                                $bgColor = 'bg-red-100 text-red-800';
-                                                                $symbol = 'C';
-                                                            } elseif ($status === 'filled') {
-                                                                $bgColor = 'bg-blue-100 text-blue-800';
-                                                                $symbol = 'F';
-                                                            } elseif ($status === 'missing') {
-                                                                $bgColor = 'bg-gray-100 text-gray-800';
-                                                                $symbol = 'X';
-                                                            } elseif ($status === 'crown') {
-                                                                $bgColor = 'bg-yellow-100 text-yellow-800';
-                                                                $symbol = 'Cr';
-                                                            } else {
-                                                                $bgColor = 'bg-white text-gray-400';
-                                                                $symbol = '-';
+
+                                                <!-- Legend -->
+                                                <div class="flex flex-wrap gap-4 mb-4 p-3 bg-gray-50 rounded">
+                                                    <div class="flex items-center">
+                                                        <span class="w-5 h-5 bg-green-500 rounded mr-2"></span>
+                                                        <span class="text-xs">Healthy</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="w-5 h-5 bg-red-500 rounded mr-2"></span>
+                                                        <span class="text-xs">Cavity</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="w-5 h-5 bg-blue-500 rounded mr-2"></span>
+                                                        <span class="text-xs">Filled</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="w-5 h-5 bg-gray-500 rounded mr-2"></span>
+                                                        <span class="text-xs">Missing</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="w-5 h-5 bg-yellow-500 rounded mr-2"></span>
+                                                        <span class="text-xs">Other</span>
+                                                    </div>
+                                                </div>
+
+                                                @php
+                                                    // Handle both flat array [1 => 'healthy', ...] and nested array ['upper' => [...], 'lower' => [...]]
+                                                    $teethStatus = $record->teeth_status;
+                                                    $flatStatus = [];
+                                                    foreach ($teethStatus as $key => $value) {
+                                                        if (is_array($value)) {
+                                                            foreach ($value as $subKey => $subValue) {
+                                                                $flatStatus[$subKey] = $subValue;
                                                             }
-                                                        @endphp
-                                                        <div class="text-center">
-                                                            <div class="text-xs text-gray-600 mb-1">{{ $i }}</div>
-                                                            <div class="w-8 h-8 {{ $bgColor }} rounded flex items-center justify-center text-xs font-semibold">
-                                                                {{ $symbol }}
+                                                        } else {
+                                                            $flatStatus[$key] = $value;
+                                                        }
+                                                    }
+                                                    $statusColors = [
+                                                        'healthy' => 'bg-green-500 text-white',
+                                                        'cavity' => 'bg-red-500 text-white',
+                                                        'filled' => 'bg-blue-500 text-white',
+                                                        'missing' => 'bg-gray-500 text-white',
+                                                        'other' => 'bg-yellow-500 text-white'
+                                                    ];
+                                                @endphp
+
+                                                <!-- Upper Teeth (1-16) -->
+                                                <div class="mb-4">
+                                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Upper Teeth</h5>
+                                                    <div class="grid grid-cols-8 gap-2">
+                                                        @for($i = 1; $i <= 16; $i++)
+                                                            @php
+                                                                $status = $flatStatus[$i] ?? 'healthy';
+                                                                $colorClass = $statusColors[$status] ?? 'bg-gray-100 text-gray-400';
+                                                            @endphp
+                                                            <div class="text-center">
+                                                                <div class="w-10 h-10 {{ $colorClass }} rounded flex items-center justify-center text-xs font-semibold cursor-default">
+                                                                    {{ $i }}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    @endfor
+                                                        @endfor
+                                                    </div>
+                                                </div>
+
+                                                <!-- Lower Teeth (17-32) -->
+                                                <div>
+                                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Lower Teeth</h5>
+                                                    <div class="grid grid-cols-8 gap-2">
+                                                        @for($i = 17; $i <= 32; $i++)
+                                                            @php
+                                                                $status = $flatStatus[$i] ?? 'healthy';
+                                                                $colorClass = $statusColors[$status] ?? 'bg-gray-100 text-gray-400';
+                                                            @endphp
+                                                            <div class="text-center">
+                                                                <div class="w-10 h-10 {{ $colorClass }} rounded flex items-center justify-center text-xs font-semibold cursor-default">
+                                                                    {{ $i }}
+                                                                </div>
+                                                            </div>
+                                                        @endfor
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endif

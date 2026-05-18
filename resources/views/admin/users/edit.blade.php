@@ -25,7 +25,7 @@
         @endforeach
     @endif
     <h2 class="text-xl font-semibold text-white mb-6">Update User</h2>
-    <form action="{{ route('admin.users.update',['user' => $admin['id'], 'type' => $admin['user_type']]) }}" method="post">
+    <form action="{{ route('admin.users.updateWithType', ['user' => $admin['id'], 'type' => $admin['user_type']]) }}" method="post">
         @csrf
         @method('PUT')
         <div class="grid md:grid-cols-2 md:gap-6">

@@ -85,11 +85,12 @@ class AdminUsers extends Controller
      */
     public function edit(Request $request, $id, $type)
     {
-        // Find the user by ID
-        if ($type == 1){
-            $admin = User::findOrFail($id);
-        } else if($type == 2){
+        // Find the user by ID - use User model for all types except Admin (0)
+        if ($type == 0){
             $admin = Admin::findOrFail($id);
+        } else {
+            // Types 1 (Student), 2 (Faculty & Staff), 3 (Doctor) all use User model
+            $admin = User::findOrFail($id);
         }
         //
         return view('admin.users.edit', compact('admin'));
@@ -100,11 +101,12 @@ class AdminUsers extends Controller
      */
     public function update(Request $request, $id, $type)
     {
-        // Find the user by ID
-        if ($type == 1){
-            $admin = User::findOrFail($id);
-        } else if($type == 2){
+        // Find the user by ID - use User model for all types except Admin (0)
+        if ($type == 0){
             $admin = Admin::findOrFail($id);
+        } else {
+            // Types 1 (Student), 2 (Faculty & Staff), 3 (Doctor) all use User model
+            $admin = User::findOrFail($id);
         }
 
         // Validation rules - password is optional for update
@@ -118,7 +120,7 @@ class AdminUsers extends Controller
             'address' => 'nullable|string',
             'gender' => 'required|string|max:1',
             'contact_no' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => $type == 0 ? 'required|email|unique:admins,email,' . $id : 'required|email|unique:users,email,' . $id,
         ];
 
         // Only validate password if it's being changed
@@ -147,7 +149,8 @@ class AdminUsers extends Controller
 
         $admin->save();
 
-        return redirect()->back()->with('success', 'User updated successfully!');
+        // Redirect with the NEW user_type to ensure the URL reflects the updated type
+        return redirect()->route('admin.users.editWithType', ['user' => $admin->id, 'type' => $admin->user_type])->with('success', 'User updated successfully!');
     }
 
     /**
@@ -156,18 +159,18 @@ class AdminUsers extends Controller
     public function deleteWithType(Request $request, $id, $type)
     {
         // Find the user by ID
-        if ($type == 1){
-            // Find and delete the User model
-            $user = User::findOrFail($id);
-            $user->delete();
-
-            return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
-        } else if($type  == 2){
+        if ($type == 0){
             // Find and delete the Admin model
             $user = Admin::findOrFail($id);
             $user->delete();
 
             return redirect()->route('admin.users.index')->with('success', 'Admin deleted successfully');
+        } else {
+            // Types 1, 2, 3 (Student, Staff, Doctor) all use User model
+            $user = User::findOrFail($id);
+            $user->delete();
+
+            return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
         }
     }
 }

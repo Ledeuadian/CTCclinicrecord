@@ -24,10 +24,7 @@
             </div>
         @endforeach
     @endif
-    <div class="grid md:grid-cols-2 md:gap-6">
-        <div class="relative z-0 w-full mb-3 group">
-            <button onclick="window.location.href='{{ route('admin.dental.create') }}'" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">New Dental</button>
-        </div>
+    <div class="grid md:grid-cols-1 md:gap-6">
         <div class="relative z-0 w-full mb-3 group">
             <form class="mx-auto">
                 <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -51,7 +48,6 @@
                 <th scope="col" class="px-6 py-4">Doctor</th>
                 <th scope="col" class="px-6 py-4">Teeth Status</th>
                 <th scope="col" class="px-6 py-4">Diagnosis</th>
-                <th scope="col" class="px-6 py-4">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -69,7 +65,18 @@
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                     @if(is_array($dental->teeth_status))
                         @php
-                            $statusCounts = array_count_values($dental->teeth_status);
+                            // Copy to local variable to avoid "indirect modification of overloaded property" warning
+                            $teethStatusData = $dental->teeth_status;
+
+                            // Flatten nested arrays (e.g. ['upper' => [...], 'lower' => [...]]) and filter to only strings/integers
+                            $flatValues = [];
+                            array_walk_recursive($teethStatusData, function($value) use (&$flatValues) {
+                                if (is_string($value) || is_int($value)) {
+                                    $flatValues[] = $value;
+                                }
+                            });
+
+                            $statusCounts = !empty($flatValues) ? array_count_values($flatValues) : [];
                             $summary = [];
                             if(isset($statusCounts['healthy'])) $summary[] = $statusCounts['healthy'] . ' healthy';
                             if(isset($statusCounts['cavity'])) $summary[] = $statusCounts['cavity'] . ' cavities';
@@ -84,14 +91,6 @@
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $dental->diagnosis }}
-                </td>
-                <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.dental.edit', $dental->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                    <form action="{{ route('admin.dental.destroy', $dental->id) }}" method="POST" style="display:inline-block;" class="ms-3">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this dental examination?')">Remove</button>
-                    </form>
                 </td>
             </tr>
             @endforeach
