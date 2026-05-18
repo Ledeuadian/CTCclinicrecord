@@ -26,11 +26,18 @@
             .logo-wrap {
                 display: grid;
                 place-items: center;
-                margin-bottom: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .logo-wrap img, .logo-wrap svg {
+                max-width: 64px !important;
+                max-height: 64px !important;
+                width: 64px !important;
+                height: 64px !important;
+                object-fit: contain;
             }
             h1 {
-                margin: 0;
-                font-size: 2rem;
+                margin: 0 0 0.5rem;
+                font-size: 1.75rem;
                 letter-spacing: -0.03em;
                 font-weight: 700;
             }
@@ -83,7 +90,7 @@
     <body>
         <div class="container">
             <div class="logo-wrap">
-                <x-application-logo class="w-32 h-auto" />
+                <x-application-logo class="w-20 h-auto" />
             </div>
             <h1>{{ config('app.name', 'Crist the King') }}</h1>
             <p>Sign in to the clinic record system.</p>

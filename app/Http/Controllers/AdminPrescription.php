@@ -14,8 +14,7 @@ class AdminPrescription extends Controller
      */
     public function index()
     {
-        //
-        $prescriptions = PrescriptionRecord::all();
+        $prescriptions = PrescriptionRecord::with(['patient.user', 'doctor.user', 'medicine'])->get();
         return view('admin.prescription.index', compact('prescriptions'));
     }
 
@@ -25,12 +24,12 @@ class AdminPrescription extends Controller
     public function export()
     {
         $prescriptions = PrescriptionRecord::join('users', 'users.id', '=', 'prescription_records.patient_id')
-            ->leftJoin('medicines', 'medicines.id', '=', 'prescription_records.medicine_id')
+            ->leftJoin('medicine', 'medicine.id', '=', 'prescription_records.medicine_id')
             ->select(
                 'prescription_records.id',
                 'users.name as patient_name',
                 'users.email',
-                'medicines.name as medicine_name',
+                'medicine.name as medicine_name',
                 'prescription_records.dosage',
                 'prescription_records.frequency',
                 'prescription_records.duration',

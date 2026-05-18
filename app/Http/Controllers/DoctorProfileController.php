@@ -17,6 +17,19 @@ class DoctorProfileController extends Controller
         $user = Auth::user();
         $doctor = Doctors::where('user_id', $user->id)->first();
 
+        if (!$doctor) {
+            $doctor = Doctors::firstOrNew(
+                ['user_id' => $user->id],
+                [
+                    'specialization' => '',
+                    'address' => '',
+                    'is_available' => false,
+                ]
+            );
+
+            return view('doctor.edit-profile', compact('user', 'doctor'));
+        }
+
         return view('doctor.profile', compact('user', 'doctor'));
     }
 
@@ -26,12 +39,14 @@ class DoctorProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        $doctor = Doctors::where('user_id', $user->id)->first();
-
-        if (!$doctor) {
-            return redirect()->route('doctor.dashboard')
-                ->with('error', 'Doctor profile not found.');
-        }
+        $doctor = Doctors::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'specialization' => '',
+                'address' => '',
+                'is_available' => false,
+            ]
+        );
 
         return view('doctor.edit-profile', compact('user', 'doctor'));
     }
@@ -50,24 +65,21 @@ class DoctorProfileController extends Controller
         ]);
 
         $user = Auth::user();
-        $doctor = Doctors::where('user_id', $user->id)->first();
 
-        if (!$doctor) {
-            return redirect()->route('doctor.dashboard')
-                ->with('error', 'Doctor profile not found.');
-        }
+        // Ensure a Doctors record exists for this user before updating
+        $doctor = Doctors::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'specialization' => $request->specialization,
+                'address' => $request->address,
+                'is_available' => $request->has('is_available') ? true : false,
+            ]
+        );
 
         // Update user information
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-        ]);
-
-        // Update doctor information
-        $doctor->update([
-            'specialization' => $request->specialization,
-            'address' => $request->address,
-            'is_available' => $request->has('is_available') ? true : false,
         ]);
 
         return redirect()->route('doctor.profile.show')

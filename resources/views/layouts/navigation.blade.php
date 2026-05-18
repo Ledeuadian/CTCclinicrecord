@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        <x-application-logo class="block h-9 w-9" />
                     </a>
                 </div>
 
@@ -219,7 +219,7 @@
                             </x-dropdown-link>
                         @else
                             <!-- Doctor Profile Links -->
-                            <x-dropdown-link :href="route('profile.edit')">
+                            <x-dropdown-link :href="route('doctor.profile.show')">
                                 {{ __('Profile') }}
                             </x-dropdown-link>
                         @endif
@@ -380,7 +380,7 @@
                     </a>
                 @else
                     <!-- Doctor Mobile Profile -->
-                    <a href="{{ route('profile.edit') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
+                    <a href="{{ route('doctor.profile.show') }}" class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 transition duration-150 ease-in-out">
                         {{ __('Profile') }}
                     </a>
                 @endif

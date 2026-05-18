@@ -83,7 +83,7 @@ class AdminUsers extends Controller
     /**
      * Show the form for editing the 2 argument of specified resource.
      */
-    public function updateWithType(Request $request, $id, $type)
+    public function edit(Request $request, $id, $type)
     {
         // Find the user by ID
         if ($type == 1){
@@ -98,7 +98,61 @@ class AdminUsers extends Controller
     /**
      * Remove the 2 argument specified resource from storage.
      */
+    public function update(Request $request, $id, $type)
+    {
+        // Find the user by ID
+        if ($type == 1){
+            $admin = User::findOrFail($id);
+        } else if($type == 2){
+            $admin = Admin::findOrFail($id);
+        }
 
+        // Validation rules - password is optional for update
+        $rules = [
+            'name' => 'required|string|max:255',
+            'user_type' => 'required|integer',
+            'f_name' => 'required|string|max:255',
+            'm_name' => 'nullable|string|max:255',
+            'l_name' => 'required|string|max:255',
+            'dob' => 'required|date',
+            'address' => 'nullable|string',
+            'gender' => 'required|string|max:1',
+            'contact_no' => 'nullable|string|max:20',
+            'email' => 'required|email|unique:users,email,' . $id,
+        ];
+
+        // Only validate password if it's being changed
+        if ($request->filled('password')) {
+            $rules['password'] = ['confirmed', Rules\Password::defaults()];
+        }
+
+        $request->validate($rules);
+
+        // Update user fields
+        $admin->name = $request->name;
+        $admin->user_type = $request->user_type;
+        $admin->f_name = $request->f_name;
+        $admin->m_name = $request->m_name;
+        $admin->l_name = $request->l_name;
+        $admin->dob = $request->dob;
+        $admin->address = $request->address;
+        $admin->gender = $request->gender;
+        $admin->contact_no = $request->contact_no;
+        $admin->email = $request->email;
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $admin->password = Hash::make($request->password);
+        }
+
+        $admin->save();
+
+        return redirect()->back()->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Remove the 2 argument specified resource from storage.
+     */
     public function deleteWithType(Request $request, $id, $type)
     {
         // Find the user by ID

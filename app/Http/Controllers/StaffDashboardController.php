@@ -210,7 +210,8 @@ class StaffDashboardController extends Controller
             $q->whereIn('user_type', [1, 2]);
         })->get();
         $medicines = Medicine::where('quantity', '>', 0)->get();
-        return view('staff.prescriptions.create', compact('patients', 'medicines'));
+        $doctors = Doctors::with('user')->get();
+        return view('staff.prescriptions.create', compact('patients', 'medicines', 'doctors'));
     }
 
     public function ajaxReports()
@@ -595,16 +596,18 @@ class StaffDashboardController extends Controller
             'name' => 'required|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'manufacturer' => 'nullable|string|max:255',
-            'dosage' => 'required|string|max:100',
-            'quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:50',
-            'expiration_date' => 'required|date',
+            'dosage' => 'nullable|string|max:100',
+            'quantity' => 'nullable|integer|min:0',
+            'unit' => 'nullable|string|max:50',
+            'expiration_date' => 'nullable|date',
             'description' => 'nullable|string',
+            'medicine_type' => 'nullable|string|max:100',
         ]);
 
         Medicine::create($request->all());
 
-        return redirect()->back()->with('success', 'Medicine added successfully');
+        return redirect()->route('staff.medications')
+            ->with('success', 'Medicine added successfully');
     }
 
     /**
@@ -613,14 +616,15 @@ class StaffDashboardController extends Controller
     public function updateMedicine(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'manufacturer' => 'nullable|string|max:255',
-            'dosage' => 'required|string|max:100',
-            'quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:50',
-            'expiration_date' => 'required|date',
+            'dosage' => 'nullable|string|max:100',
+            'quantity' => 'nullable|integer|min:0',
+            'unit' => 'nullable|string|max:50',
+            'expiration_date' => 'nullable|date',
             'description' => 'nullable|string',
+            'medicine_type' => 'nullable|string',
         ]);
 
         $medicine = Medicine::findOrFail($id);
@@ -676,20 +680,30 @@ class StaffDashboardController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'medicine_id' => 'required|exists:medicine,id',
             'dosage' => 'required|string|max:255',
-            'frequency' => 'required|string|max:255',
-            'duration' => 'required|string|max:255',
+            'frequency' => 'nullable|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'instruction' => 'nullable|string',
             'instructions' => 'nullable|string',
-            'status' => 'required|in:active,completed,discontinued',
+            'status' => 'nullable|in:active,completed,discontinued',
+            'doctor_id' => 'nullable|exists:doctors,id',
         ]);
 
-        $prescription = new PrescriptionRecord($request->all());
-        $prescription->prescribed_by = Auth::id();
-        $prescription->save();
+        // Get staff's doctor profile if exists, use form doctor_id first
+        $staffDoctor = \App\Models\Doctors::where('user_id', Auth::id())->first();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Prescription created successfully'
+        PrescriptionRecord::create([
+            'patient_id' => $request->patient_id,
+            'medicine_id' => $request->medicine_id,
+            'dosage' => $request->dosage,
+            'frequency' => $request->frequency ?? $request->instructions,
+            'duration' => $request->duration,
+            'instruction' => $request->instruction ?? $request->instructions,
+            'doctor_id' => $request->doctor_id ?? $staffDoctor->id ?? null,
+            'prescribed_by' => Auth::id(),
+            'status' => $request->status ?? 'active',
         ]);
+
+        return redirect()->back()->with('success', 'Prescription created successfully');
     }
 
     /**
@@ -821,8 +835,9 @@ class StaffDashboardController extends Controller
 
         // Get available immunizations for dropdown
         $immunizations = Immunization::orderBy('name')->get();
+        $doctors = Doctors::with('user')->orderBy('created_at', 'desc')->get();
 
-        return view('staff.create-health-record', compact('patients', 'immunizations'));
+        return view('staff.create-health-record', compact('patients', 'immunizations', 'doctors'));
     }
 
     /**
@@ -833,6 +848,7 @@ class StaffDashboardController extends Controller
         $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'record_type' => 'required|in:physical,dental,immunization',
+            'doctor_id' => 'required_if:record_type,physical,dental|exists:doctors,id',
         ]);
 
         try {
@@ -861,6 +877,7 @@ class StaffDashboardController extends Controller
     private function createPhysicalExamination(Request $request)
     {
         $request->validate([
+            'doctor_id' => 'required|exists:doctors,id',
             'height' => 'nullable|numeric',
             'weight' => 'nullable|numeric',
             'bp' => 'nullable|string|max:20',
@@ -874,11 +891,9 @@ class StaffDashboardController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        $patient = Patients::findOrFail($request->patient_id);
-
         PhysicalExamination::create([
-            'patient_id' => $patient->id,
-            'doctor_id' => null, // Staff member, not a doctor
+            'patient_id' => $request->patient_id,
+            'doctor_id' => $request->doctor_id,
             'height' => $request->height,
             'weight' => $request->weight,
             'bp' => $request->bp,
@@ -899,14 +914,16 @@ class StaffDashboardController extends Controller
     private function createDentalExamination(Request $request)
     {
         $request->validate([
+            'doctor_id' => 'required|exists:doctors,id',
             'diagnosis' => 'nullable|string',
+            'dental_diagnosis' => 'nullable|string',
             'teeth_status' => 'nullable|array',
         ]);
 
         DentalExamination::create([
             'patient_id' => $request->patient_id,
-            'doctor_id' => null, // Staff member, not a doctor
-            'diagnosis' => $request->diagnosis,
+            'doctor_id' => $request->doctor_id,
+            'diagnosis' => $request->input('dental_diagnosis', $request->diagnosis),
             'teeth_status' => $request->teeth_status ?? [],
         ]);
     }
@@ -983,20 +1000,20 @@ class StaffDashboardController extends Controller
         $exam = PhysicalExamination::findOrFail($id);
 
         $request->validate([
-            'height' => 'required|string',
-            'weight' => 'required|string',
-            'bp' => 'required|string',
-            'heart' => 'nullable|string',
-            'lungs' => 'nullable|string',
-            'eyes' => 'nullable|string',
-            'ears' => 'nullable|string',
-            'nose' => 'nullable|string',
-            'throat' => 'nullable|string',
-            'skin' => 'nullable|string',
+            'height' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'bp' => 'nullable|string|max:20',
+            'heart' => 'nullable|string|max:255',
+            'lungs' => 'nullable|string|max:255',
+            'eyes' => 'nullable|string|max:255',
+            'ears' => 'nullable|string|max:255',
+            'nose' => 'nullable|string|max:255',
+            'throat' => 'nullable|string|max:255',
+            'skin' => 'nullable|string|max:255',
             'remarks' => 'nullable|string',
         ]);
 
-        $exam->update($request->only(['height', 'weight', 'bp', 'heart', 'lungs', 'eyes', 'ears', 'nose', 'throat', 'skin', 'remarks']));
+        $exam->update($request->only(['height', 'weight', 'bp', 'heart', 'lungs', 'eyes', 'ears', 'nose', 'throat', 'skin', 'remarks', 'doctor_id']));
 
         return redirect()->route('staff.health-records')
             ->with('success', 'Physical examination updated successfully.');
@@ -1007,7 +1024,7 @@ class StaffDashboardController extends Controller
      */
     public function editDentalExam($id)
     {
-        $exam = DentalExamination::with(['patient.user'])->findOrFail($id);
+        $exam = DentalExamination::with(['patient.user', 'doctor'])->findOrFail($id);
         return view('staff.edit-dental-exam', compact('exam'));
     }
 
@@ -1019,11 +1036,28 @@ class StaffDashboardController extends Controller
         $exam = DentalExamination::findOrFail($id);
 
         $request->validate([
-            'teeth_status' => 'nullable|array',
             'diagnosis' => 'nullable|string',
+            'teeth_status' => 'nullable|array',
+            'doctor_id' => 'nullable|exists:doctors,id',
         ]);
 
-        $exam->update($request->only(['teeth_status', 'diagnosis']));
+        $teethStatus = $request->teeth_status;
+        // Form sends flat array teeth_status[1], teeth_status[2], etc.
+        if (is_array($teethStatus)) {
+            $flatTeethStatus = [];
+            foreach ($teethStatus as $key => $status) {
+                if (is_numeric($key)) {
+                    $flatTeethStatus[(int)$key] = $status;
+                }
+            }
+            $teethStatus = $flatTeethStatus;
+        }
+
+        $exam->update(array_filter([
+            'diagnosis' => $request->diagnosis,
+            'teeth_status' => $teethStatus ?? [],
+            'doctor_id' => $request->doctor_id,
+        ], fn($v) => $v !== null));
 
         return redirect()->route('staff.health-records')
             ->with('success', 'Dental examination updated successfully.');
@@ -1203,18 +1237,32 @@ class StaffDashboardController extends Controller
                 ->whereHas('user', function($q) {
                     $q->whereIn('user_type', [1, 2]);
                 })->count(),
-            'gender_distribution' => Patients::selectRaw('gender, COUNT(*) as count')
-                ->whereHas('user', function($q) {
-                    $q->whereIn('user_type', [1, 2]);
-                })
-                ->groupBy('gender')
+            'gender_distribution' => Patients::join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('users.gender, COUNT(*) as count')
+                ->whereIn('users.user_type', [1, 2])
+                ->groupBy('users.gender')
                 ->get(),
-            'by_educational_level' => Patients::join('educational_levels', 'patients.edulvl_id', '=', 'educational_levels.id')
-                ->selectRaw('educational_levels.level, COUNT(*) as count')
+            'by_educational_level' => Patients::join('educational_level', 'patients.edulvl_id', '=', 'educational_level.id')
+                ->join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('educational_level.level_name, COUNT(*) as count')
+                ->whereIn('users.user_type', [1, 2])
+                ->groupBy('educational_level.level_name')
+                ->get(),
+            // Detailed patient list
+            'recent_patients' => Patients::with(['user', 'educationalLevel'])
                 ->whereHas('user', function($q) {
                     $q->whereIn('user_type', [1, 2]);
                 })
-                ->groupBy('educational_levels.level')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            'all_patients' => Patients::with(['user', 'educationalLevel'])
+                ->whereHas('user', function($q) {
+                    $q->whereIn('user_type', [1, 2]);
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(100)
                 ->get(),
         ];
     }
@@ -1238,6 +1286,34 @@ class StaffDashboardController extends Controller
             'completed' => Appointment::where('status', 'Completed')
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->count(),
+            'cancelled' => Appointment::where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            // Detailed appointment lists
+            'recent_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->orderBy('time', 'desc')
+                ->take(50)
+                ->get(),
+            'pending_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Pending')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'asc')
+                ->take(50)
+                ->get(),
+            'completed_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Completed')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+            'cancelled_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
         ];
     }
 
@@ -1248,9 +1324,36 @@ class StaffDashboardController extends Controller
             'physical_exams' => PhysicalExamination::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
             'dental_exams' => DentalExamination::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
             'immunizations' => ImmunizationRecords::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            // Detailed records with relationships
             'recent_records' => HealthRecords::with(['patient.user'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Physical examinations detail
+            'physical_examinations' => PhysicalExamination::with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Dental examinations detail
+            'dental_examinations' => DentalExamination::with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Immunization records detail
+            'immunization_records' => ImmunizationRecords::with(['patient.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Top diagnoses
+            'top_diagnoses' => HealthRecords::selectRaw('diagnosis, COUNT(*) as count')
+                ->whereNotNull('diagnosis')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->groupBy('diagnosis')
+                ->orderBy('count', 'desc')
                 ->take(20)
                 ->get(),
         ];
@@ -1264,17 +1367,17 @@ class StaffDashboardController extends Controller
                 ->whereBetween('date_prescribed', [$dateFrom, $dateTo])
                 ->groupBy('status')
                 ->get(),
-            'most_prescribed' => PrescriptionRecord::join('medicines', 'prescription_records.medicine_id', '=', 'medicines.id')
-                ->selectRaw('medicines.brand_name, COUNT(*) as count')
+            'most_prescribed' => PrescriptionRecord::join('medicine', 'prescription_records.medicine_id', '=', 'medicine.id')
+                ->selectRaw('medicine.name, COUNT(*) as count')
                 ->whereBetween('prescription_records.date_prescribed', [$dateFrom, $dateTo])
-                ->groupBy('medicines.brand_name')
+                ->groupBy('medicine.name')
                 ->orderByDesc('count')
                 ->take(10)
                 ->get(),
-            'recent_prescriptions' => PrescriptionRecord::with(['patient.user', 'medicine', 'doctor'])
+            'recent_prescriptions' => PrescriptionRecord::with(['patient.user', 'medicine', 'doctor.user'])
                 ->whereBetween('date_prescribed', [$dateFrom, $dateTo])
                 ->orderBy('date_prescribed', 'desc')
-                ->take(20)
+                ->take(50)
                 ->get(),
         ];
     }
@@ -1297,6 +1400,7 @@ class StaffDashboardController extends Controller
             'expired_items' => Medicine::where('expiration_date', '<', Carbon::now())
                 ->orderBy('expiration_date')
                 ->get(),
+            'all_medicines' => Medicine::orderBy('name')->get(),
         ];
     }
 
@@ -1320,22 +1424,132 @@ class StaffDashboardController extends Controller
             fputcsv($file, []);
 
             // Add data based on report type
-            foreach ($reportData as $key => $value) {
-                if (is_array($value) || is_object($value)) {
-                    fputcsv($file, [ucwords(str_replace('_', ' ', $key))]);
+            if ($report->report_type === 'appointment_statistics') {
+                fputcsv($file, ['Summary']);
+                fputcsv($file, ['Total Appointments', $reportData['total_appointments'] ?? 0]);
+                fputcsv($file, ['Pending', $reportData['pending'] ?? 0]);
+                fputcsv($file, ['Completed', $reportData['completed'] ?? 0]);
+                fputcsv($file, ['Cancelled', $reportData['cancelled'] ?? 0]);
+                fputcsv($file, []);
+                fputcsv($file, ['Detailed Appointments']);
+                fputcsv($file, ['Date', 'Time', 'Patient', 'Doctor', 'Status', 'Reason']);
+                foreach ($reportData['recent_appointments'] ?? [] as $appt) {
+                    fputcsv($file, [
+                        $appt->date ?? 'N/A',
+                        $appt->time ?? 'N/A',
+                        $appt->patient->user->name ?? 'N/A',
+                        $appt->doctor->user->name ?? 'N/A',
+                        $appt->status ?? 'N/A',
+                        $appt->reason ?? 'N/A'
+                    ]);
+                }
+            } elseif ($report->report_type === 'health_records_summary') {
+                fputcsv($file, ['Summary']);
+                fputcsv($file, ['Total Records', $reportData['total_records'] ?? 0]);
+                fputcsv($file, ['Physical Exams', $reportData['physical_exams'] ?? 0]);
+                fputcsv($file, ['Dental Exams', $reportData['dental_exams'] ?? 0]);
+                fputcsv($file, ['Immunizations', $reportData['immunizations'] ?? 0]);
+                fputcsv($file, []);
 
-                    if ($value instanceof \Illuminate\Support\Collection) {
-                        $items = $value->toArray();
-                        if (count($items) > 0) {
-                            fputcsv($file, array_keys((array)$items[0]));
-                            foreach ($items as $item) {
-                                fputcsv($file, (array)$item);
+                // Health Records Detail
+                fputcsv($file, ['Health Records Detail']);
+                fputcsv($file, ['Date', 'Patient', 'Diagnosis', 'Symptoms', 'Treatment']);
+                foreach ($reportData['recent_records'] ?? [] as $record) {
+                    fputcsv($file, [
+                        $record->created_at->format('Y-m-d') ?? 'N/A',
+                        $record->patient->user->name ?? 'N/A',
+                        $record->diagnosis ?? 'N/A',
+                        $record->symptoms ?? 'N/A',
+                        $record->treatment ?? 'N/A'
+                    ]);
+                }
+                fputcsv($file, []);
+
+                // Physical Examinations Detail
+                fputcsv($file, ['Physical Examinations Detail']);
+                fputcsv($file, ['Date', 'Patient', 'Height', 'Weight', 'BP', 'Heart', 'Remarks']);
+                foreach ($reportData['physical_examinations'] ?? [] as $exam) {
+                    fputcsv($file, [
+                        $exam->created_at->format('Y-m-d') ?? 'N/A',
+                        $exam->patient->user->name ?? 'N/A',
+                        $exam->height ?? 'N/A',
+                        $exam->weight ?? 'N/A',
+                        $exam->bp ?? 'N/A',
+                        $exam->heart ?? 'N/A',
+                        $exam->remarks ?? 'N/A'
+                    ]);
+                }
+                fputcsv($file, []);
+
+                // Dental Examinations Detail
+                fputcsv($file, ['Dental Examinations Detail']);
+                fputcsv($file, ['Date', 'Patient', 'Doctor', 'Diagnosis']);
+                foreach ($reportData['dental_examinations'] ?? [] as $exam) {
+                    fputcsv($file, [
+                        $exam->created_at->format('Y-m-d') ?? 'N/A',
+                        $exam->patient->user->name ?? 'N/A',
+                        $exam->doctor->user->name ?? 'N/A',
+                        $exam->diagnosis ?? 'N/A'
+                    ]);
+                }
+                fputcsv($file, []);
+
+                // Immunization Records Detail
+                fputcsv($file, ['Immunization Records Detail']);
+                fputcsv($file, ['Date', 'Patient', 'Vaccine', 'Dosage', 'Administered By']);
+                foreach ($reportData['immunization_records'] ?? [] as $record) {
+                    fputcsv($file, [
+                        $record->created_at->format('Y-m-d') ?? 'N/A',
+                        $record->patient->user->name ?? 'N/A',
+                        $record->vaccine_name ?? 'N/A',
+                        $record->dosage ?? 'N/A',
+                        $record->administered_by ?? 'N/A'
+                    ]);
+                }
+            } elseif ($report->report_type === 'prescriptions_report') {
+                fputcsv($file, ['Summary']);
+                fputcsv($file, ['Total Prescriptions', $reportData['total_prescriptions'] ?? 0]);
+                fputcsv($file, []);
+
+                // Prescriptions by Status
+                fputcsv($file, ['Prescriptions by Status']);
+                fputcsv($file, ['Status', 'Count']);
+                foreach ($reportData['by_status'] ?? [] as $item) {
+                    fputcsv($file, [$item->status ?? 'N/A', $item->count ?? 0]);
+                }
+                fputcsv($file, []);
+
+                // Recent Prescriptions Detail
+                fputcsv($file, ['Recent Prescriptions Detail']);
+                fputcsv($file, ['Date', 'Patient', 'Doctor', 'Medicine', 'Dosage', 'Status']);
+                foreach ($reportData['recent_prescriptions'] ?? [] as $prescription) {
+                    fputcsv($file, [
+                        $prescription->date_prescribed ?? 'N/A',
+                        $prescription->patient->user->name ?? 'N/A',
+                        ($prescription->doctor->user->name ?? 'N/A'),
+                        $prescription->medicine->name ?? 'N/A',
+                        $prescription->dosage ?? 'N/A',
+                        $prescription->status ?? 'N/A'
+                    ]);
+                }
+            } else {
+                foreach ($reportData as $key => $value) {
+                    if (is_array($value) || is_object($value)) {
+                        fputcsv($file, [ucwords(str_replace('_', ' ', $key))]);
+
+                        if ($value instanceof \Illuminate\Support\Collection) {
+                            $items = $value->toArray();
+                            if (count($items) > 0) {
+                                fputcsv($file, array_keys((array)$items[0]));
+                                foreach ($items as $item) {
+                                    fputcsv($file, (array)$item);
+                                }
                             }
                         }
+                        fputcsv($file, []);
+                    } else {
+                        fputcsv($file, [ucwords(str_replace('_', ' ', $key)), $value]);
                     }
-                    fputcsv($file, []);
-                } else {
-                    fputcsv($file, [ucwords(str_replace('_', ' ', $key)), $value]);
                 }
             }
 
@@ -1356,15 +1570,14 @@ class StaffDashboardController extends Controller
         $query = CertificateRequest::query()
             ->with(['patient.user', 'certificateType']);
 
-        // Filter by status
-        if ($request->has('status') && $request->status != '') {
+        // Filter by status (show all if no filter, or filter by specific status)
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
-        } else {
-            $query->where('status', 'pending');
         }
+        // No default filter - show all certificates
 
         // Search filter
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('patient.user', function($q) use ($search) {
                 $q->where('firstname', 'like', '%' . $search . '%')

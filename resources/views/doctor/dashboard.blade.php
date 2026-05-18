@@ -83,6 +83,10 @@
                    class="block w-full bg-purple-600 text-white text-center py-2 px-4 rounded hover:bg-purple-700 transition">
                     View Reports
                 </a>
+                <a href="{{ route('doctor.reports.generate') }}"
+                   class="block w-full bg-indigo-600 text-white text-center py-2 px-4 rounded hover:bg-indigo-700 transition">
+                    📊 Generate Custom Report
+                </a>
             </div>
         </div>
 
@@ -147,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {{ is_array($monthlyStats) ? ($monthlyStats[$m] ?? 0) : ($monthlyStats->get($m, 0)) }},
         @endfor
     ];
-    
+
     new Chart(ctx, {
         type: 'line',
         data: {

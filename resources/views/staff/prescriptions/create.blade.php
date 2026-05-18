@@ -100,6 +100,22 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Assign Doctor</label>
+                        <select name="doctor_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Doctor (Optional)</option>
+                            @foreach($doctors as $doctor)
+                                <option value="{{ $doctor->id }}" {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>
+                                    Dr. {{ $doctor->user->name ?? 'N/A' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('doctor_id')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
                         <textarea name="instructions" rows="3"

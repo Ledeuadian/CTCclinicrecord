@@ -1,7 +1,6 @@
 <?php
 
 // User Contollers
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\ImmunizationController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +16,7 @@ use App\Http\Controllers\PatientsViewPersonalHealthRecord;
 use App\Http\Controllers\PatientsUpdatePersonalInformation;use App\Http\Controllers\PatientCertificateController;// Doctor Controllers
 use App\Http\Controllers\DoctorDashboardController;
 use App\Http\Controllers\DoctorProfileController;
+use Illuminate\Support\Facades\Auth;
 // Staff Controllers
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\ImportController;
@@ -41,7 +41,7 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     // Generic dashboard - redirects to appropriate user dashboard
     Route::get('/dashboard', function () {
-        $user = auth()->user();
+        $user = Auth::user();
         switch ($user->user_type) {
             case 0: // Admin
                 return redirect()->route('admin.dashboard');
@@ -50,7 +50,10 @@ Route::middleware('auth')->group(function () {
             case 2: // Faculty & Staff
                 return redirect()->route('staff.dashboard');
             case 3: // Doctor
-                return redirect()->route('doctor.dashboard');
+                $doctor = \App\Models\Doctors::where('user_id', $user->id)->first();
+                return $doctor
+                    ? redirect()->route('doctor.dashboard')
+                    : redirect()->route('doctor.profile.show');
             default:
                 return redirect()->route('patients.dashboard');
         }
@@ -137,9 +140,19 @@ Route::middleware('auth')->group(function () {
     });
     Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'check.user.type:3'])->group(function () {
         Route::get('/', function() {
+            $user = Auth::user();
+            $doctor = \App\Models\Doctors::where('user_id', $user->id)->first();
+            if (!$doctor) {
+                return redirect()->route('doctor.profile.show');
+            }
             return view('doctor.shells.doctor-shell');
         })->name('index');
         Route::get('/dashboard', function() {
+            $user = Auth::user();
+            $doctor = \App\Models\Doctors::where('user_id', $user->id)->first();
+            if (!$doctor) {
+                return redirect()->route('doctor.profile.show');
+            }
             return view('doctor.shells.doctor-shell');
         })->name('dashboard');
         Route::get('/appointments', [DoctorDashboardController::class, 'appointments'])->name('appointments');
@@ -181,11 +194,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/prescription/history/{patientId}', [DoctorDashboardController::class, 'prescriptionHistory'])->name('prescription.history');
 
         // Medicine
-        Route::post('/medicine', [DoctorDashboardController::class, 'storeMedicine'])->name('medicine.store');
+        Route::post('/medicine', [DoctorDashboardController::class, 'storeMedicine'])->name('medicines.store');
         Route::put('/medicine/{id}', [DoctorDashboardController::class, 'updateMedicine'])->name('medicine.update');
 
         Route::get('/medications', [DoctorDashboardController::class, 'medications'])->name('medications');
         Route::get('/reports', [DoctorDashboardController::class, 'reports'])->name('reports');
+
+        // Custom Report Generation Routes
+        Route::get('/reports/generate', [DoctorDashboardController::class, 'showReportGeneration'])->name('reports.generate');
+        Route::post('/reports/generate', [DoctorDashboardController::class, 'generateReport'])->name('reports.store');
+        Route::get('/reports/view/{id}', [DoctorDashboardController::class, 'viewReport'])->name('reports.view');
+        Route::delete('/reports/{id}', [DoctorDashboardController::class, 'deleteReport'])->name('reports.delete');
+        Route::get('/reports/export/{id}/{format}', [DoctorDashboardController::class, 'exportReport'])->name('reports.export');
 
         // Certificate Requests
         Route::get('/certificate-requests', [DoctorDashboardController::class, 'certificateRequests'])->name('certificate-requests');
@@ -250,8 +270,8 @@ Route::middleware('auth')->group(function () {
 
         // Medicines
         Route::get('/medications', [StaffDashboardController::class, 'medications'])->name('medications');
-        Route::post('/medicine', [StaffDashboardController::class, 'storeMedicine'])->name('medicine.store');
-        Route::put('/medicine/{id}', [StaffDashboardController::class, 'updateMedicine'])->name('medicine.update');
+        Route::post('/medicine', [StaffDashboardController::class, 'storeMedicine'])->name('medicines.store');
+        Route::put('/medicine/{id}', [StaffDashboardController::class, 'updateMedicine'])->name('medicines.update');
 
         // Staff Prescriptions Management
         Route::get('/prescriptions', [StaffDashboardController::class, 'prescriptions'])->name('prescriptions');
@@ -301,9 +321,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/certificate-requests/{id}/issue', [StaffDashboardController::class, 'issueCertificateRequest'])->name('certificate-requests.issue');
     });
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
@@ -321,7 +338,8 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'store' => 'admin.users.store',
         'update' => 'admin.users.update',
     ]);
-    Route::get('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'updateWithType'])->name('admin.users.updateWithType');
+    Route::get('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'edit'])->name('admin.users.updateWithType');
+    Route::put('/admin/users/edit/{user}/{type}', [AdminUsers::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/destroy/{user}/{type}', [AdminUsers::class, 'deleteWithType'])->name('admin.users.deleteWithType');
     Route::resource('/admin/doctors', AdminDoctor::class)->names([
         'index' => 'admin.doctors.index',
@@ -393,6 +411,13 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
     ]);
     Route::get('/admin/prescription/export', [AdminPrescription::class, 'export'])->name('admin.prescription.export')->middleware('auth');
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Custom Report Generation Routes
+    Route::get('/admin/reports/generate', [AdminReports::class, 'showReportGeneration'])->name('admin.reports.generate');
+    Route::post('/admin/reports/generate', [AdminReports::class, 'generateReport'])->name('admin.reports.store');
+    Route::get('/admin/reports/view/{id}', [AdminReports::class, 'viewReport'])->name('admin.reports.view');
+    Route::delete('/admin/reports/{id}', [AdminReports::class, 'deleteReport'])->name('admin.reports.delete');
+    Route::get('/admin/reports/export/{id}/{format}', [AdminReports::class, 'exportReport'])->name('admin.reports.export');
 
     // Patient Statistics Routes
     Route::get('/admin/statistics/course/{id}', [AdminPatientStatistics::class, 'byCourse'])->name('admin.statistics.course');

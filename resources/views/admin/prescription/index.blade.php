@@ -61,8 +61,10 @@
                 <th scope="col" class="px-6 py-4">Doctor Name</th>
                 <th scope="col" class="px-6 py-4">Medicine</th>
                 <th scope="col" class="px-6 py-4">Dosage</th>
+                <th scope="col" class="px-6 py-4">Frequency</th>
+                <th scope="col" class="px-6 py-4">Duration</th>
                 <th scope="col" class="px-6 py-4">Instruction</th>
-                <th scope="col" class="px-6 py-4">Action</th>
+                <th scope="col" class="px-6 py-4">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -72,29 +74,38 @@
                     {{ $prescription->id }}
                 </th>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $prescription->patient_id }}
+                    {{ $prescription->patient->user->name ?? 'N/A' }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $prescription->doctor_id }}
+                    Dr. {{ $prescription->doctor->user->name ?? 'N/A' }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    {{ $prescription->medicine_id }}
+                    {{ $prescription->medicine->name ?? 'N/A' }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $prescription->dosage }}
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ $prescription->frequency ?? 'N/A' }}
+                </td>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ $prescription->duration ?? 'N/A' }}
+                </td>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {{ $prescription->instruction }}
                 </td>
-                <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.prescription.edit', $prescription->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                    <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
-                        <form action="{{ route('admin.prescription.destroy', $prescription->id) }}" method="POST" style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3r" onclick="return confirm('Are you sure?')">Remove</button>
-                        </form>
-                    </a>
+                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    @php
+                        $statusClass = match($prescription->status) {
+                            'active' => 'bg-green-100 text-green-800',
+                            'completed' => 'bg-blue-100 text-blue-800',
+                            'discontinued' => 'bg-red-100 text-red-800',
+                            default => 'bg-gray-100 text-gray-800',
+                        };
+                    @endphp
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
+                        {{ ucfirst($prescription->status ?? 'N/A') }}
+                    </span>
                 </td>
             </tr>
             @endforeach

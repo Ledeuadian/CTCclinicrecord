@@ -201,53 +201,6 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-(function() {
-    document.addEventListener('input', function(e) {
-        if (e.target.id === 'medicineSearch') {
-            var searchValue = e.target.value.toLowerCase();
-            var rows = document.querySelectorAll('.medicine-row');
-            var visibleCount = 0;
-            rows.forEach(function(row) {
-                var searchText = row.getAttribute('data-search') || '';
-                var show = searchText.includes(searchValue);
-                row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
-            });
-            var noResults = document.getElementById('noMedicineResults');
-            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
-        }
-    });
-})();
-</script>
-@endpush
-
-<!-- Inline script for AJAX content loading -->
-<script>
-(function() {
-    document.addEventListener('input', function(e) {
-        if (e.target.id === 'medicineSearch') {
-            var searchValue = e.target.value.toLowerCase();
-            var rows = document.querySelectorAll('.medicine-row');
-            var visibleCount = 0;
-            rows.forEach(function(row) {
-                var searchText = row.getAttribute('data-search') || '';
-                var show = searchText.includes(searchValue);
-                row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
-            });
-            var noResults = document.getElementById('noMedicineResults');
-            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
-        }
-    });
-})();
-</script>
-
-@endsection
-
-@endsection
-
 <!-- Add Medicine Modal -->
 <div id="addMedicineModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -259,7 +212,7 @@
                 </svg>
             </button>
         </div>
-        <form action="{{ route('staff.medicine.store') }}" method="POST">
+        <form action="{{ route('staff.medicines.store') }}" method="POST">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
@@ -361,7 +314,6 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
 function openAddMedicineModal() {
     document.getElementById('addMedicineModal').classList.remove('hidden');
@@ -379,7 +331,7 @@ function openEditMedicineModal(medicine) {
     document.getElementById('edit_expiration_date').value = medicine.expiration_date || '';
 
     const form = document.getElementById('editMedicineForm');
-    form.action = '/staff/medicine/' + medicine.id;
+    form.action = '/staff/medicine/' + medicine.id + '?_method=PUT';
 
     document.getElementById('editMedicineModal').classList.remove('hidden');
 }
@@ -412,6 +364,5 @@ function closeEditMedicineModal() {
     }
 })();
 </script>
-@endpush
 
 @endsection

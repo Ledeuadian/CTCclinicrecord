@@ -76,6 +76,26 @@
                         @enderror
                     </div>
 
+                    <!-- Attending Doctor Selection -->
+                    <div>
+                        <label for="doctor_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Attending Doctor
+                        </label>
+                        <select id="doctor_id"
+                                name="doctor_id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- Select a Doctor --</option>
+                            @foreach($doctors as $doctor)
+                                <option value="{{ $doctor->id }}" {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>
+                                    {{ optional($doctor->user)->name ?: 'Doctor #' . $doctor->id }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('doctor_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- General Health Record Fields -->
                     <div class="border-t pt-6">
                         <h3 class="text-lg font-medium text-gray-800 mb-4">General Information</h3>
@@ -135,16 +155,22 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="height" class="block text-sm font-medium text-gray-700 mb-2">Height</label>
-                                <input type="text" id="height" name="height" value="{{ old('height') }}"
+                                <label for="height" class="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+                                <input type="number" step="0.01" id="height" name="height" value="{{ old('height') }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="e.g., 170 cm">
+                                       placeholder="e.g., 170" min="0">
+                                @error('height')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
-                                <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">Weight</label>
-                                <input type="text" id="weight" name="weight" value="{{ old('weight') }}"
+                                <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+                                <input type="number" step="0.1" id="weight" name="weight" value="{{ old('weight') }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="e.g., 65 kg">
+                                       placeholder="e.g., 65" min="0">
+                                @error('weight')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label for="bp" class="block text-sm font-medium text-gray-700 mb-2">Blood Pressure</label>
