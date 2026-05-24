@@ -193,9 +193,6 @@
 </div>
 
 <script>
-document.getElementById('medicineSearch').addEventListener('input', function() {
-@push('scripts')
-<script>
 function openAddMedicineModal() {
     document.getElementById('addMedicineModal').classList.remove('hidden');
 }
@@ -211,7 +208,6 @@ function openEditMedicineModal(medicine) {
     document.getElementById('edit_description').value = medicine.description || '';
     document.getElementById('edit_expiration_date').value = medicine.expiration_date || '';
 
-
     const form = document.getElementById('editMedicineForm');
     form.action = '/doctor/medicine/' + medicine.id;
 
@@ -222,26 +218,23 @@ function closeEditMedicineModal() {
     document.getElementById('editMedicineModal').classList.add('hidden');
 }
 
-document.getElementById('medicineSearch').addEventListener('input', function() {
-    const searchValue = this.value.toLowerCase();
-    const rows = document.querySelectorAll('.medicine-row');
-    let visibleCount = 0;
-    rows.forEach(function(row) {
-        const searchText = row.getAttribute('data-search');
-        if (searchText.includes(searchValue)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
+(function() {
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'medicineSearch') {
+            var searchValue = e.target.value.toLowerCase();
+            var rows = document.querySelectorAll('.medicine-row');
+            var visibleCount = 0;
+            rows.forEach(function(row) {
+                var searchText = row.getAttribute('data-search') || '';
+                var show = searchText.includes(searchValue);
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            var noResults = document.getElementById('noMedicineResults');
+            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
         }
     });
-    const noResults = document.getElementById('noMedicineResults');
-    if (noResults) {
-        noResults.classList.toggle('hidden', visibleCount > 0);
-    }
-});
-</script>
-@endpush
+})();
 </script>
 
 <!-- Add Medicine Modal -->
@@ -255,7 +248,7 @@ document.getElementById('medicineSearch').addEventListener('input', function() {
                 </svg>
             </button>
         </div>
-        <form action="{{ route('doctor.medicine.store') }}" method="POST">
+        <form action="{{ route('doctor.medicines.store') }}" method="POST">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
@@ -383,46 +376,7 @@ function openEditMedicineModal(medicine) {
 function closeEditMedicineModal() {
     document.getElementById('editMedicineModal').classList.add('hidden');
 }
-
-(function() {
-    document.addEventListener('input', function(e) {
-        if (e.target.id === 'medicineSearch') {
-            var searchValue = e.target.value.toLowerCase();
-            var rows = document.querySelectorAll('.medicine-row');
-            var visibleCount = 0;
-            rows.forEach(function(row) {
-                var searchText = row.getAttribute('data-search') || '';
-                var show = searchText.includes(searchValue);
-                row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
-            });
-            var noResults = document.getElementById('noMedicineResults');
-            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
-        }
-    });
-})();
 </script>
 @endpush
-
-<!-- Inline script for AJAX loaded content -->
-<script>
-(function() {
-    document.addEventListener('input', function(e) {
-        if (e.target.id === 'medicineSearch') {
-            var searchValue = e.target.value.toLowerCase();
-            var rows = document.querySelectorAll('.medicine-row');
-            var visibleCount = 0;
-            rows.forEach(function(row) {
-                var searchText = row.getAttribute('data-search') || '';
-                var show = searchText.includes(searchValue);
-                row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
-            });
-            var noResults = document.getElementById('noMedicineResults');
-            if (noResults) noResults.classList.toggle('hidden', visibleCount > 0);
-        }
-    });
-})();
-</script>
 
 @endsection

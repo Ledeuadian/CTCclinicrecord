@@ -53,6 +53,9 @@
                     Expiration Date
                 </th>
                 <th scope="col" class="px-6 py-4">
+                    Stocked Date
+                </th>
+                <th scope="col" class="px-6 py-4">
                     Medicine Type
                 </th>
                 <th scope="col" class="px-6 py-4">
@@ -77,6 +80,9 @@
                 </td>
                 <td class="px-6 py-4">
                     {{ $medicine->expiration_date }}
+                </td>
+                <td class="px-6 py-4">
+                    {{ $medicine->created_at ? $medicine->created_at->format('M j, Y') : 'N/A' }}
                 </td>
                 <td class="px-6 py-4">
                     {{ $medicine->medicine_type }}

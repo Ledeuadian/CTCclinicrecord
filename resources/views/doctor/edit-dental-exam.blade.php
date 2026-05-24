@@ -23,6 +23,15 @@
                 @csrf
                 @method('PUT')
 
+                <!-- Patient Info -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">
+                        <strong>Patient:</strong> {{ optional($exam->patient->user)->name ?? 'N/A' }}
+                        <span class="ml-4"><strong>Patient ID:</strong> {{ $exam->patient_id }}</span>
+                        <span class="ml-4"><strong>Exam ID:</strong> {{ $exam->id }}</span>
+                    </p>
+                </div>
+
                 <!-- Diagnosis -->
                 <div class="mb-6">
                     <label for="diagnosis" class="block text-sm font-medium text-gray-700 mb-2">
@@ -31,7 +40,7 @@
                     <textarea id="diagnosis"
                               name="diagnosis"
                               rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="Enter diagnosis...">{{ old('diagnosis', $exam->diagnosis) }}</textarea>
                     @error('diagnosis')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -63,8 +72,8 @@
                                         @if(($teethStatus[$i] ?? 'healthy') === 'healthy') border-green-300 bg-green-50
                                         @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-red-300 bg-red-50
                                         @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-gray-300 bg-gray-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-yellow-300 bg-yellow-50
-                                        @else border-orange-300 bg-orange-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-blue-300 bg-blue-50
+                                        @else border-amber-800 bg-amber-50
                                         @endif"
                                         data-tooth="{{ $i }}"
                                         onclick="toggleToothStatus({{ $i }})">
@@ -87,8 +96,8 @@
                                         @if(($teethStatus[$i] ?? 'healthy') === 'healthy') border-green-300 bg-green-50
                                         @elseif(($teethStatus[$i] ?? 'healthy') === 'cavity') border-red-300 bg-red-50
                                         @elseif(($teethStatus[$i] ?? 'healthy') === 'missing') border-gray-300 bg-gray-50
-                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-yellow-300 bg-yellow-50
-                                        @else border-orange-300 bg-orange-50
+                                        @elseif(($teethStatus[$i] ?? 'healthy') === 'filled') border-blue-300 bg-blue-50
+                                        @else border-amber-800 bg-amber-50
                                         @endif"
                                         data-tooth="{{ $i }}"
                                         onclick="toggleToothStatus({{ $i }})">
@@ -106,23 +115,23 @@
                         <h4 class="text-sm font-semibold text-gray-700 mb-2">Legend:</h4>
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-green-100 border border-green-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-green-500 border border-green-300 rounded mr-2"></div>
                                 <span class="text-sm">Healthy</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-red-100 border border-red-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-red-500 border border-red-300 rounded mr-2"></div>
                                 <span class="text-sm">Cavity</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-blue-500 border border-blue-300 rounded mr-2"></div>
                                 <span class="text-sm">Filled</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-gray-500 border border-gray-300 rounded mr-2"></div>
                                 <span class="text-sm">Missing</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-4 h-4 bg-orange-100 border border-orange-300 rounded mr-2"></div>
+                                <div class="w-4 h-4 bg-yellow-500 border border-amber-800 rounded mr-2"></div>
                                 <span class="text-sm">Other</span>
                             </div>
                         </div>
@@ -136,7 +145,7 @@
                         Cancel
                     </a>
                     <button type="submit"
-                            class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition">
+                            class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
                         Update Examination
                     </button>
                 </div>
@@ -150,9 +159,9 @@ const statuses = ['healthy', 'cavity', 'filled', 'missing', 'other'];
 const statusColors = {
     'healthy': { border: 'border-green-300', bg: 'bg-green-50' },
     'cavity': { border: 'border-red-300', bg: 'bg-red-50' },
-    'filled': { border: 'border-yellow-300', bg: 'bg-yellow-50' },
+    'filled': { border: 'border-blue-300', bg: 'bg-blue-50' },
     'missing': { border: 'border-gray-300', bg: 'bg-gray-50' },
-    'other': { border: 'border-orange-300', bg: 'bg-orange-50' }
+    'other': { border: 'border-amber-800', bg: 'bg-amber-50' }
 };
 
 function toggleToothStatus(toothNum) {

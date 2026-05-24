@@ -24,10 +24,7 @@
             </div>
         @endforeach
     @endif
-    <div class="grid md:grid-cols-2 md:gap-6">
-        <div class="relative z-0 w-full mb-3 group">
-            <button onclick="window.location.href='{{ route('admin.physical.create') }}'" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">New Physical</button>
-        </div>
+    <div class="grid md:grid-cols-1 md:gap-6">
         <div class="relative z-0 w-full mb-3 group">
             <form class="mx-auto">
                 <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -55,7 +52,6 @@
                 <th scope="col" class="px-6 py-4">Heart</th>
                 <th scope="col" class="px-6 py-4">Lungs</th>
                 <th scope="col" class="px-6 py-4">Remarks</th>
-                <th scope="col" class="px-6 py-4">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -87,14 +83,6 @@
                 </td>
                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                     {{ $physical->remarks ?? 'N/A' }}
-                </td>
-                <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.physical.edit', $physical->id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                    <form action="{{ route('admin.physical.destroy', $physical->id) }}" method="POST" style="display:inline-block;" class="ms-3">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="font-medium text-red-600 dark:text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this physical examination?')">Remove</button>
-                    </form>
                 </td>
             </tr>
             @endforeach

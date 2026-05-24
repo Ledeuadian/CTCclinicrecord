@@ -2,9 +2,15 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Reports & Statistics</h1>
-        <p class="text-gray-600">View your practice statistics and performance metrics</p>
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Reports & Statistics</h1>
+            <p class="text-gray-600">View your practice statistics and performance metrics</p>
+        </div>
+        <a href="{{ route('doctor.reports.generate') }}"
+           class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50">
+            📊 Generate Custom Report
+        </a>
     </div>
 
     <!-- Summary Statistics -->

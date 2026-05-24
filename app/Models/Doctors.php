@@ -20,6 +20,7 @@ class Doctors extends Model
         'user_id',
         'specialization',
         'address',
+        'is_available',
     ];
 
     /**

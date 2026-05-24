@@ -1,6 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const patientTypeSelect = document.getElementById('patient_type');
+    const schoolIdField = document.getElementById('school_id_field');
+    const edulvlField = document.getElementById('edulvl_field');
+
+    function toggleStudentFields() {
+        const isStudent = patientTypeSelect && patientTypeSelect.value === 'student';
+        if (schoolIdField) schoolIdField.style.display = isStudent ? 'block' : 'none';
+        if (edulvlField) edulvlField.style.display = isStudent ? 'block' : 'none';
+    }
+
+    if (patientTypeSelect) {
+        patientTypeSelect.addEventListener('change', toggleStudentFields);
+        toggleStudentFields();
+    }
+});
+</script>
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -37,6 +55,54 @@
                     </select>
                 </div>
 
+                <!-- School ID (for students) -->
+                <div id="school_id_field" style="display: none;">
+                    <label for="school_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        School ID
+                    </label>
+                    <input type="text" name="school_id" id="school_id"
+                           value="{{ old('school_id') }}"
+                           placeholder="Enter your School ID"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Educational Level (for students) -->
+                <div id="edulvl_field" style="display: none;">
+                    <label for="edulvl_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Educational Level
+                    </label>
+                    <select name="edulvl_id" id="edulvl_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select educational level...</option>
+                        @if(isset($edulvl))
+                            @foreach($edulvl as $level)
+                                <option value="{{ $level->id }}" {{ old('edulvl_id') == $level->id ? 'selected' : '' }}>
+                                    {{ $level->level_name }} - {{ $level->year_level }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                <!-- Blood Type -->
+                <div>
+                    <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">
+                        Blood Type
+                    </label>
+                    <select name="bloodtype" id="bloodtype"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select blood type...</option>
+                        <option value="A+" {{ old('bloodtype') == 'A+' ? 'selected' : '' }}>A+</option>
+                        <option value="A-" {{ old('bloodtype') == 'A-' ? 'selected' : '' }}>A-</option>
+                        <option value="B+" {{ old('bloodtype') == 'B+' ? 'selected' : '' }}>B+</option>
+                        <option value="B-" {{ old('bloodtype') == 'B-' ? 'selected' : '' }}>B-</option>
+                        <option value="O+" {{ old('bloodtype') == 'O+' ? 'selected' : '' }}>O+</option>
+                        <option value="O-" {{ old('bloodtype') == 'O-' ? 'selected' : '' }}>O-</option>
+                        <option value="AB+" {{ old('bloodtype') == 'AB+' ? 'selected' : '' }}>AB+</option>
+                        <option value="AB-" {{ old('bloodtype') == 'AB-' ? 'selected' : '' }}>AB-</option>
+                    </select>
+                </div>
+
                 <!-- Address -->
                 <div>
                     <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
@@ -50,7 +116,7 @@
                 <!-- Medical Information -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Medical Information</h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="medical_condition" class="block text-sm font-medium text-gray-700 mb-2">
@@ -93,7 +159,7 @@
                 <!-- Emergency Contact -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Emergency Contact</h3>
-                    
+
                     <div class="space-y-4">
                         <div>
                             <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-2">

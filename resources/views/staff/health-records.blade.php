@@ -528,9 +528,15 @@
                                             <p class="text-sm text-gray-600">Patient ID: {{ $exam->patient->id }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-800">{{ $exam->created_at->format('M j, Y') }}</p>
-                                        <p class="text-sm text-gray-600">{{ $exam->created_at->format('g:i A') }}</p>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium text-gray-800">{{ $exam->created_at->format('M j, Y') }}</p>
+                                            <p class="text-sm text-gray-600">{{ $exam->created_at->format('g:i A') }}</p>
+                                        </div>
+                                        <a href="{{ route('staff.physical-exams.edit', $exam->id) }}"
+                                           class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-md transition">
+                                            Edit
+                                        </a>
                                     </div>
                                 </div>
 
@@ -614,9 +620,15 @@
                                             <p class="text-sm text-gray-600">Patient ID: {{ $exam->patient->id }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-800">{{ $exam->created_at->format('M j, Y') }}</p>
-                                        <p class="text-sm text-gray-600">{{ $exam->created_at->format('g:i A') }}</p>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium text-gray-800">{{ $exam->created_at->format('M j, Y') }}</p>
+                                            <p class="text-sm text-gray-600">{{ $exam->created_at->format('g:i A') }}</p>
+                                        </div>
+                                        <a href="{{ route('staff.dental-exams.edit', $exam->id) }}"
+                                           class="text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded-md transition">
+                                            Edit
+                                        </a>
                                     </div>
                                 </div>
 
@@ -736,9 +748,15 @@
                                             <p class="text-sm text-gray-600">Patient ID: {{ $record->patient->id }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-800">{{ $record->created_at->format('M j, Y') }}</p>
-                                        <p class="text-sm text-gray-600">{{ $record->created_at->format('g:i A') }}</p>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium text-gray-800">{{ $record->created_at->format('M j, Y') }}</p>
+                                            <p class="text-sm text-gray-600">{{ $record->created_at->format('g:i A') }}</p>
+                                        </div>
+                                        <a href="{{ route('staff.immunizations.edit', $record->id) }}"
+                                           class="text-sm bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded-md transition">
+                                            Edit
+                                        </a>
                                     </div>
                                 </div>
 

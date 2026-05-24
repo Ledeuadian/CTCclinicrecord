@@ -25,6 +25,47 @@
         </div>
     </div>
 
+    <!-- All Medicines List -->
+    @if(isset($data['all_medicines']) && count($data['all_medicines']) > 0)
+    <div class="bg-gray-700 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-white mb-4">All Medicines</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-gray-300">
+                <thead class="border-b border-gray-600">
+                    <tr>
+                        <th class="text-left py-2">Medicine</th>
+                        <th class="text-left py-2">Generic Name</th>
+                        <th class="text-left py-2">Manufacturer</th>
+                        <th class="text-right py-2">Quantity</th>
+                        <th class="text-left py-2">Dosage</th>
+                        <th class="text-left py-2">Expiry Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($data['all_medicines'] as $medicine)
+                    <tr class="border-b border-gray-600 hover:bg-gray-600">
+                        <td class="py-2">{{ $medicine->name }}</td>
+                        <td class="py-2">{{ $medicine->generic_name ?? 'N/A' }}</td>
+                        <td class="py-2">{{ $medicine->manufacturer ?? 'N/A' }}</td>
+                        <td class="text-right py-2">
+                            @if($medicine->quantity <= 0)
+                                <span class="px-2 py-1 bg-red-600 text-white text-xs rounded">{{ $medicine->quantity }}</span>
+                            @elseif($medicine->quantity <= 10)
+                                <span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded">{{ $medicine->quantity }}</span>
+                            @else
+                                <span class="px-2 py-1 bg-green-600 text-white text-xs rounded">{{ $medicine->quantity }}</span>
+                            @endif
+                        </td>
+                        <td class="py-2">{{ $medicine->dosage ?? 'N/A' }}</td>
+                        <td class="py-2">{{ \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
     <!-- Low Stock Items -->
     @if(isset($data['low_stock_items']) && count($data['low_stock_items']) > 0)
     <div class="bg-gray-700 rounded-lg p-4">
@@ -42,14 +83,14 @@
                 <tbody>
                     @foreach($data['low_stock_items'] as $medicine)
                     <tr class="border-b border-gray-600">
-                        <td class="py-2">{{ $medicine->brand_name }}</td>
+                        <td class="py-2">{{ $medicine->name }}</td>
                         <td class="py-2">{{ $medicine->generic_name ?? 'N/A' }}</td>
                         <td class="text-right py-2">
                             <span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded">
                                 {{ $medicine->quantity }}
                             </span>
                         </td>
-                        <td class="py-2">{{ \Carbon\Carbon::parse($medicine->expiry_date)->format('M d, Y') }}</td>
+                        <td class="py-2">{{ \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -75,12 +116,12 @@
                 <tbody>
                     @foreach($data['expired_items'] as $medicine)
                     <tr class="border-b border-gray-600">
-                        <td class="py-2">{{ $medicine->brand_name }}</td>
+                        <td class="py-2">{{ $medicine->name }}</td>
                         <td class="py-2">{{ $medicine->generic_name ?? 'N/A' }}</td>
                         <td class="text-right py-2">{{ $medicine->quantity }}</td>
                         <td class="py-2">
                             <span class="px-2 py-1 bg-red-600 text-white text-xs rounded">
-                                {{ \Carbon\Carbon::parse($medicine->expiry_date)->format('M d, Y') }}
+                                {{ \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') }}
                             </span>
                         </td>
                     </tr>

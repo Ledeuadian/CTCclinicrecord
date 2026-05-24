@@ -83,13 +83,14 @@ class AdminUsers extends Controller
     /**
      * Show the form for editing the 2 argument of specified resource.
      */
-    public function updateWithType(Request $request, $id, $type)
+    public function edit(Request $request, $id, $type)
     {
-        // Find the user by ID
-        if ($type == 1){
-            $admin = User::findOrFail($id);
-        } else if($type == 2){
+        // Find the user by ID - use User model for all types except Admin (0)
+        if ($type == 0){
             $admin = Admin::findOrFail($id);
+        } else {
+            // Types 1 (Student), 2 (Faculty & Staff), 3 (Doctor) all use User model
+            $admin = User::findOrFail($id);
         }
         //
         return view('admin.users.edit', compact('admin'));
@@ -98,22 +99,78 @@ class AdminUsers extends Controller
     /**
      * Remove the 2 argument specified resource from storage.
      */
+    public function update(Request $request, $id, $type)
+    {
+        // Find the user by ID - use User model for all types except Admin (0)
+        if ($type == 0){
+            $admin = Admin::findOrFail($id);
+        } else {
+            // Types 1 (Student), 2 (Faculty & Staff), 3 (Doctor) all use User model
+            $admin = User::findOrFail($id);
+        }
 
+        // Validation rules - password is optional for update
+        $rules = [
+            'name' => 'required|string|max:255',
+            'user_type' => 'required|integer',
+            'f_name' => 'required|string|max:255',
+            'm_name' => 'nullable|string|max:255',
+            'l_name' => 'required|string|max:255',
+            'dob' => 'required|date',
+            'address' => 'nullable|string',
+            'gender' => 'required|string|max:1',
+            'contact_no' => 'nullable|string|max:20',
+            'email' => $type == 0 ? 'required|email|unique:admins,email,' . $id : 'required|email|unique:users,email,' . $id,
+        ];
+
+        // Only validate password if it's being changed
+        if ($request->filled('password')) {
+            $rules['password'] = ['confirmed', Rules\Password::defaults()];
+        }
+
+        $request->validate($rules);
+
+        // Update user fields
+        $admin->name = $request->name;
+        $admin->user_type = $request->user_type;
+        $admin->f_name = $request->f_name;
+        $admin->m_name = $request->m_name;
+        $admin->l_name = $request->l_name;
+        $admin->dob = $request->dob;
+        $admin->address = $request->address;
+        $admin->gender = $request->gender;
+        $admin->contact_no = $request->contact_no;
+        $admin->email = $request->email;
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $admin->password = Hash::make($request->password);
+        }
+
+        $admin->save();
+
+        // Redirect with the NEW user_type to ensure the URL reflects the updated type
+        return redirect()->route('admin.users.editWithType', ['user' => $admin->id, 'type' => $admin->user_type])->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Remove the 2 argument specified resource from storage.
+     */
     public function deleteWithType(Request $request, $id, $type)
     {
         // Find the user by ID
-        if ($type == 1){
-            // Find and delete the User model
-            $user = User::findOrFail($id);
-            $user->delete();
-
-            return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
-        } else if($type  == 2){
+        if ($type == 0){
             // Find and delete the Admin model
             $user = Admin::findOrFail($id);
             $user->delete();
 
             return redirect()->route('admin.users.index')->with('success', 'Admin deleted successfully');
+        } else {
+            // Types 1, 2, 3 (Student, Staff, Doctor) all use User model
+            $user = User::findOrFail($id);
+            $user->delete();
+
+            return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
         }
     }
 }

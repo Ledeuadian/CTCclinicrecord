@@ -23,7 +23,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('staff.medicine.store') }}" method="POST">
+            <form action="{{ route('staff.medicines.store') }}" method="POST">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="col-span-2">

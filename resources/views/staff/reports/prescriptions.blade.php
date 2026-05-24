@@ -46,7 +46,7 @@
             <tbody>
                 @foreach($data['most_prescribed'] as $item)
                 <tr class="border-b border-gray-600">
-                    <td class="py-2">{{ $item->brand_name }}</td>
+                    <td class="py-2">{{ $item->name }}</td>
                     <td class="text-right py-2">{{ $item->count }}</td>
                 </tr>
                 @endforeach
@@ -65,6 +65,7 @@
                     <tr>
                         <th class="text-left py-2">Date</th>
                         <th class="text-left py-2">Patient</th>
+                        <th class="text-left py-2">Doctor</th>
                         <th class="text-left py-2">Medicine</th>
                         <th class="text-left py-2">Dosage</th>
                         <th class="text-left py-2">Status</th>
@@ -72,10 +73,17 @@
                 </thead>
                 <tbody>
                     @foreach($data['recent_prescriptions'] as $prescription)
-                    <tr class="border-b border-gray-600">
+                    <tr class="border-b border-gray-600 hover:bg-gray-600">
                         <td class="py-2">{{ \Carbon\Carbon::parse($prescription->date_prescribed)->format('M d, Y') }}</td>
                         <td class="py-2">{{ $prescription->patient->user->name ?? 'N/A' }}</td>
-                        <td class="py-2">{{ $prescription->medicine->brand_name ?? 'N/A' }}</td>
+                        <td class="py-2">
+                            @if($prescription->doctor && $prescription->doctor->user)
+                                Dr. {{ $prescription->doctor->user->name }}
+                            @else
+                                N/A
+                            @endif
+                        </td>
+                        <td class="py-2">{{ $prescription->medicine->name ?? 'N/A' }}</td>
                         <td class="py-2">{{ $prescription->dosage ?? 'N/A' }}</td>
                         <td class="py-2">
                             <span class="px-2 py-1 bg-blue-600 text-white text-xs rounded">

@@ -6,82 +6,506 @@ use Illuminate\Http\Request;
 use App\Models\Patients;
 use App\Models\Course;
 use App\Models\EducationalLevel;
+use App\Models\Appointment;
+use App\Models\Doctors;
+use App\Models\User;
+use App\Models\HealthRecords;
+use App\Models\PrescriptionRecord;
+use App\Models\Medicine;
+use App\Models\PhysicalExamination;
+use App\Models\DentalExamination;
+use App\Models\ImmunizationRecords;
+use App\Models\GeneratedReport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AdminReports extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display the reports dashboard
      */
     public function index()
     {
-        // Get statistics by course
-        $byCourse = DB::table('patients')
-            ->join('courses', 'patients.course_id', '=', 'courses.id')
-            ->select('courses.course_name', DB::raw('COUNT(*) as total_patients'))
-            ->groupBy('courses.course_name')
-            ->orderBy('total_patients', 'desc')
+        return view('admin.reports.index');
+    }
+
+    /**
+     * Show report generation form
+     */
+    public function showReportGeneration()
+    {
+        $savedReports = GeneratedReport::where('generated_by_type', 'admin')
+            ->where('generated_by_id', Auth::id())
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get statistics by educational level
-        $byEducationalLevel = DB::table('patients')
-            ->join('educational_level', 'patients.edulvl_id', '=', 'educational_level.id')
-            ->select('educational_level.level_name', DB::raw('COUNT(*) as total_patients'))
-            ->groupBy('educational_level.level_name')
-            ->orderBy('total_patients', 'desc')
+        return view('admin.reports.generate', compact('savedReports'));
+    }
+
+    /**
+     * Generate report based on parameters
+     */
+    public function generateReport(Request $request)
+    {
+        $request->validate([
+            'report_type' => 'required|in:patient_statistics,appointment_statistics,health_records,prescriptions,medicine_inventory',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'title' => 'required|string|max:255',
+        ]);
+
+        $reportType = $request->report_type;
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from) : Carbon::now()->subYear();
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to) : Carbon::now();
+
+        $reportData = $this->compileReportData($reportType, $dateFrom, $dateTo);
+
+        // Save report to database
+        $report = GeneratedReport::create([
+            'title' => $request->title,
+            'report_type' => $reportType,
+            'description' => $request->description,
+            'parameters' => [
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+            ],
+            'generated_by_type' => 'admin',
+            'generated_by_id' => Auth::id(),
+            'status' => 'completed',
+        ]);
+
+        return view('admin.reports.view', compact('report', 'reportData', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * View existing report
+     */
+    public function viewReport($id)
+    {
+        $report = GeneratedReport::findOrFail($id);
+
+        $dateFrom = Carbon::parse($report->parameters['date_from']);
+        $dateTo = Carbon::parse($report->parameters['date_to']);
+
+        $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
+
+        return view('admin.reports.view', compact('report', 'reportData', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Delete report
+     */
+    public function deleteReport($id)
+    {
+        $report = GeneratedReport::findOrFail($id);
+
+        if ($report->generated_by_id !== Auth::id()) {
+            abort(403, 'Unauthorized to delete this report.');
+        }
+
+        $report->delete();
+
+        return redirect()->route('admin.reports.generate')
+            ->with('success', 'Report deleted successfully.');
+    }
+
+    /**
+     * Export report as CSV
+     */
+    public function exportReport($id, $format = 'csv')
+    {
+        $report = GeneratedReport::findOrFail($id);
+
+        $dateFrom = Carbon::parse($report->parameters['date_from']);
+        $dateTo = Carbon::parse($report->parameters['date_to']);
+
+        $reportData = $this->compileReportData($report->report_type, $dateFrom, $dateTo);
+
+        return $this->exportAsCSV($report, $reportData);
+    }
+
+    /**
+     * Compile report data based on type
+     */
+    private function compileReportData($reportType, $dateFrom, $dateTo)
+    {
+        switch ($reportType) {
+            case 'patient_statistics':
+                return $this->compilePatientStatistics($dateFrom, $dateTo);
+            case 'appointment_statistics':
+                return $this->compileAppointmentStatistics($dateFrom, $dateTo);
+            case 'health_records':
+                return $this->compileHealthRecordsReport($dateFrom, $dateTo);
+            case 'prescriptions':
+                return $this->compilePrescriptionsReport($dateFrom, $dateTo);
+            case 'medicine_inventory':
+                return $this->compileMedicineInventoryReport($dateFrom, $dateTo);
+            default:
+                return [];
+        }
+    }
+
+    /**
+     * Compile Patient Statistics Report
+     */
+    private function compilePatientStatistics($dateFrom, $dateTo)
+    {
+        return [
+            'total_patients' => Patients::whereHas('user', function($q) {
+                $q->whereIn('user_type', [1, 2]);
+            })->count(),
+            'new_patients' => Patients::whereBetween('created_at', [$dateFrom, $dateTo])
+                ->whereHas('user', function($q) {
+                    $q->whereIn('user_type', [1, 2]);
+                })->count(),
+            'gender_distribution' => Patients::join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('users.gender, COUNT(*) as count')
+                ->whereIn('users.user_type', [1, 2])
+                ->groupBy('users.gender')
+                ->get(),
+            'by_educational_level' => Patients::join('educational_level', 'patients.edulvl_id', '=', 'educational_level.id')
+                ->join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('educational_level.level_name, COUNT(*) as count')
+                ->whereIn('users.user_type', [1, 2])
+                ->groupBy('educational_level.level_name')
+                ->get(),
+            'by_course' => Patients::join('courses', 'patients.course_id', '=', 'courses.id')
+                ->join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('courses.course_name, COUNT(*) as count')
+                ->whereIn('users.user_type', [1, 2])
+                ->groupBy('courses.course_name')
+                ->get(),
+            // Detailed patient list
+            'recent_patients' => Patients::with(['user', 'educationalLevel'])
+                ->whereHas('user', function($q) {
+                    $q->whereIn('user_type', [1, 2]);
+                })
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            'all_patients' => Patients::with(['user', 'educationalLevel'])
+                ->whereHas('user', function($q) {
+                    $q->whereIn('user_type', [1, 2]);
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(100)
+                ->get(),
+        ];
+    }
+
+    /**
+     * Compile Appointment Statistics Report
+     */
+    private function compileAppointmentStatistics($dateFrom, $dateTo)
+    {
+        return [
+            'total_appointments' => Appointment::whereBetween('date', [$dateFrom, $dateTo])->count(),
+            'by_status' => Appointment::selectRaw('status, COUNT(*) as count')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->groupBy('status')
+                ->get(),
+            'by_month' => Appointment::selectRaw('DATE_FORMAT(date, "%Y-%m") as month, COUNT(*) as count')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get(),
+            'pending' => Appointment::where('status', 'Pending')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            'completed' => Appointment::where('status', 'Completed')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            'cancelled' => Appointment::where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            // Detailed appointment lists
+            'recent_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->orderBy('time', 'desc')
+                ->take(50)
+                ->get(),
+            'pending_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Pending')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'asc')
+                ->take(50)
+                ->get(),
+            'completed_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Completed')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+            'cancelled_appointments' => Appointment::with(['patient.user', 'doctor.user'])
+                ->where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+        ];
+    }
+
+    /**
+     * Compile Health Records Report
+     */
+    private function compileHealthRecordsReport($dateFrom, $dateTo)
+    {
+        return [
+            'total_records' => HealthRecords::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            'physical_exams' => PhysicalExamination::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            'dental_exams' => DentalExamination::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            'immunizations' => ImmunizationRecords::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            // Detailed records with relationships
+            'recent_records' => HealthRecords::with(['patient.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Physical examinations detail
+            'physical_examinations' => PhysicalExamination::with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Dental examinations detail
+            'dental_examinations' => DentalExamination::with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Immunization records detail
+            'immunization_records' => ImmunizationRecords::with(['patient.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Top diagnoses
+            'top_diagnoses' => HealthRecords::selectRaw('diagnosis, COUNT(*) as count')
+                ->whereNotNull('diagnosis')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->groupBy('diagnosis')
+                ->orderBy('count', 'desc')
+                ->take(20)
+                ->get(),
+        ];
+    }
+
+    /**
+     * Compile Prescriptions Report
+     */
+    private function compilePrescriptionsReport($dateFrom, $dateTo)
+    {
+        return [
+            'total_prescriptions' => PrescriptionRecord::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
+            'by_medicine' => PrescriptionRecord::join('medicine', 'prescription_records.medicine_id', '=', 'medicine.id')
+                ->selectRaw('medicine.name, COUNT(*) as count')
+                ->whereBetween('prescription_records.created_at', [$dateFrom, $dateTo])
+                ->groupBy('medicine.name')
+                ->orderBy('count', 'desc')
+                ->get(),
+            // Detailed prescription list
+            'prescriptions' => PrescriptionRecord::with(['patient.user', 'patient.educationalLevel', 'medicine', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(100)
+                ->get(),
+        ];
+    }
+
+    /**
+     * Compile Medicine Inventory Report
+     */
+    private function compileMedicineInventoryReport($dateFrom, $dateTo)
+    {
+        $allMedicines = Medicine::orderBy('name')->get();
+        $lowStock = Medicine::where('quantity', '<=', 10)->orderBy('quantity')->get();
+        $expiredMedicines = Medicine::where('expiration_date', '<', Carbon::now())->get();
+        $expiringSoon = Medicine::where('expiration_date', '>=', Carbon::now())
+            ->where('expiration_date', '<=', Carbon::now()->addMonth())
             ->get();
 
-        // Total patients
-        $totalPatients = Patients::count();
-
-        return view('admin.reports.index', compact('byCourse', 'byEducationalLevel', 'totalPatients'));
+        return [
+            'total_medicines' => Medicine::count(),
+            'total_quantity' => Medicine::sum('quantity'),
+            'low_stock_count' => $lowStock->count(),
+            'expired_count' => $expiredMedicines->count(),
+            'expiring_soon_count' => $expiringSoon->count(),
+            // Detailed lists
+            'all_medicines' => $allMedicines,
+            'low_stock' => $lowStock,
+            'expired' => $expiredMedicines,
+            'expiring_soon' => $expiringSoon,
+        ];
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Export report as CSV
      */
-    public function create()
+    private function exportAsCSV($report, $data)
     {
-        //
-    }
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . str_replace(' ', '_', $report->title) . '_' . date('Y-m-d') . '.csv"',
+        ];
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $callback = function() use ($report, $data) {
+            $handle = fopen('php://output', 'w');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+            fputcsv($handle, [$report->title]);
+            fputcsv($handle, ['Generated: ' . $report->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($handle, ['Period: ' . ($report->parameters['date_from'] ?? 'N/A') . ' to ' . ($report->parameters['date_to'] ?? 'N/A')]);
+            fputcsv($handle, []);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+            switch ($report->report_type) {
+                case 'patient_statistics':
+                    fputcsv($handle, ['Patient Statistics Report']);
+                    fputcsv($handle, ['Total Patients', $data['total_patients'] ?? 0]);
+                    fputcsv($handle, ['New Patients (Period)', $data['new_patients'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Patient Name', 'Gender', 'Email', 'Educational Level', 'Date']);
+                    if (isset($data['recent_patients'])) {
+                        foreach ($data['recent_patients'] as $patient) {
+                            fputcsv($handle, [
+                                $patient->user->name ?? 'N/A',
+                                $patient->user->gender ?? 'N/A',
+                                $patient->user->email ?? 'N/A',
+                                $patient->educationalLevel->level_name ?? 'N/A',
+                                $patient->created_at->format('Y-m-d'),
+                            ]);
+                        }
+                    }
+                    break;
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+                case 'appointment_statistics':
+                    fputcsv($handle, ['Appointment Statistics Report']);
+                    fputcsv($handle, ['Total Appointments', $data['total_appointments'] ?? 0]);
+                    fputcsv($handle, ['Completed', $data['completed'] ?? 0]);
+                    fputcsv($handle, ['Pending', $data['pending'] ?? 0]);
+                    fputcsv($handle, ['Cancelled', $data['cancelled'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Date', 'Time', 'Patient', 'Doctor', 'Status']);
+                    if (isset($data['recent_appointments'])) {
+                        foreach ($data['recent_appointments'] as $apt) {
+                            fputcsv($handle, [
+                                $apt->date,
+                                $apt->time,
+                                $apt->patient->user->name ?? 'N/A',
+                                $apt->doctor->user->name ?? 'N/A',
+                                $apt->status,
+                            ]);
+                        }
+                    }
+                    break;
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+                case 'health_records':
+                    fputcsv($handle, ['Health Records Report']);
+                    fputcsv($handle, ['Total Health Records', $data['total_records'] ?? 0]);
+                    fputcsv($handle, ['Total Physical Exams', $data['physical_exams'] ?? 0]);
+                    fputcsv($handle, ['Total Dental Exams', $data['dental_exams'] ?? 0]);
+                    fputcsv($handle, ['Total Immunizations', $data['immunizations'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Health Records']);
+                    fputcsv($handle, ['Date', 'Patient', 'Diagnosis', 'Symptoms', 'Treatment']);
+                    if (isset($data['recent_records'])) {
+                        foreach ($data['recent_records'] as $record) {
+                            fputcsv($handle, [
+                                $record->created_at->format('Y-m-d'),
+                                $record->patient->user->name ?? 'N/A',
+                                $record->diagnosis ?? 'N/A',
+                                $record->symptoms ?? 'N/A',
+                                $record->treatment ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Physical Examinations']);
+                    fputcsv($handle, ['Date', 'Patient', 'Height', 'Weight', 'BP', 'Heart', 'Remarks']);
+                    if (isset($data['physical_examinations'])) {
+                        foreach ($data['physical_examinations'] as $exam) {
+                            fputcsv($handle, [
+                                $exam->created_at->format('Y-m-d'),
+                                $exam->patient->user->name ?? 'N/A',
+                                $exam->height ?? 'N/A',
+                                $exam->weight ?? 'N/A',
+                                $exam->bp ?? 'N/A',
+                                $exam->heart ?? 'N/A',
+                                $exam->remarks ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Dental Examinations']);
+                    fputcsv($handle, ['Date', 'Patient', 'Doctor', 'Diagnosis']);
+                    if (isset($data['dental_examinations'])) {
+                        foreach ($data['dental_examinations'] as $exam) {
+                            fputcsv($handle, [
+                                $exam->created_at->format('Y-m-d'),
+                                $exam->patient->user->name ?? 'N/A',
+                                $exam->doctor->user->name ?? 'N/A',
+                                $exam->diagnosis ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Immunization Records']);
+                    fputcsv($handle, ['Date', 'Patient', 'Vaccine', 'Dosage', 'Administered By']);
+                    if (isset($data['immunization_records'])) {
+                        foreach ($data['immunization_records'] as $record) {
+                            fputcsv($handle, [
+                                $record->created_at->format('Y-m-d'),
+                                $record->patient->user->name ?? 'N/A',
+                                $record->vaccine_name ?? 'N/A',
+                                $record->dosage ?? 'N/A',
+                                $record->administered_by ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    break;
+
+                case 'prescriptions':
+                    fputcsv($handle, ['Prescriptions Report']);
+                    fputcsv($handle, ['Total Prescriptions', $data['total_prescriptions'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Date', 'Patient', 'Medicine', 'Dosage', 'Doctor']);
+                    if (isset($data['prescriptions'])) {
+                        foreach ($data['prescriptions'] as $rx) {
+                            fputcsv($handle, [
+                                $rx->created_at->format('Y-m-d'),
+                                $rx->patient->user->name ?? 'N/A',
+                                $rx->medicine->name ?? 'N/A',
+                                $rx->dosage ?? 'N/A',
+                                $rx->doctor->user->name ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    break;
+
+                case 'medicine_inventory':
+                    fputcsv($handle, ['Medicine Inventory Report']);
+                    fputcsv($handle, ['Total Medicines', $data['total_medicines'] ?? 0]);
+                    fputcsv($handle, ['Low Stock Items', $data['low_stock_count'] ?? 0]);
+                    fputcsv($handle, ['Expired Items', $data['expired_count'] ?? 0]);
+                    fputcsv($handle, []);
+                    fputcsv($handle, ['Medicine Name', 'Quantity', 'Expiration Date', 'Unit']);
+                    if (isset($data['all_medicines'])) {
+                        foreach ($data['all_medicines'] as $med) {
+                            fputcsv($handle, [
+                                $med->name,
+                                $med->quantity,
+                                $med->expiration_date,
+                                $med->unit ?? 'N/A',
+                            ]);
+                        }
+                    }
+                    break;
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

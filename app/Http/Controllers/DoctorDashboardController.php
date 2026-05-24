@@ -13,6 +13,7 @@ use App\Models\DentalExamination;
 use App\Models\Immunization;
 use App\Models\Medicine;
 use App\Models\CertificateRequest;
+use App\Models\GeneratedReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -684,17 +685,17 @@ class DoctorDashboardController extends Controller
     private function createPhysicalExamination(Request $request, $doctor)
     {
         $request->validate([
-            'height' => 'nullable|numeric',
-            'weight' => 'nullable|numeric',
-            'bp' => 'nullable|string|max:20',
-            'heart' => 'nullable|string|max:255',
-            'lungs' => 'nullable|string|max:255',
-            'eyes' => 'nullable|string|max:255',
-            'ears' => 'nullable|string|max:255',
-            'nose' => 'nullable|string|max:255',
-            'throat' => 'nullable|string|max:255',
-            'skin' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
+            'height' => 'required|numeric',
+            'weight' => 'required|numeric',
+            'bp' => 'required|string|max:20',
+            'heart' => 'required|string|max:255',
+            'lungs' => 'required|string|max:255',
+            'eyes' => 'required|string|max:255',
+            'ears' => 'required|string|max:255',
+            'nose' => 'required|string|max:255',
+            'throat' => 'required|string|max:255',
+            'skin' => 'required|string|max:255',
+            'remarks' => 'required|string',
         ]);
 
         // Get the patient's user_id
@@ -723,15 +724,40 @@ class DoctorDashboardController extends Controller
     private function createDentalExamination(Request $request, $doctor)
     {
         $request->validate([
-            'diagnosis' => 'nullable|string',
+            'diagnosis' => 'required|string',
             'teeth_status' => 'nullable|array',
         ]);
+
+        $teethStatus = $request->teeth_status ?? [];
+
+        // Form sends nested array teeth_status[upper][1], teeth_status[lower][1]
+        // Flatten to simple array with keys 1-32
+        if (is_array($teethStatus)) {
+            $flatTeethStatus = [];
+            foreach ($teethStatus as $key => $value) {
+                if (is_array($value)) {
+                    // Handle nested structure like ['upper' => [...], 'lower' => [...]]
+                    foreach ($value as $subKey => $subValue) {
+                        if ($key === 'upper') {
+                            $flatTeethStatus[(int)$subKey] = $subValue;
+                        } elseif ($key === 'lower') {
+                            // Lower teeth start from 17
+                            $flatTeethStatus[16 + (int)$subKey] = $subValue;
+                        }
+                    }
+                } elseif (is_numeric($key)) {
+                    // Already flat array with numeric keys
+                    $flatTeethStatus[(int)$key] = $value;
+                }
+            }
+            $teethStatus = $flatTeethStatus;
+        }
 
         DentalExamination::create([
             'patient_id' => $request->patient_id,
             'doctor_id' => $doctor->id,
             'diagnosis' => $request->diagnosis,
-            'teeth_status' => $request->teeth_status ?? [],
+            'teeth_status' => $teethStatus,
         ]);
     }
 
@@ -742,11 +768,11 @@ class DoctorDashboardController extends Controller
     {
         $request->validate([
             'vaccine_name' => 'required|string|max:255',
-            'vaccine_type' => 'nullable|string|max:255',
-            'dosage' => 'nullable|string|max:255',
-            'site_of_administration' => 'nullable|string|max:255',
-            'expiration_date' => 'nullable|date',
-            'notes' => 'nullable|string',
+            'vaccine_type' => 'required|string|max:255',
+            'dosage' => 'required|string|max:255',
+            'site_of_administration' => 'required|string|max:255',
+            'expiration_date' => 'required|date',
+            'notes' => 'required|string',
         ]);
 
         ImmunizationRecords::create([
@@ -996,7 +1022,7 @@ class DoctorDashboardController extends Controller
         $prescription = PrescriptionRecord::findOrFail($id);
 
         $request->validate([
-            'medicine_id' => 'required|exists:medicines,id',
+            'medicine_id' => 'required|exists:medicine,id',
             'dosage' => 'required|string|max:255',
             'frequency' => 'nullable|string|max:255',
             'duration' => 'nullable|string|max:255',
@@ -1022,15 +1048,13 @@ class DoctorDashboardController extends Controller
             'name' => 'required|string|max:255',
             'medicine_type' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:0',
+            'quantity' => 'nullable|integer|min:0',
             'expiration_date' => 'nullable|date',
         ]);
 
-        Medicine::create($request->only([
-            'name', 'medicine_type', 'description', 'quantity', 'expiration_date'
-        ]));
+        Medicine::create($request->all());
 
-        return redirect()->route('doctor.health-records')
+        return redirect()->route('doctor.medications')
             ->with('success', 'Medicine added successfully.');
     }
 
@@ -1045,15 +1069,13 @@ class DoctorDashboardController extends Controller
             'name' => 'required|string|max:255',
             'medicine_type' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:0',
+            'quantity' => 'nullable|integer|min:0',
             'expiration_date' => 'nullable|date',
         ]);
 
-        $medicine->update($request->only([
-            'name', 'medicine_type', 'description', 'quantity', 'expiration_date'
-        ]));
+        $medicine->update($request->all());
 
-        return redirect()->route('doctor.health-records')
+        return redirect()->route('doctor.medications')
             ->with('success', 'Medicine updated successfully.');
     }
 
@@ -1163,23 +1185,23 @@ class DoctorDashboardController extends Controller
             'frequency' => 'nullable|string|max:255',
             'duration' => 'nullable|string|max:255',
             'instruction' => 'nullable|string',
-            'date_prescribed' => 'required|date',
+            'date_prescribed' => 'nullable|date',
         ]);
 
         PrescriptionRecord::create([
             'patient_id' => $request->patient_id,
             'medicine_id' => $request->medicine_id,
             'doctor_id' => $doctor->id,
+            'prescribed_by' => Auth::id(),
             'dosage' => $request->dosage,
             'frequency' => $request->frequency,
             'duration' => $request->duration,
             'instruction' => $request->instruction,
-            'date_prescribed' => $request->date_prescribed,
+            'date_prescribed' => $request->date_prescribed ?? now(),
             'status' => 'active',
         ]);
 
-        return redirect()->route('doctor.prescriptions')
-            ->with('success', 'Prescription created successfully.');
+        return redirect()->back()->with('success', 'Prescription created successfully.');
     }
 
     /**
@@ -1278,16 +1300,14 @@ class DoctorDashboardController extends Controller
         $query = CertificateRequest::query()
             ->with(['patient.user', 'certificateType']);
 
-        // Filter by status
-        if ($request->has('status') && $request->status != '') {
+        // Filter by status (show all if no filter, or filter by specific status)
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
-        } else {
-            // Default to pending requests
-            $query->where('status', 'pending');
         }
+        // No default filter - show all certificates
 
         // Search filter
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('patient.user', function($q) use ($search) {
                 $q->where('firstname', 'like', '%' . $search . '%')
@@ -1404,5 +1424,534 @@ class DoctorDashboardController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Certificate marked as issued.');
+    }
+
+    /**
+     * Show report generation page for doctors
+     */
+    public function showReportGeneration()
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $savedReports = GeneratedReport::where('generated_by_type', 'doctor')
+            ->where('generated_by_id', $doctor->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('doctor.generate-report', compact('savedReports'));
+    }
+
+    /**
+     * Generate report based on parameters
+     */
+    public function generateReport(Request $request)
+    {
+        $request->validate([
+            'report_type' => 'required|in:patient_statistics,appointment_statistics,health_records,prescriptions,medicine_inventory',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'title' => 'required|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $reportType = $request->report_type;
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from) : Carbon::now()->subYear();
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to) : Carbon::now();
+
+        $reportData = $this->compileDoctorReportData($reportType, $dateFrom, $dateTo, $doctor);
+
+        // Save report to database
+        $report = GeneratedReport::create([
+            'title' => $request->title,
+            'report_type' => $reportType,
+            'description' => $request->description,
+            'parameters' => [
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+            ],
+            'generated_by_type' => 'doctor',
+            'generated_by_id' => $doctor->id,
+            'status' => 'completed',
+        ]);
+
+        return view('doctor.view-report', compact('report', 'reportData', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * View existing report
+     */
+    public function viewReport($id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $report = GeneratedReport::findOrFail($id);
+
+        // Check authorization
+        if ($report->generated_by_id !== $doctor->id && $report->generated_by_type !== 'doctor') {
+            abort(403, 'Unauthorized access to this report.');
+        }
+
+        $dateFrom = Carbon::parse($report->parameters['date_from']);
+        $dateTo = Carbon::parse($report->parameters['date_to']);
+
+        $reportData = $this->compileDoctorReportData($report->report_type, $dateFrom, $dateTo, $doctor);
+
+        return view('doctor.view-report', compact('report', 'reportData', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Delete report
+     */
+    public function deleteReport($id)
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $report = GeneratedReport::findOrFail($id);
+
+        // Check authorization
+        if ($report->generated_by_id !== $doctor->id && $report->generated_by_type !== 'doctor') {
+            abort(403, 'Unauthorized to delete this report.');
+        }
+
+        $report->delete();
+
+        return redirect()->route('doctor.reports.generate')
+            ->with('success', 'Report deleted successfully.');
+    }
+
+    /**
+     * Export report as CSV
+     */
+    public function exportReport($id, $format = 'pdf')
+    {
+        $user = Auth::user();
+        $doctor = Doctors::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return redirect()->route('doctor.dashboard')->with('error', 'Doctor profile not found.');
+        }
+
+        $report = GeneratedReport::findOrFail($id);
+
+        // Check authorization
+        if ($report->generated_by_id !== $doctor->id && $report->generated_by_type !== 'doctor') {
+            abort(403, 'Unauthorized to export this report.');
+        }
+
+        $dateFrom = Carbon::parse($report->parameters['date_from']);
+        $dateTo = Carbon::parse($report->parameters['date_to']);
+
+        $reportData = $this->compileDoctorReportData($report->report_type, $dateFrom, $dateTo, $doctor);
+
+        if ($format === 'csv') {
+            return $this->exportDoctorReportAsCSV($report, $reportData);
+        }
+
+        return view('doctor.export-report', compact('report', 'reportData', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Compile doctor-specific report data
+     */
+    private function compileDoctorReportData($reportType, $dateFrom, $dateTo, $doctor)
+    {
+        switch ($reportType) {
+            case 'patient_statistics':
+                return $this->compileDoctorPatientStatistics($dateFrom, $dateTo, $doctor);
+            case 'appointment_statistics':
+                return $this->compileDoctorAppointmentStatistics($dateFrom, $dateTo, $doctor);
+            case 'health_records':
+                return $this->compileDoctorHealthRecordsReport($dateFrom, $dateTo, $doctor);
+            case 'prescriptions':
+                return $this->compileDoctorPrescriptionsReport($dateFrom, $dateTo, $doctor);
+            case 'medicine_inventory':
+                return $this->compileDoctorMedicineInventoryReport();
+            default:
+                return [];
+        }
+    }
+
+    private function compileDoctorPatientStatistics($dateFrom, $dateTo, $doctor)
+    {
+        return [
+            'total_patients' => Appointment::where('doc_id', $doctor->id)
+                ->distinct('patient_id')
+                ->count(),
+            'new_patients' => Appointment::where('doc_id', $doctor->id)
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->distinct('patient_id')
+                ->count(),
+            'gender_distribution' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->join('patients', 'appointments.patient_id', '=', 'patients.id')
+                ->join('users', 'patients.user_id', '=', 'users.id')
+                ->selectRaw('users.gender, COUNT(*) as count')
+                ->groupBy('users.gender')
+                ->get(),
+            'monthly_trend' => Appointment::where('doc_id', $doctor->id)
+                ->selectRaw('MONTH(date) as month, YEAR(date) as year, COUNT(*) as count')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->groupBy('year', 'month')
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->get(),
+            // Detailed patient list
+            'recent_patients' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'patient.educationalLevel'])
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+            'all_patients' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'patient.educationalLevel'])
+                ->orderBy('date', 'desc')
+                ->take(100)
+                ->get(),
+        ];
+    }
+
+    private function compileDoctorAppointmentStatistics($dateFrom, $dateTo, $doctor)
+    {
+        return [
+            'total_appointments' => Appointment::where('doc_id', $doctor->id)->count(),
+            'by_status' => Appointment::where('doc_id', $doctor->id)
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->get(),
+            'completed' => Appointment::where('doc_id', $doctor->id)
+                ->where('status', 'Completed')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            'pending' => Appointment::where('doc_id', $doctor->id)
+                ->where('status', 'Pending')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            'cancelled' => Appointment::where('doc_id', $doctor->id)
+                ->where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->count(),
+            'monthly_breakdown' => Appointment::where('doc_id', $doctor->id)
+                ->selectRaw('MONTH(date) as month, YEAR(date) as year, status, COUNT(*) as count')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->groupBy('year', 'month', 'status')
+                ->orderBy('year', 'desc')
+                ->orderBy('month', 'desc')
+                ->get(),
+            // Detailed appointment lists
+            'recent_appointments' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->orderBy('time', 'desc')
+                ->take(50)
+                ->get(),
+            'pending_appointments' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->where('status', 'Pending')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'asc')
+                ->take(50)
+                ->get(),
+            'completed_appointments' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->where('status', 'Completed')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+            'cancelled_appointments' => Appointment::where('appointments.doc_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->where('status', 'Cancelled')
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date', 'desc')
+                ->take(50)
+                ->get(),
+        ];
+    }
+
+    private function compileDoctorHealthRecordsReport($dateFrom, $dateTo, $doctor)
+    {
+        return [
+            'total_records' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
+                $query->where('doc_id', $doctor->id);
+            })->count(),
+            'records_with_diagnosis' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
+                $query->where('doc_id', $doctor->id);
+            })->whereNotNull('diagnosis')->count(),
+            'top_conditions' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
+                $query->where('doc_id', $doctor->id);
+            })
+                ->selectRaw('diagnosis, COUNT(*) as count')
+                ->whereNotNull('diagnosis')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->groupBy('diagnosis')
+                ->orderBy('count', 'desc')
+                ->take(20)
+                ->get(),
+            // Detailed health records
+            'recent_records' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
+                $query->where('doc_id', $doctor->id);
+            })
+                ->with('patient.user')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Physical examinations detail
+            'physical_examinations' => PhysicalExamination::where('doctor_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Dental examinations detail
+            'dental_examinations' => DentalExamination::where('doctor_id', $doctor->id)
+                ->with(['patient.user', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Immunization records detail
+            'immunization_records' => ImmunizationRecords::whereHas('patient.appointments', function($query) use ($doctor) {
+                $query->where('doc_id', $doctor->id);
+            })
+                ->with(['patient.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            // Prescriptions detail
+            'prescriptions_detail' => PrescriptionRecord::where('doctor_id', $doctor->id)
+                ->with(['patient.user', 'medicine'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+        ];
+    }
+
+    private function compileDoctorPrescriptionsReport($dateFrom, $dateTo, $doctor)
+    {
+        return [
+            'total_prescriptions' => PrescriptionRecord::where('doctor_id', $doctor->id)->count(),
+            'active_prescriptions' => PrescriptionRecord::where('doctor_id', $doctor->id)
+                ->where('status', 'active')
+                ->count(),
+            'discontinued_prescriptions' => PrescriptionRecord::where('doctor_id', $doctor->id)
+                ->where('status', 'discontinued')
+                ->count(),
+            'recent_prescriptions' => PrescriptionRecord::where('doctor_id', $doctor->id)
+                ->with(['patient.user', 'medicine', 'doctor.user'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at', 'desc')
+                ->take(50)
+                ->get(),
+            'most_prescribed' => PrescriptionRecord::where('doctor_id', $doctor->id)
+                ->selectRaw('medicine_id, COUNT(*) as count')
+                ->whereNotNull('medicine_id')
+                ->groupBy('medicine_id')
+                ->orderBy('count', 'desc')
+                ->take(10)
+                ->get(),
+        ];
+    }
+
+    private function compileDoctorMedicineInventoryReport()
+    {
+        return [
+            'total_medicines' => Medicine::count(),
+            'low_stock' => Medicine::where('quantity', '>', 0)->where('quantity', '<=', 10)->get(),
+            'out_of_stock' => Medicine::where('quantity', 0)->get(),
+            'all_medicines' => Medicine::orderBy('name')->get(),
+        ];
+    }
+
+    /**
+     * Export doctor report as CSV
+     */
+    private function exportDoctorReportAsCSV($report, $reportData)
+    {
+        $filename = 'report_' . $report->id . '_' . date('Ymd') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($report, $reportData) {
+            $handle = fopen('php://output', 'w');
+
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($handle, [$report->title]);
+            fputcsv($handle, ['Report Type: ' . ucwords(str_replace('_', ' ', $report->report_type))]);
+            fputcsv($handle, ['Date Range: ' . $report->parameters['date_from'] . ' to ' . $report->parameters['date_to']]);
+            fputcsv($handle, ['Generated: ' . $report->created_at->format('Y-m-d H:i:s')]);
+            fputcsv($handle, []);
+
+            if ($report->report_type === 'patient_statistics') {
+                fputcsv($handle, ['Patient Statistics Report']);
+                fputcsv($handle, ['Total Patients', $reportData['total_patients'] ?? 0]);
+                fputcsv($handle, ['New Patients', $reportData['new_patients'] ?? 0]);
+                fputcsv($handle, []);
+                fputcsv($handle, ['Gender', 'Count']);
+                foreach ($reportData['gender_distribution'] ?? [] as $item) {
+                    fputcsv($handle, [$item->gender ?? 'N/A', $item->count]);
+                }
+            } elseif ($report->report_type === 'appointment_statistics') {
+                fputcsv($handle, ['Appointment Statistics Report']);
+                fputcsv($handle, ['Total Appointments', $reportData['total_appointments'] ?? 0]);
+                fputcsv($handle, ['Completed', $reportData['completed'] ?? 0]);
+                fputcsv($handle, ['Pending', $reportData['pending'] ?? 0]);
+                fputcsv($handle, ['Cancelled', $reportData['cancelled'] ?? 0]);
+                fputcsv($handle, []);
+                fputcsv($handle, ['Recent Appointments']);
+                fputcsv($handle, ['Date', 'Time', 'Patient', 'Doctor', 'Status', 'Reason']);
+                foreach ($reportData['recent_appointments'] ?? [] as $appt) {
+                    fputcsv($handle, [
+                        $appt->date ?? 'N/A',
+                        $appt->time ?? 'N/A',
+                        $appt->patient->user->name ?? 'N/A',
+                        $appt->doctor->user->name ?? 'N/A',
+                        $appt->status ?? 'N/A',
+                        $appt->reason ?? 'N/A'
+                    ]);
+                }
+            } elseif ($report->report_type === 'health_records_summary') {
+                fputcsv($handle, ['Health Records Summary Report']);
+                fputcsv($handle, ['Total Records', $reportData['total_records'] ?? 0]);
+                fputcsv($handle, ['Records with Diagnosis', $reportData['records_with_diagnosis'] ?? 0]);
+                fputcsv($handle, []);
+
+                // Top Conditions
+                fputcsv($handle, ['Top Conditions']);
+                fputcsv($handle, ['Condition', 'Cases']);
+                foreach ($reportData['top_conditions'] ?? [] as $condition) {
+                    fputcsv($handle, [
+                        $condition->diagnosis ?? 'N/A',
+                        $condition->count ?? 0
+                    ]);
+                }
+                fputcsv($handle, []);
+
+                // Health Records Detail
+                fputcsv($handle, ['Health Records Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Diagnosis', 'Symptoms', 'Treatment']);
+                foreach ($reportData['recent_records'] ?? [] as $record) {
+                    fputcsv($handle, [
+                        $record->created_at->format('Y-m-d') ?? 'N/A',
+                        $record->patient->user->name ?? 'N/A',
+                        $record->diagnosis ?? 'N/A',
+                        $record->symptoms ?? 'N/A',
+                        $record->treatment ?? 'N/A'
+                    ]);
+                }
+                fputcsv($handle, []);
+
+                // Physical Examinations Detail
+                fputcsv($handle, ['Physical Examinations Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Height', 'Weight', 'BP', 'Heart', 'Remarks']);
+                foreach ($reportData['physical_examinations'] ?? [] as $exam) {
+                    fputcsv($handle, [
+                        $exam->created_at->format('Y-m-d') ?? 'N/A',
+                        $exam->patient->user->name ?? 'N/A',
+                        $exam->height ?? 'N/A',
+                        $exam->weight ?? 'N/A',
+                        $exam->bp ?? 'N/A',
+                        $exam->heart ?? 'N/A',
+                        $exam->remarks ?? 'N/A'
+                    ]);
+                }
+                fputcsv($handle, []);
+
+                // Dental Examinations Detail
+                fputcsv($handle, ['Dental Examinations Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Doctor', 'Diagnosis']);
+                foreach ($reportData['dental_examinations'] ?? [] as $exam) {
+                    fputcsv($handle, [
+                        $exam->created_at->format('Y-m-d') ?? 'N/A',
+                        $exam->patient->user->name ?? 'N/A',
+                        $exam->doctor->user->name ?? 'N/A',
+                        $exam->diagnosis ?? 'N/A'
+                    ]);
+                }
+                fputcsv($handle, []);
+
+                // Immunization Records Detail
+                fputcsv($handle, ['Immunization Records Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Vaccine', 'Dosage', 'Administered By']);
+                foreach ($reportData['immunization_records'] ?? [] as $record) {
+                    fputcsv($handle, [
+                        $record->created_at->format('Y-m-d') ?? 'N/A',
+                        $record->patient->user->name ?? 'N/A',
+                        $record->vaccine_name ?? 'N/A',
+                        $record->dosage ?? 'N/A',
+                        $record->administered_by ?? 'N/A'
+                    ]);
+                }
+                fputcsv($handle, []);
+
+                // Prescriptions Detail
+                fputcsv($handle, ['Prescriptions Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Doctor', 'Medicine', 'Dosage', 'Status']);
+                foreach ($reportData['prescriptions_detail'] ?? [] as $prescription) {
+                    fputcsv($handle, [
+                        $prescription->created_at->format('Y-m-d') ?? 'N/A',
+                        $prescription->patient->user->name ?? 'N/A',
+                        $prescription->doctor->user->name ?? 'N/A',
+                        $prescription->medicine->name ?? 'N/A',
+                        $prescription->dosage ?? 'N/A',
+                        $prescription->status ?? 'N/A'
+                    ]);
+                }
+            } elseif ($report->report_type === 'prescriptions_report') {
+                fputcsv($handle, ['Prescriptions Report']);
+                fputcsv($handle, ['Total Prescriptions', $reportData['total_prescriptions'] ?? 0]);
+                fputcsv($handle, ['Active', $reportData['active_prescriptions'] ?? 0]);
+                fputcsv($handle, ['Discontinued', $reportData['discontinued_prescriptions'] ?? 0]);
+                fputcsv($handle, []);
+
+                // Recent Prescriptions Detail
+                fputcsv($handle, ['Recent Prescriptions Detail']);
+                fputcsv($handle, ['Date', 'Patient', 'Doctor', 'Medicine', 'Dosage', 'Status']);
+                foreach ($reportData['recent_prescriptions'] ?? [] as $prescription) {
+                    fputcsv($handle, [
+                        $prescription->date_prescribed ?? 'N/A',
+                        $prescription->patient->user->name ?? 'N/A',
+                        $prescription->doctor->user->name ?? 'N/A',
+                        $prescription->medicine->name ?? 'N/A',
+                        $prescription->dosage ?? 'N/A',
+                        $prescription->status ?? 'N/A'
+                    ]);
+                }
+            } else {
+                fputcsv($handle, ['Report data export']);
+                fputcsv($handle, ['Note: Export for this report type not fully implemented']);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

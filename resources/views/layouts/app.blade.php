@@ -7,7 +7,8 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <link rel="shortcut icon" href="data:image/svg+xml;utf8, {!! rawurlencode(view('components.application-logo')->render()) !!}" type="image/svg+xml">
+        <link rel="shortcut icon" href="{{ asset('ckc.png') }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ asset('ckc.png') }}">
 
         <!-- PWA Meta Tags -->
         <meta name="theme-color" content="#3b82f6">

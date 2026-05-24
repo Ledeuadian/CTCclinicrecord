@@ -7,7 +7,8 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <link rel="shortcut icon" href="data:image/svg+xml;utf8, {!! rawurlencode(view('components.application-logo')->render()) !!}" type="image/svg+xml">
+        <link rel="shortcut icon" href="{{ asset('ckc.png') }}" type="image/png">
+        <link rel="apple-touch-icon" href="{{ asset('ckc.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -32,7 +33,7 @@
 <body>
     <section class="bg-gray-50 dark:bg-gray-900">
         <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-            <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+            <x-application-logo class="block h-12 w-auto" />
             <a href="#" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
                 Admin Login
             </a>

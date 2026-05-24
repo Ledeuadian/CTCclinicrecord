@@ -97,7 +97,7 @@
                     {{ $user['contact_no'] }}
                 </td>
                 <td class="flex items-center px-6 py-4">
-                    <a href="{{ route('admin.users.updateWithType', ['user' => $user['id'], 'type' => $user['user_type']]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                    <a href="{{ route('admin.users.editWithType', ['user' => $user['id'], 'type' => $user['user_type']]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
                     <a class="font-medium text-red-600 dark:text-red-500 hover:underline ms-3">
                         <form action="{{ route('admin.users.deleteWithType', ['user' => $user['id'], 'type' => $user['user_type']]) }}" method="POST" style="display:inline-block'];">
                             @csrf

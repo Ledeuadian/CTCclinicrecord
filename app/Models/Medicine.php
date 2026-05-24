@@ -12,8 +12,12 @@ class Medicine extends Model
 
     protected $fillable = [
         'name',
+        'generic_name',
+        'manufacturer',
         'description',
         'quantity',
+        'dosage',
+        'unit',
         'expiration_date',
         'medicine_type'
     ];

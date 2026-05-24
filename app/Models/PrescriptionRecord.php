@@ -25,6 +25,7 @@ class PrescriptionRecord extends Model
         'patient_id',
         'doctor_id',
         'medicine_id',
+        'prescribed_by',
     ];
 
     /**

@@ -80,26 +80,26 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($requests as $request)
+                        @foreach($requests as $certRequest)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ $request->patient->user->firstname ?? '' }} {{ $request->patient->user->middlename ?? '' }} {{ $request->patient->user->lastname ?? '' }}
+                                    {{ $certRequest->patient->user->firstname ?? '' }} {{ $certRequest->patient->user->middlename ?? '' }} {{ $certRequest->patient->user->lastname ?? '' }}
                                 </div>
-                                @if($request->patient->school_id)
-                                    <div class="text-xs text-gray-500">ID: {{ $request->patient->school_id }}</div>
+                                @if($certRequest->patient->school_id)
+                                    <div class="text-xs text-gray-500">ID: {{ $certRequest->patient->school_id }}</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">{{ $request->certificateType->name }}</div>
+                                <div class="text-sm text-gray-900">{{ $certRequest->certificateType->name }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-500 truncate max-w-xs" title="{{ $request->reason }}">
-                                    {{ Str::limit($request->reason, 40) }}
+                                <div class="text-sm text-gray-500 truncate max-w-xs" title="{{ $certRequest->reason }}">
+                                    {{ Str::limit($certRequest->reason, 40) }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $request->created_at->format('M d, Y') }}
+                                {{ $certRequest->created_at->format('M d, Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php $statusClass = [
@@ -107,13 +107,13 @@
                                     'approved' => 'bg-blue-100 text-blue-800',
                                     'rejected' => 'bg-red-100 text-red-800',
                                     'issued' => 'bg-green-100 text-green-800'
-                                ][$request->status] ?? 'bg-gray-100 text-gray-800'; @endphp
+                                ][$certRequest->status] ?? 'bg-gray-100 text-gray-800'; @endphp
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
-                                    {{ ucfirst($request->status) }}
+                                    {{ ucfirst($certRequest->status) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <a href="{{ route('doctor.certificate-requests.show', $request->id) }}"
+                                <a href="{{ route('doctor.certificate-requests.show', $certRequest->id) }}"
                                    class="text-blue-600 hover:text-blue-900 font-medium">
                                     View Details
                                 </a>
@@ -135,14 +135,16 @@
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No certificate requests</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        @if(($request->status ?? '') === 'pending' || !$request->status)
+                        @if(request('status') === 'pending')
                             No pending certificate requests at the moment.
-                        @elseif($request->status === 'approved')
+                        @elseif(request('status') === 'approved')
                             No approved certificate requests.
-                        @elseif($request->status === 'issued')
+                        @elseif(request('status') === 'issued')
                             No issued certificates yet.
-                        @elseif($request->status === 'rejected')
+                        @elseif(request('status') === 'rejected')
                             No rejected certificate requests.
+                        @else
+                            No certificate requests found.
                         @endif
                     </p>
                 </div>
