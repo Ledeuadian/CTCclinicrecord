@@ -43,6 +43,11 @@ class PatientCertificateController extends Controller
             return redirect()->back()->with('error', 'Patient profile not found.');
         }
 
+        // Check if patient has any completed appointments
+        $hasAppointmentHistory = Appointment::where('patient_id', $patient->id)
+            ->whereIn('status', ['completed', 'done', 'Completed', 'Confirmed'])
+            ->exists();
+
         $certificateTypes = CertificateType::active()->get();
 
         // Get patient's appointments for reference
@@ -52,7 +57,7 @@ class PatientCertificateController extends Controller
             ->limit(10)
             ->get();
 
-        return view('patients.certificates.create', compact('certificateTypes', 'appointments', 'patient'));
+        return view('patients.certificates.create', compact('certificateTypes', 'appointments', 'patient', 'hasAppointmentHistory'));
     }
 
     /**

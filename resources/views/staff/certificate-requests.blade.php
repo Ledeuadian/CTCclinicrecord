@@ -113,10 +113,18 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <a href="{{ route('staff.certificate-requests.show', $certRequest->id) }}"
-                                   class="text-blue-600 hover:text-blue-900 font-medium">
-                                    View Details
-                                </a>
+                                <div class="flex flex-col gap-1">
+                                    <a href="{{ route('staff.certificate-requests.show', $certRequest->id) }}"
+                                       class="text-blue-600 hover:text-blue-900 font-medium">
+                                        View Details
+                                    </a>
+                                    @if(in_array($certRequest->status, ['approved', 'issued']))
+                                    <a href="{{ route('staff.certificate-requests.print', $certRequest->id) }}" target="_blank"
+                                       class="text-green-600 hover:text-green-900 font-medium text-xs">
+                                        🖨️ Print Certificate
+                                    </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @endforeach

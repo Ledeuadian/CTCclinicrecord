@@ -1691,13 +1691,21 @@ class DoctorDashboardController extends Controller
 
     private function compileDoctorHealthRecordsReport($dateFrom, $dateTo, $doctor)
     {
+        // Base query for doctor-related health records
+        $baseQuery = function($query) use ($doctor) {
+            $query->whereHas('patient.appointments', function($q) use ($doctor) {
+                $q->where('doc_id', $doctor->id);
+            });
+        };
+
         return [
-            'total_records' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
-                $query->where('doc_id', $doctor->id);
-            })->count(),
-            'records_with_diagnosis' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
-                $query->where('doc_id', $doctor->id);
-            })->whereNotNull('diagnosis')->count(),
+            'total_records' => HealthRecords::where($baseQuery)
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->count(),
+            'records_with_diagnosis' => HealthRecords::where($baseQuery)
+                ->whereNotNull('diagnosis')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->count(),
             'top_conditions' => HealthRecords::whereHas('patient.appointments', function($query) use ($doctor) {
                 $query->where('doc_id', $doctor->id);
             })
@@ -1953,5 +1961,24 @@ class DoctorDashboardController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Print a certificate
+     */
+    public function printCertificate($id)
+    {
+        $certificate = CertificateRequest::with(['patient.user', 'certificateType', 'doctor.user', 'appointment'])
+            ->findOrFail($id);
+
+        // Only allow printing if certificate is approved or issued
+        if (!in_array($certificate->status, ['approved', 'issued'])) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'Certificate must be approved before printing.'], 403);
+            }
+            return redirect()->back()->with('error', 'Certificate must be approved before printing.');
+        }
+
+        return view('doctor.certificate-print', compact('certificate'));
     }
 }

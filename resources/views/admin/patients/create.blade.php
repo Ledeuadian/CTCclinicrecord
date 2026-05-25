@@ -67,12 +67,35 @@
         <div class="grid md:grid-cols-2 md:gap-6">
             <div class="relative z-0 w-full mb-5 group">
                 <label for="edulvl_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Educational Level</label>
-                <select id="edulvl_id" name="edulvl_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    <option selected>Select Educational Level</option>
-                    @foreach ($edulvl as $level)
-                        <option value="{{ $level->id }}">{{ $level->level_name }} {{ $level->year_level }}</option>
-                    @endforeach
-                </select>
+                <div class="flex gap-2">
+                    <select id="edulvl_id" name="edulvl_id" onchange="toggleNewLevelInput()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="">Select Educational Level</option>
+                        @foreach ($edulvl as $level)
+                            <option value="{{ $level->id }}">{{ $level->level_name }} {{ $level->year_level }}</option>
+                        @endforeach
+                        <option value="new">+ Add New Educational Level</option>
+                    </select>
+                </div>
+                <!-- New Educational Level Input Fields -->
+                <div id="newLevelInputs" class="hidden mt-3 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Create New Educational Level</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="new_level_name" class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Level Name *</label>
+                            <input type="text" id="new_level_name" name="new_level_name" placeholder="e.g., College, Senior High"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="new_year_level" class="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">Year Level (optional)</label>
+                            <input type="text" id="new_year_level" name="new_year_level" placeholder="e.g., 1st Year, Grade 11"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                    </div>
+                    <button type="button" onclick="createNewLevel()" class="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg">
+                        Create Level
+                    </button>
+                    <div id="newLevelError" class="hidden mt-2 text-sm text-red-600 dark:text-red-400"></div>
+                </div>
             </div>
         </div>
         <div class="grid md:grid-cols-2 md:gap-6">
@@ -80,7 +103,7 @@
                 <label for="patient_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Patient Type</label>
                 <select id="patient_type" name="patient_type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option selected value="1">Student</option>
-                    <option value="2">Faculty & Staff</option>
+                    <option value="3">Faculty</option>
                 </select>
             </div>
         </div>
@@ -179,6 +202,76 @@
         input.value = value; // Set the selected option in the input
         inputVal.value = id; //
         dropdown.classList.add('hidden'); // Hide the dropdown
+    }
+
+    function toggleNewLevelInput() {
+        const select = document.getElementById('edulvl_id');
+        const newLevelInputs = document.getElementById('newLevelInputs');
+
+        if (select.value === 'new') {
+            newLevelInputs.classList.remove('hidden');
+            document.getElementById('new_level_name').focus();
+        } else {
+            newLevelInputs.classList.add('hidden');
+        }
+    }
+
+    function createNewLevel() {
+        const levelName = document.getElementById('new_level_name').value.trim();
+        const yearLevel = document.getElementById('new_year_level').value.trim();
+        const errorDiv = document.getElementById('newLevelError');
+
+        errorDiv.classList.add('hidden');
+
+        if (!levelName) {
+            errorDiv.textContent = 'Level name is required';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        // Send AJAX request to create new level
+        fetch('{{ route('admin.educational-levels.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                level_name: levelName,
+                year_level: yearLevel
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new option to select
+                const select = document.getElementById('edulvl_id');
+                const newOption = document.createElement('option');
+                newOption.value = data.id;
+                newOption.textContent = levelName + (yearLevel ? ' ' + yearLevel : '');
+
+                // Insert before the "Add New" option
+                const addNewOption = select.querySelector('option[value="new"]');
+                select.insertBefore(newOption, addNewOption);
+
+                // Select the new option
+                select.value = data.id;
+
+                // Hide the new level inputs
+                document.getElementById('newLevelInputs').classList.add('hidden');
+
+                // Clear inputs
+                document.getElementById('new_level_name').value = '';
+                document.getElementById('new_year_level').value = '';
+            } else {
+                errorDiv.textContent = data.message || 'Failed to create level';
+                errorDiv.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            errorDiv.textContent = 'Error: ' + error.message;
+            errorDiv.classList.remove('hidden');
+        });
     }
 
     // Hide dropdown if clicked outside

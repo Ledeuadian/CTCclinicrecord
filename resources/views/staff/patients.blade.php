@@ -81,7 +81,8 @@
                                     <span class="text-gray-600">Type:</span>
                                     <span class="font-medium">
                                         @if($patient->patient_type == 1) Student
-                                        @elseif($patient->patient_type == 2) Faculty & Staff
+                                        @elseif($patient->patient_type == 3) Faculty
+                                        @elseif($patient->patient_type == 2) Staff
                                         @else Other
                                         @endif
                                     </span>

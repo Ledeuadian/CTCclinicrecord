@@ -53,8 +53,9 @@
                 <label for="user_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">User Type</label>
                 <select id="user_type" name="user_type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                     <option {{ $admin->user_type == 1 ? 'selected' : '' }} value="1">Student</option>
-                    <option {{ $admin->user_type == 2 ? 'selected' : '' }}  value="2">Faculty & Staff</option>
-                    <option {{ $admin->user_type == 3 ? 'selected' : '' }}  value="2">Doctor</option>
+                    <option {{ $admin->user_type == 2 ? 'selected' : '' }} value="2">Staff</option>
+                    <option {{ $admin->user_type == 4 ? 'selected' : '' }} value="4">Faculty</option>
+                    <option {{ $admin->user_type == 3 ? 'selected' : '' }} value="3">Doctor</option>
                 </select>
             </div>
             <div class="relative z-0 w-full mb-5 group">

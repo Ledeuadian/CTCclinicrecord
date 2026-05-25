@@ -49,24 +49,53 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
 
+                    <!-- Generic Name Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Generic Name Column</label>
+                        <input type="number" name="generic_name_column" value="1" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Manufacturer Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Manufacturer Column</label>
+                        <input type="number" name="manufacturer_column" value="2" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Dosage Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage Column</label>
+                        <input type="number" name="dosage_column" value="3" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
                     <!-- Description Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description Column</label>
-                        <input type="number" name="description_column" value="1" min="0"
+                        <input type="number" name="description_column" value="4" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
 
                     <!-- Quantity Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity Column</label>
-                        <input type="number" name="quantity_column" value="2" min="0"
+                        <input type="number" name="quantity_column" value="5" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Unit Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit Column</label>
+                        <input type="number" name="unit_column" value="6" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">e.g., mg, ml, tablet, capsule</p>
                     </div>
 
                     <!-- Expiration Date Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date Column</label>
-                        <input type="number" name="expiration_date_column" value="3" min="0"
+                        <input type="number" name="expiration_date_column" value="7" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <p class="text-xs text-gray-500 mt-1">Format: YYYY-MM-DD</p>
                     </div>
@@ -74,8 +103,16 @@
                     <!-- Medicine Type Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medicine Type Column</label>
-                        <input type="number" name="medicine_type_column" value="4" min="0"
+                        <input type="number" name="medicine_type_column" value="8" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Status Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Column</label>
+                        <input type="number" name="status_column" value="9" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">active or inactive</p>
                     </div>
                 </div>
             </div>

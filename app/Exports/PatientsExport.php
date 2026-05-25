@@ -19,7 +19,7 @@ class PatientsExport implements FromCollection, WithHeadings
                 'patients.id',
                 'users.name as patient_name',
                 'users.email',
-                DB::raw("CASE WHEN patients.patient_type = 1 THEN 'Student' ELSE 'Faculty & Staff' END as patient_type"),
+                DB::raw("CASE WHEN patients.patient_type = 1 THEN 'Student' WHEN patients.patient_type = 3 THEN 'Faculty' ELSE 'Staff' END as patient_type"),
                 'patients.school_id',
                 'patients.bloodtype',
                 'patients.address',

@@ -64,7 +64,8 @@
                                     <span class="text-gray-600">Type:</span>
                                     <span class="font-medium">
                                         @if($patient->patient_type == 1) Student
-                                        @elseif($patient->patient_type == 2) Faculty & Staff
+                                        @elseif($patient->patient_type == 3) Faculty
+                                        @elseif($patient->patient_type == 2) Staff
                                         @else Other
                                         @endif
                                     </span>
@@ -140,10 +141,6 @@
                                    class="flex-1 bg-purple-600 hover:bg-purple-600 text-white text-center py-2 px-3 rounded-md text-sm font-medium shadow-sm border border-purple-600 transition-all duration-200">
                                     🖨️ Print Record
                                 </a>
-                                <button class="bg-gray-300 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200"
-                                        onclick="quickContact('{{ $patient->user->email }}')">
-                                    Contact
-                                </button>
                             </div>
                         </div>
                     @endforeach

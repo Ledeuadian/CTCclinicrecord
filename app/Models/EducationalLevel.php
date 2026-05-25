@@ -12,6 +12,11 @@ class EducationalLevel extends Model
 
     protected $table = 'educational_level';
 
+    protected $fillable = [
+        'level_name',
+        'year_level',
+    ];
+
     /**
      * Educational Level to Patients Relationship (One-to-Many)
      */

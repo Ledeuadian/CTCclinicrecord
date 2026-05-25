@@ -14,34 +14,39 @@ class CertificateTypeSeeder extends Seeder
     {
         $types = [
             [
-                'name' => 'Certificate of Fit to Work',
-                'slug' => 'fit_to_work',
-                'description' => 'Certifies that the patient is physically and medically fit to perform work duties.',
-            ],
-            [
-                'name' => 'Medical Certificate',
-                'slug' => 'medical_certificate',
-                'description' => 'General medical certificate confirming patient examination and health status.',
-            ],
-            [
-                'name' => 'Medical Abstract',
-                'slug' => 'medical_abstract',
-                'description' => 'Summary of patient\'s medical history, treatments, and current condition.',
-            ],
-            [
-                'name' => 'Sanitary Permit',
-                'slug' => 'sanitary_permit',
-                'description' => 'Certifies compliance with health and sanitation requirements.',
-            ],
-            [
-                'name' => 'Sick Leave Certificate',
+                'name' => 'Sick Leave',
                 'slug' => 'sick_leave',
                 'description' => 'Certificate recommending a period of rest due to illness or medical condition.',
             ],
             [
-                'name' => 'Clearance Certificate',
-                'slug' => 'clearance',
-                'description' => 'Medical clearance for specific activities, events, or requirements.',
+                'name' => 'Fit to Work / Return to Work',
+                'slug' => 'fit_to_work',
+                'description' => 'Certifies that the patient is physically and medically fit to perform work duties.',
+            ],
+            [
+                'name' => 'School / P.E.',
+                'slug' => 'school_pe',
+                'description' => 'Medical certificate for school or physical education requirements.',
+            ],
+            [
+                'name' => 'Fit to Travel',
+                'slug' => 'fit_to_travel',
+                'description' => 'Certifies that the patient is medically fit to travel.',
+            ],
+            [
+                'name' => 'Employment',
+                'slug' => 'employment',
+                'description' => 'Medical certificate for employment purposes.',
+            ],
+            [
+                'name' => "Driver's License",
+                'slug' => 'drivers_license',
+                'description' => 'Medical certificate for driver\'s license application or renewal.',
+            ],
+            [
+                'name' => 'Health Certificate',
+                'slug' => 'health_certificate',
+                'description' => 'General health certificate confirming patient examination and health status.',
             ],
         ];
 

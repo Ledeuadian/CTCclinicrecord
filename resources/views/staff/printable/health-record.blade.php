@@ -10,7 +10,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 12px;
@@ -18,36 +18,36 @@
             color: #333;
             padding: 20px;
         }
-        
+
         .header {
             text-align: center;
             border-bottom: 3px solid #1e40af;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
-        
+
         .header h1 {
             font-size: 18px;
             color: #1e40af;
             margin-bottom: 5px;
         }
-        
+
         .header h2 {
             font-size: 14px;
             color: #333;
             margin-bottom: 5px;
         }
-        
+
         .header p {
             font-size: 11px;
             color: #666;
         }
-        
+
         .section {
             margin-bottom: 20px;
             page-break-inside: avoid;
         }
-        
+
         .section-title {
             font-size: 14px;
             font-weight: bold;
@@ -56,16 +56,16 @@
             padding-bottom: 5px;
             margin-bottom: 10px;
         }
-        
+
         .info-grid {
             display: table;
             width: 100%;
         }
-        
+
         .info-row {
             display: table-row;
         }
-        
+
         .info-label {
             display: table-cell;
             width: 35%;
@@ -74,36 +74,36 @@
             background-color: #f3f4f6;
             border: 1px solid #ddd;
         }
-        
+
         .info-value {
             display: table-cell;
             width: 65%;
             padding: 4px 8px;
             border: 1px solid #ddd;
         }
-        
+
         .two-column {
             display: table;
             width: 100%;
         }
-        
+
         .two-column .col {
             display: table-cell;
             width: 48%;
             vertical-align: top;
         }
-        
+
         .col:first-child {
             margin-right: 4%;
         }
-        
+
         .record-card {
             border: 1px solid #ddd;
             padding: 10px;
             margin-bottom: 10px;
             page-break-inside: avoid;
         }
-        
+
         .record-header {
             font-weight: bold;
             color: #1e40af;
@@ -111,7 +111,7 @@
             padding-bottom: 5px;
             margin-bottom: 8px;
         }
-        
+
         .badge {
             display: inline-block;
             padding: 2px 8px;
@@ -119,18 +119,18 @@
             font-size: 10px;
             font-weight: bold;
         }
-        
+
         .badge-health { background-color: #dbeafe; color: #1e40af; }
         .badge-physical { background-color: #d1fae5; color: #059669; }
         .badge-dental { background-color: #ede9fe; color: #7c3aed; }
         .badge-immunization { background-color: #fef3c7; color: #d97706; }
-        
+
         .vitals-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
-        
+
         .vital-item {
             text-align: center;
             padding: 8px;
@@ -138,25 +138,25 @@
             border: 1px solid #e5e7eb;
             border-radius: 4px;
         }
-        
+
         .vital-value {
             font-size: 16px;
             font-weight: bold;
             color: #1e40af;
         }
-        
+
         .vital-label {
             font-size: 10px;
             color: #666;
         }
-        
+
         .teeth-chart {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             gap: 3px;
             margin-top: 10px;
         }
-        
+
         .tooth {
             width: 30px;
             height: 30px;
@@ -168,13 +168,13 @@
             font-size: 10px;
             font-weight: bold;
         }
-        
+
         .tooth-healthy { background-color: #22c55e; color: white; }
         .tooth-cavity { background-color: #ef4444; color: white; }
         .tooth-filled { background-color: #3b82f6; color: white; }
         .tooth-missing { background-color: #9ca3af; color: white; }
         .tooth-other { background-color: #f59e0b; color: white; }
-        
+
         .footer {
             margin-top: 30px;
             padding-top: 15px;
@@ -182,47 +182,47 @@
             font-size: 10px;
             color: #666;
         }
-        
+
         .signature-section {
             margin-top: 40px;
             display: table;
             width: 100%;
         }
-        
+
         .signature-box {
             display: table-cell;
             width: 45%;
             text-align: center;
             vertical-align: bottom;
         }
-        
+
         .signature-line {
             border-top: 1px solid #333;
             margin-top: 40px;
             padding-top: 5px;
         }
-        
+
         .print-date {
             text-align: right;
             font-size: 10px;
             color: #666;
             margin-bottom: 10px;
         }
-        
+
         @media print {
             body {
                 padding: 0;
             }
-            
+
             .no-print {
                 display: none !important;
             }
-            
+
             .section {
                 page-break-inside: avoid;
             }
         }
-        
+
         .back-button {
             background-color: #1e40af;
             color: white;
@@ -232,7 +232,7 @@
             cursor: pointer;
             margin-bottom: 20px;
         }
-        
+
         .back-button:hover {
             background-color: #1e3a8a;
         }
@@ -243,14 +243,14 @@
     <div class="print-date">
         Generated: {{ now()->format('M j, Y g:i A') }}
     </div>
-    
+
     <!-- Header -->
     <div class="header">
         <h1>COLLEGE CLINIC HEALTH SERVICES</h1>
         <h2>Medical Health Record</h2>
-        <p>Christian Kingdom College - Health Center</p>
+        <p>Christ the King College- Gingoog City</p>
     </div>
-    
+
     <!-- Patient Information -->
     <div class="section">
         <div class="section-title">PATIENT INFORMATION</div>
@@ -267,7 +267,8 @@
                 <div class="info-label">Patient Type</div>
                 <div class="info-value">
                     @if($patient->patient_type == 1) Student
-                    @elseif($patient->patient_type == 2) Faculty/Staff
+                    @elseif($patient->patient_type == 3) Faculty
+                    @elseif($patient->patient_type == 2) Staff
                     @else Other
                     @endif
                 </div>
@@ -306,7 +307,7 @@
             @endif
         </div>
     </div>
-    
+
     <!-- Health Records -->
     @if(isset($healthRecords) && $healthRecords->count() > 0)
     <div class="section">
@@ -361,7 +362,7 @@
         @endforeach
     </div>
     @endif
-    
+
     <!-- Physical Examinations -->
     @if(isset($physicalExaminations) && $physicalExaminations->count() > 0)
     <div class="section">
@@ -371,7 +372,7 @@
             <div class="record-header">
                 Examination #{{ $exam->id }} - {{ $exam->created_at->format('M j, Y') }}
             </div>
-            
+
             @if($exam->height || $exam->weight || $exam->blood_pressure || $exam->temperature)
             <div class="vitals-grid">
                 @if($exam->height)
@@ -400,7 +401,7 @@
                 @endif
             </div>
             @endif
-            
+
             <div class="info-grid" style="margin-top: 10px;">
                 @if($exam->visual_acuity_left)
                 <div class="info-row">
@@ -431,7 +432,7 @@
         @endforeach
     </div>
     @endif
-    
+
     <!-- Dental Examinations -->
     @if(isset($dentalExaminations) && $dentalExaminations->count() > 0)
     <div class="section">
@@ -471,7 +472,7 @@
         @endforeach
     </div>
     @endif
-    
+
     <!-- Immunization Records -->
     @if(isset($immunizationRecords) && $immunizationRecords->count() > 0)
     <div class="section">
@@ -526,13 +527,13 @@
         @endforeach
     </div>
     @endif
-    
+
     <!-- Footer -->
     <div class="footer">
         <p>This is an official medical record from Christian Kingdom College Health Services.</p>
         <p>For inquiries, please contact the College Clinic.</p>
     </div>
-    
+
     <!-- Signature Section -->
     <div class="signature-section">
         <div class="signature-box">
@@ -549,7 +550,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Print Button (hidden when printing) -->
     <div class="no-print" style="text-align: center; margin-top: 30px;">
         <button onclick="window.print()" class="back-button">

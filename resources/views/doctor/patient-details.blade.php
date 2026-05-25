@@ -29,7 +29,7 @@
                     @method('PUT')
                     <div class="mb-4">
                         <label for="bloodtype" class="block text-sm font-medium text-gray-700 mb-2">Blood Type</label>
-                        <select name="bloodtype" id="bloodtype" 
+                        <select name="bloodtype" id="bloodtype"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">Select Blood Type...</option>
                             <option value="A+" {{ $patient->bloodtype == 'A+' ? 'selected' : '' }}>A+</option>
@@ -90,7 +90,8 @@
                         <label class="block text-sm font-medium text-gray-600 mb-1">Patient Type</label>
                         <p class="text-gray-800">
                             @if($patient->patient_type == 1) Student
-                            @elseif($patient->patient_type == 2) Faculty & Staff
+                            @elseif($patient->patient_type == 3) Faculty
+                            @elseif($patient->patient_type == 2) Staff
                             @else Other
                             @endif
                         </p>

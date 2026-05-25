@@ -150,9 +150,15 @@
                         <form action="{{ route('doctor.certificate-requests.issue', $request->id) }}" method="POST" 
                               onsubmit="return confirm('Mark this certificate as issued?');">
                             @csrf
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
-                                📄 Mark as Issued
-                            </button>
+                            <div class="flex gap-3">
+                                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
+                                    📄 Mark as Issued
+                                </button>
+                                <a href="{{ route('certificate-requests.print', $request->id) }}" target="_blank"
+                                   class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition inline-flex items-center">
+                                    🖨️ Print Certificate
+                                </a>
+                            </div>
                         </form>
                     </div>
                 </div>

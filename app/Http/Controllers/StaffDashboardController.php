@@ -1698,4 +1698,20 @@ class StaffDashboardController extends Controller
 
         return redirect()->back()->with('success', 'Certificate marked as issued.');
     }
+
+    /**
+     * Print a certificate
+     */
+    public function printCertificate($id)
+    {
+        $certificate = CertificateRequest::with(['patient.user', 'certificateType', 'doctor.user', 'appointment'])
+            ->findOrFail($id);
+
+        // Only allow printing if certificate is approved or issued
+        if (!in_array($certificate->status, ['approved', 'issued'])) {
+            return redirect()->back()->with('error', 'Certificate must be approved before printing.');
+        }
+
+        return view('staff.certificate-print', compact('certificate'));
+    }
 }

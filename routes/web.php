@@ -33,6 +33,7 @@ use App\Http\Controllers\AdminDentalExamination;
 use App\Http\Controllers\AdminPhysicalExamination;
 use App\Http\Controllers\AdminPrescription;
 use App\Http\Controllers\AdminPatientStatistics;
+use App\Http\Controllers\EducationalLevelController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,8 +47,9 @@ Route::middleware('auth')->group(function () {
             case 0: // Admin
                 return redirect()->route('admin.dashboard');
             case 1: // Student/Patient
+            case 4: // Faculty/Patient
                 return redirect()->route('patients.dashboard');
-            case 2: // Faculty & Staff
+            case 2: // Staff
                 return redirect()->route('staff.dashboard');
             case 3: // Doctor
                 $doctor = \App\Models\Doctors::where('user_id', $user->id)->first();
@@ -213,6 +215,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/certificate-requests/{id}/approve', [DoctorDashboardController::class, 'approveCertificateRequest'])->name('certificate-requests.approve');
         Route::post('/certificate-requests/{id}/reject', [DoctorDashboardController::class, 'rejectCertificateRequest'])->name('certificate-requests.reject');
         Route::post('/certificate-requests/{id}/issue', [DoctorDashboardController::class, 'issueCertificateRequest'])->name('certificate-requests.issue');
+        Route::get('/certificate-requests/{id}/print', [DoctorDashboardController::class, 'printCertificate'])->name('certificate-requests.print');
 
         // AJAX Tab Content Routes
         Route::get('/ajax/dashboard', [DoctorDashboardController::class, 'ajaxDashboard'])->name('ajax.dashboard');
@@ -319,6 +322,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/certificate-requests/{id}/approve', [StaffDashboardController::class, 'approveCertificateRequest'])->name('certificate-requests.approve');
         Route::post('/certificate-requests/{id}/reject', [StaffDashboardController::class, 'rejectCertificateRequest'])->name('certificate-requests.reject');
         Route::post('/certificate-requests/{id}/issue', [StaffDashboardController::class, 'issueCertificateRequest'])->name('certificate-requests.issue');
+        Route::get('/certificate-requests/{id}/print', [StaffDashboardController::class, 'printCertificate'])->name('certificate-requests.print');
     });
 
 });
@@ -378,6 +382,8 @@ Route::middleware(['auth', 'check.user.type:0'])->group(function ()  {
         'update' => 'admin.patients.update',
         'destroy' => 'admin.patients.destroy',
     ]);
+    Route::post('/admin/educational-levels', [EducationalLevelController::class, 'store'])->name('admin.educational-levels.store');
+
     Route::resource('/admin/immunization', AdminImmunization::class)->names([
         'index' => 'admin.immunization.index',
         'create' => 'admin.immunization.create',

@@ -68,11 +68,11 @@ class PatientsUpdatePersonalInformation extends Controller
                 ->with('error', 'Patient profile already exists.');
         }
 
-        // Convert patient_type string to integer: 1 = Student, 2 = Faculty & Staff
+        // Convert patient_type string to integer: 1 = Student, 2 = Staff, 3 = Faculty
         $patientTypeMap = [
             'student' => 1,
             'staff' => 2,
-            'faculty' => 2,
+            'faculty' => 3,
             'external' => 2,
         ];
         $patientType = $patientTypeMap[$request->patient_type] ?? 1;
@@ -150,11 +150,11 @@ class PatientsUpdatePersonalInformation extends Controller
             'email' => $request->email,
         ]);
 
-        // Convert patient_type string to integer: 1 = Student, 2 = Faculty & Staff
+        // Convert patient_type string to integer: 1 = Student, 2 = Staff, 3 = Faculty
         $patientTypeMap = [
             'student' => 1,
             'staff' => 2,
-            'faculty' => 2,
+            'faculty' => 3,
             'external' => 2,
         ];
 

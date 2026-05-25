@@ -4,6 +4,10 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Generate Reports</h1>
+        <a href="{{ route('admin.dashboard') }}"
+           class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50">
+            ← Back to Dashboard
+        </a>
     </div>
 
     @if (session('success'))

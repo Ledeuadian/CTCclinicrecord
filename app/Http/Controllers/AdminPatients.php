@@ -21,19 +21,19 @@ class AdminPatients extends Controller
         $patients = Patients::join('educational_level', 'educational_level.id', '=', 'patients.edulvl_id')
             ->leftJoin('users as u', function($join) {
                 $join->on('u.id', '=', 'patients.user_id')
-                    ->where('patients.patient_type', 1)
-                    ->whereIn('u.user_type', [1, 2]); // Only students and staff, exclude doctors
+                    ->whereIn('patients.patient_type', [1, 3]) // Students and Faculty
+                    ->whereIn('u.user_type', [1, 2, 4]); // Only students, staff, and faculty
             })
             ->leftJoin('admins as a', function($join) {
                 $join->on('a.id', '=', 'patients.user_id')
-                    ->where('patients.patient_type', 2)
-                    ->whereIn('a.user_type', [1, 2]); // Only students and staff, exclude doctors
+                    ->where('patients.patient_type', 2) // Staff
+                    ->whereIn('a.user_type', [1, 2]); // Only students and staff
             })
             ->join('users as user_filter', 'user_filter.id', '=', 'patients.user_id')
-            ->whereIn('user_filter.user_type', [1, 2]) // Global filter to exclude doctors
+            ->whereIn('user_filter.user_type', [1, 2, 4]) // Global filter to exclude doctors
             ->select(
                 'patients.*',
-                DB::raw("CASE WHEN patients.patient_type = 1 THEN u.name ELSE a.name END as name"),
+                DB::raw("CASE WHEN patients.patient_type IN (1, 3) THEN u.name ELSE a.name END as name"),
                 'educational_level.level_name',
                 'educational_level.year_level'
             )
@@ -54,7 +54,7 @@ class AdminPatients extends Controller
                 'patients.id',
                 'users.name as patient_name',
                 'users.email',
-                DB::raw("CASE WHEN patients.patient_type = 1 THEN 'Student' ELSE 'Faculty & Staff' END as patient_type"),
+                DB::raw("CASE WHEN patients.patient_type = 1 THEN 'Student' WHEN patients.patient_type = 3 THEN 'Faculty' ELSE 'Staff' END as patient_type"),
                 'patients.school_id',
                 'patients.bloodtype',
                 'patients.address',
@@ -197,20 +197,20 @@ class AdminPatients extends Controller
         $patients = Patients::where('patients.id', $id)
             ->leftJoin('users as u', function ($join) {
                 $join->on('u.id', '=', 'patients.user_id')
-                    ->where('patients.patient_type', 1);
+                    ->whereIn('patients.patient_type', [1, 3]); // Students and Faculty
             })
             ->leftJoin('admins as a', function ($join) {
                 $join->on('a.id', '=', 'patients.user_id')
-                    ->where('patients.patient_type', 2);
+                    ->where('patients.patient_type', 2); // Staff
             })
             ->join('educational_level', 'educational_level.id', '=', 'patients.edulvl_id')
             ->select(
                 'patients.*',
-                DB::raw("CASE WHEN patients.patient_type = 1 THEN u.name ELSE a.name END as name"),
+                DB::raw("CASE WHEN patients.patient_type IN (1, 3) THEN u.name ELSE a.name END as name"),
                 'educational_level.level_name',
                 'educational_level.year_level'
             )
-            ->first(); // Using first() instead of firstOrFail()
+            ->first();
 
 
         //

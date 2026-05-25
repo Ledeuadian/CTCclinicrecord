@@ -12,6 +12,30 @@
             <p class="text-gray-600">Fill out the form below to request a medical certificate</p>
         </div>
 
+        @if(!$hasAppointmentHistory)
+            <!-- Blocker for patients without appointment history -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-amber-800">Appointment History Required</h3>
+                        <p class="mt-2 text-sm text-amber-700">
+                            You cannot request a medical certificate at this time because you don't have any completed appointments yet.
+                        </p>
+                        <p class="mt-2 text-sm text-amber-700">
+                            Please <a href="{{ route('appointments.create') }}" class="font-medium underline hover:no-underline">book an appointment</a> and complete a visit first before requesting a certificate.
+                        </p>
+                        <a href="{{ route('patients.certificates.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-md hover:bg-amber-700 transition">
+                            <span class="mr-1">←</span> Back to Certificates
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @else
         <!-- Form -->
         <div class="bg-white shadow-sm rounded-lg p-6">
             <form action="{{ route('patients.certificates.store') }}" method="POST">
@@ -47,7 +71,7 @@
                     @error('certificate_type_id')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
-                    
+
                     @if(old('certificate_type_id'))
                         @php $selectedType = $certificateTypes->firstWhere('id', old('certificate_type_id')) @endphp
                         @if($selectedType && $selectedType->description)
@@ -112,17 +136,18 @@
 
                 <!-- Submit Buttons -->
                 <div class="flex justify-end space-x-3">
-                    <a href="{{ route('patients.certificates.index') }}" 
+                    <a href="{{ route('patients.certificates.index') }}"
                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
                         Cancel
                     </a>
-                    <button type="submit" 
+                    <button type="submit"
                             class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
                         Submit Request
                     </button>
                 </div>
             </form>
         </div>
+        @endif
     </div>
 </div>
 @endsection

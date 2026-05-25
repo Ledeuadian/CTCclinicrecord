@@ -42,25 +42,38 @@
                 </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Name Column -->
+                    <!-- First Name Column -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name Column <span class="text-red-500">*</span></label>
-                        <input type="number" name="name_column" value="0" min="0" required
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name Column <span class="text-red-500">*</span></label>
+                        <input type="number" name="f_name_column" value="0" min="0" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Middle Name Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Middle Name Column</label>
+                        <input type="number" name="m_name_column" value="1" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Last Name Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name Column <span class="text-red-500">*</span></label>
+                        <input type="number" name="l_name_column" value="2" min="0" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
 
                     <!-- Email Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Column <span class="text-red-500">*</span></label>
-                        <input type="number" name="email_column" value="1" min="0" required
+                        <input type="number" name="email_column" value="3" min="0" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     </div>
 
                     <!-- Password Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password Column</label>
-                        <input type="number" name="password_column" value="2" min="0"
-                            placeholder="Leave as default if not in file"
+                        <input type="number" name="password_column" value="4" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <p class="text-xs text-gray-500 mt-1">Default password "password123" will be used if not specified</p>
                     </div>
@@ -68,10 +81,40 @@
                     <!-- User Type Column -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Type Column</label>
-                        <input type="number" name="user_type_column" value="3" min="0"
+                        <input type="number" name="user_type_column" value="5" min="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <p class="text-xs text-gray-500 mt-1">1=Admin, 2=Patient, 3=Doctor</p>
                     </div>
+
+                    <!-- DOB Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date of Birth Column</label>
+                        <input type="number" name="dob_column" value="6" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">Format: YYYY-MM-DD</p>
+                    </div>
+
+                    <!-- Address Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address Column</label>
+                        <input type="number" name="address_column" value="7" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Gender Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender Column</label>
+                        <input type="number" name="gender_column" value="8" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <!-- Contact No Column -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact No Column</label>
+                        <input type="number" name="contact_no_column" value="9" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
                 </div>
             </div>
 

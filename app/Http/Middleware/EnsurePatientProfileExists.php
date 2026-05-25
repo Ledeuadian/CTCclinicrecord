@@ -19,8 +19,8 @@ class EnsurePatientProfileExists
     {
         $user = Auth::user();
 
-        // Only check for patient-type users and staff users who are also patients (user_type = 1 or 2)
-        if ($user && in_array($user->user_type, [1, 2])) {
+        // Only check for patient-type users: Student (1), Staff (2), Faculty (4)
+        if ($user && in_array($user->user_type, [1, 2, 4])) {
             $patient = Patients::where('user_id', $user->id)->first();
 
             if (!$patient) {

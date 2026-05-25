@@ -68,7 +68,7 @@
                                 required>
                             <option value="">Select Type...</option>
                             <option value="1" {{ old('patient_type') == '1' ? 'selected' : '' }}>Student</option>
-                            <option value="2" {{ old('patient_type') == '2' ? 'selected' : '' }}>Faculty & Staff</option>
+                            <option value="3" {{ old('patient_type') == '3' ? 'selected' : '' }}>Faculty</option>
                         </select>
                         @error('patient_type')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
