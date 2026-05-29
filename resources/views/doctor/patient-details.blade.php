@@ -541,32 +541,6 @@
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                <div class="flex flex-wrap gap-4">
-                    <button onclick="addHealthRecord({{ $patient->id }})"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
-                        Add Health Record
-                    </button>
-                    <button onclick="addPrescription({{ $patient->id }})"
-                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
-                        Prescribe Medication
-                    </button>
-                    <button onclick="addDentalRecord({{ $patient->id }})"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-                        Add Dental Record
-                    </button>
-                    <button onclick="addPhysicalExam({{ $patient->id }})"
-                            class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
-                        Add Physical Exam
-                    </button>
-                    <button onclick="addImmunization({{ $patient->id }})"
-                            class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition">
-                        Add Immunization
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>

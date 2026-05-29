@@ -119,7 +119,7 @@
                                         View Details
                                     </a>
                                     @if(in_array($certRequest->status, ['approved', 'issued']))
-                                    <a href="{{ route('certificate-requests.print', $certRequest->id) }}" target="_blank"
+                                    <a href="{{ route('doctor.certificate-requests.print', $certRequest->id) }}" target="_blank"
                                        class="text-green-600 hover:text-green-900 font-medium text-xs">
                                         🖨️ Print Certificate
                                     </a>

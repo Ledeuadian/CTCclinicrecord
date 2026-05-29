@@ -502,10 +502,6 @@
                                             View Patient Details
                                         </a>
                                         <span class="text-gray-300">|</span>
-                                        <button class="text-green-600 hover:text-green-800 text-sm font-medium">
-                                            Add Follow-up
-                                        </button>
-                                        <span class="text-gray-300">|</span>
                                         <a href="{{ route('doctor.print.health-record', $patient->id) }}" target="_blank"
                                            class="text-purple-600 hover:text-purple-800 text-sm font-medium">
                                             Print Record

@@ -94,46 +94,6 @@
                 </div>
                 @endif
 
-                <!-- Action Forms -->
-                @if($request->status === 'pending')
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Actions</h3>
-
-                    <!-- Approve Form -->
-                    <form action="{{ route('staff.certificate-requests.approve', $request->id) }}" method="POST" class="mb-6">
-                        @csrf
-                        <div class="mb-4">
-                            <label for="doctor_notes" class="block text-sm font-medium text-gray-700 mb-2">
-                                Add Notes (Optional)
-                            </label>
-                            <textarea name="doctor_notes" id="doctor_notes" rows="3"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      placeholder="Add any notes about this certificate..."></textarea>
-                        </div>
-                        <button type="submit" class="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition">
-                            ✓ Approve Request
-                        </button>
-                    </form>
-
-                    <!-- Reject Form -->
-                    <form action="{{ route('staff.certificate-requests.reject', $request->id) }}" method="POST" 
-                          onsubmit="return confirm('Are you sure you want to reject this request?');">
-                        @csrf
-                        <div class="mb-4">
-                            <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">
-                                Reason for Rejection <span class="text-red-500">*</span>
-                            </label>
-                            <textarea name="rejection_reason" id="rejection_reason" rows="3" required
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                      placeholder="Please provide a reason for rejection..."></textarea>
-                        </div>
-                        <button type="submit" class="w-full sm:w-auto bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition">
-                            ✕ Reject Request
-                        </button>
-                    </form>
-                </div>
-                @endif
-
                 <!-- Issue Button (for approved requests) -->
                 @if($request->status === 'approved')
                 <div class="border-t border-gray-200 pt-6">
@@ -147,7 +107,7 @@
                         <p class="text-sm text-blue-700 mb-4">
                             The certificate has been approved. Mark as issued when the patient collects it.
                         </p>
-                        <form action="{{ route('staff.certificate-requests.issue', $request->id) }}" method="POST" 
+                        <form action="{{ route('staff.certificate-requests.issue', $request->id) }}" method="POST"
                               onsubmit="return confirm('Mark this certificate as issued?');">
                             @csrf
                             <div class="flex gap-3">
